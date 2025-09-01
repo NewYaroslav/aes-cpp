@@ -1,4 +1,59 @@
+#ifndef AESUTILS_HAS_INCLUDE
+#if defined(__has_include)
+#define AESUTILS_HAS_INCLUDE(x) __has_include(x)
+#else
+#define AESUTILS_HAS_INCLUDE(x) 0
+#endif
+#endif
+
+#if defined(_WIN32)
+#if !defined(_WIN32_WINNT)
+#define _WIN32_WINNT 0x0601  // Windows 7 or later
+#endif
+#if !defined(WINVER)
+#define WINVER _WIN32_WINNT
+#endif
+#if AESUTILS_HAS_INCLUDE(<bcrypt.h>)
+#define AESUTILS_HAVE_BCRYPT 1
+// clang-format off
+#include <windows.h>
+#include <bcrypt.h>
+// clang-format on
+#if defined(_MSC_VER)
+#pragma comment(lib, "bcrypt")
+#endif
+#endif
+#elif defined(__APPLE__) || defined(__OpenBSD__) || defined(__FreeBSD__) || \
+    defined(__NetBSD__) || defined(__DragonFly__)
+#define AESUTILS_HAVE_ARC4RANDOM 1
+#include <stdlib.h>
+#elif defined(__linux__)
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+#if AESUTILS_HAS_INCLUDE(<sys / random.h>)
+#define AESUTILS_HAVE_GETRANDOM 1
+#include <sys/random.h>
+#endif
+#endif
+
+#include <algorithm>
+#include <memory>
+#include <stdexcept>
+
 #include "AESUtils.h"
+
+#ifdef AESUTILS_TRUST_STD_RANDOM_DEVICE
+#include <random>
+#endif
+#ifdef AESUTILS_ALLOW_WEAK_FALLBACK
+#include <cstring>
+#if !defined(_WIN32)
+#include <unistd.h>
+#else
+#include <processthreadsapi.h>
+#endif
+#endif
 
 // Implementation for AES utility helpers.
 
