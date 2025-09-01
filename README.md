@@ -83,3 +83,6 @@ Build commands:
 * `make speed_test` - run performance speed test
 * `make release` - run `release` version
 * `make clean` - clean `bin` directory
+
+To enable project hooks run:
+`git config core.hooksPath .githooks`
