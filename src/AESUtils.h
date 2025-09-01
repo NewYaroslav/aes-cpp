@@ -18,12 +18,19 @@ constexpr std::size_t BLOCK_SIZE = 16;
 
 inline std::array<uint8_t, BLOCK_SIZE> generate_iv() {
   std::array<uint8_t, BLOCK_SIZE> iv{};
-  auto seed = static_cast<uint32_t>(
-      std::chrono::steady_clock::now().time_since_epoch().count());
-  std::mt19937 generator(seed);
+  std::random_device rd;
   std::uniform_int_distribution<int> distribution(0, 255);
-  for (auto &byte : iv) {
-    byte = static_cast<uint8_t>(distribution(generator));
+  if (rd.entropy() > 0) {
+    for (auto &byte : iv) {
+      byte = static_cast<uint8_t>(distribution(rd));
+    }
+  } else {
+    auto seed = static_cast<unsigned long>(
+        std::chrono::steady_clock::now().time_since_epoch().count());
+    std::mt19937 gen(seed);
+    for (auto &byte : iv) {
+      byte = static_cast<uint8_t>(distribution(gen));
+    }
   }
   return iv;
 }
