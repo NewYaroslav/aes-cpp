@@ -702,6 +702,7 @@ std::vector<unsigned char> AES::EncryptGCM (
         std::vector<unsigned char> iv,
         std::vector<unsigned char> aad,
         std::vector<unsigned char> &tag) {
+    if(tag.size()<16) tag.resize(16);
     unsigned char *out = EncryptGCM (VectorToArray (in), (unsigned int)in.size(),
                                      VectorToArray (key), VectorToArray (iv),
                                      VectorToArray (aad), (unsigned int)aad.size(),
@@ -717,6 +718,7 @@ std::vector<unsigned char> AES::DecryptGCM (
         std::vector<unsigned char> iv,
         std::vector<unsigned char> aad,
         std::vector<unsigned char> tag) {
+    if(tag.size()<16) tag.resize(16);
     unsigned char *out = DecryptGCM (VectorToArray (in), (unsigned int)in.size(),
                                      VectorToArray (key), VectorToArray (iv),
                                      VectorToArray (aad), (unsigned int)aad.size(),
