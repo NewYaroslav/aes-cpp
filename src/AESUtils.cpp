@@ -248,9 +248,14 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
                              decrypted.get() + data.ciphertext.size());
   secure_zero(decrypted.get(), data.ciphertext.size());
   if (mode == AesMode::CBC) {
-    auto result = remove_padding(plain);
-    secure_zero(plain.data(), plain.size());
-    return result;
+    try {
+      auto result = remove_padding(plain);
+      secure_zero(plain.data(), plain.size());
+      return result;
+    } catch (...) {
+      secure_zero(plain.data(), plain.size());
+      throw;
+    }
   }
   return plain;
 }
