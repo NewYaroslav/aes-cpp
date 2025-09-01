@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+namespace aescpp {
+
 enum class AESKeyLength { AES_128, AES_192, AES_256 };
 
 class AES {
@@ -428,5 +430,7 @@ static const unsigned char CMDS[4][4] = {
 /// Inverse circulant MDS matrix
 static const unsigned char INV_CMDS[4][4] = {
     {14, 11, 13, 9}, {9, 14, 11, 13}, {13, 9, 14, 11}, {11, 13, 9, 14}};
+
+}  // namespace aescpp
 
 #endif
