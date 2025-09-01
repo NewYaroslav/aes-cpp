@@ -13,11 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Code style
+      - name: Code style (check only)
         run: |
-          sudo apt install clang-format-17
-          clang-format-17 --dry-run --Werror -i src/*.cpp src/*.h tests/*.cpp
-        
+          sudo apt-get update
+          sudo apt-get install -y clang-format-17
+          files="$(git ls-files '*.h' '*.hpp' '*.c' '*.cc' '*.cpp' || true)"
+          [ -n "$files" ] && clang-format-17 -style=file -n --Werror $files
+
       - name: Build gtest
         run: |
           sudo apt-get update
@@ -40,5 +42,6 @@ jobs:
       
       
       
+
 
 
