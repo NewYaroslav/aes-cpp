@@ -15,8 +15,10 @@
 #endif
 #if AESUTILS_HAS_INCLUDE(<bcrypt.h>)
 #define AESUTILS_HAVE_BCRYPT 1
-#include <bcrypt.h>
+// clang-format off
 #include <windows.h>
+#include <bcrypt.h>
+// clang-format on
 #if defined(_MSC_VER)
 #pragma comment(lib, "bcrypt")
 #endif
