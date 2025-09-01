@@ -95,6 +95,7 @@ unsigned char *AES::DecryptECB(const unsigned char in[], size_t inLen,
 unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
+  if (!key || !iv) throw std::invalid_argument("Null key or IV");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
@@ -115,6 +116,7 @@ unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
 unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
+  if (!key || !iv) throw std::invalid_argument("Null key or IV");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
@@ -135,6 +137,7 @@ unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
 unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
+  if (!key || !iv) throw std::invalid_argument("Null key or IV");
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
@@ -157,6 +160,7 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
 unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
+  if (!key || !iv) throw std::invalid_argument("Null key or IV");
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
@@ -179,6 +183,7 @@ unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
 unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char iv[]) {
+  if (!key || !iv) throw std::invalid_argument("Null key or IV");
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char counter[blockBytesLen];
@@ -207,6 +212,7 @@ unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
 unsigned char *AES::DecryptCTR(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char iv[]) {
+  if (!key || !iv) throw std::invalid_argument("Null key or IV");
   return EncryptCTR(in, inLen, key, iv);
 }
 
@@ -215,6 +221,8 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
                                const unsigned char iv[],
                                const unsigned char aad[], size_t aadLen,
                                unsigned char tag[]) {
+  if (!key || !iv || (!aad && aadLen > 0) || !tag)
+    throw std::invalid_argument("Null key, IV, AAD or tag");
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
 
@@ -282,6 +290,8 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
                                const unsigned char iv[],
                                const unsigned char aad[], size_t aadLen,
                                const unsigned char tag[]) {
+  if (!key || !iv || (!aad && aadLen > 0) || !tag)
+    throw std::invalid_argument("Null key, IV, AAD or tag");
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
 
