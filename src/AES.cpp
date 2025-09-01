@@ -44,22 +44,25 @@ AES::~AES() {
   secure_zero(cachedKey.data(), cachedKey.size());
 }
 
+void AES::prepare_round_keys(const unsigned char *key,
+                             std::vector<unsigned char> &roundKeys) {
+  std::lock_guard<std::mutex> lock(cacheMutex);
+  const size_t keyLen = 4 * Nk;
+  if (cachedKey.size() != keyLen ||
+      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+    cachedKey.assign(key, key + keyLen);
+    if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
+      cachedRoundKeys.resize(4 * Nb * (Nr + 1));
+    KeyExpansion(key, cachedRoundKeys.data());
+  }
+  roundKeys = cachedRoundKeys;
+}
+
 unsigned char *AES::EncryptECB(const unsigned char in[], size_t inLen,
                                const unsigned char key[]) {
   CheckLength(inLen);
   std::vector<unsigned char> roundKeys;
-  {
-    std::lock_guard<std::mutex> lock(cacheMutex);
-    const size_t keyLen = 4 * Nk;
-    if (cachedKey.size() != keyLen ||
-        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-      cachedKey.assign(key, key + keyLen);
-      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-      KeyExpansion(key, cachedRoundKeys.data());
-    }
-    roundKeys = cachedRoundKeys;
-  }
+  prepare_round_keys(key, roundKeys);
   auto out = std::make_unique<unsigned char[]>(inLen);
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     EncryptBlock(in + i, out.get() + i, roundKeys.data());
@@ -72,18 +75,7 @@ unsigned char *AES::DecryptECB(const unsigned char in[], size_t inLen,
                                const unsigned char key[]) {
   CheckLength(inLen);
   std::vector<unsigned char> roundKeys;
-  {
-    std::lock_guard<std::mutex> lock(cacheMutex);
-    const size_t keyLen = 4 * Nk;
-    if (cachedKey.size() != keyLen ||
-        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-      cachedKey.assign(key, key + keyLen);
-      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-      KeyExpansion(key, cachedRoundKeys.data());
-    }
-    roundKeys = cachedRoundKeys;
-  }
+  prepare_round_keys(key, roundKeys);
   auto out = std::make_unique<unsigned char[]>(inLen);
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     DecryptBlock(in + i, out.get() + i, roundKeys.data());
@@ -97,18 +89,7 @@ unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
                                const unsigned char *iv) {
   CheckLength(inLen);
   std::vector<unsigned char> roundKeys;
-  {
-    std::lock_guard<std::mutex> lock(cacheMutex);
-    const size_t keyLen = 4 * Nk;
-    if (cachedKey.size() != keyLen ||
-        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-      cachedKey.assign(key, key + keyLen);
-      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-      KeyExpansion(key, cachedRoundKeys.data());
-    }
-    roundKeys = cachedRoundKeys;
-  }
+  prepare_round_keys(key, roundKeys);
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
@@ -128,18 +109,7 @@ unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
                                const unsigned char *iv) {
   CheckLength(inLen);
   std::vector<unsigned char> roundKeys;
-  {
-    std::lock_guard<std::mutex> lock(cacheMutex);
-    const size_t keyLen = 4 * Nk;
-    if (cachedKey.size() != keyLen ||
-        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-      cachedKey.assign(key, key + keyLen);
-      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-      KeyExpansion(key, cachedRoundKeys.data());
-    }
-    roundKeys = cachedRoundKeys;
-  }
+  prepare_round_keys(key, roundKeys);
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
@@ -158,18 +128,7 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
   std::vector<unsigned char> roundKeys;
-  {
-    std::lock_guard<std::mutex> lock(cacheMutex);
-    const size_t keyLen = 4 * Nk;
-    if (cachedKey.size() != keyLen ||
-        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-      cachedKey.assign(key, key + keyLen);
-      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-      KeyExpansion(key, cachedRoundKeys.data());
-    }
-    roundKeys = cachedRoundKeys;
-  }
+  prepare_round_keys(key, roundKeys);
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   unsigned char encryptedBlock[blockBytesLen];
@@ -191,18 +150,7 @@ unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
   std::vector<unsigned char> roundKeys;
-  {
-    std::lock_guard<std::mutex> lock(cacheMutex);
-    const size_t keyLen = 4 * Nk;
-    if (cachedKey.size() != keyLen ||
-        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-      cachedKey.assign(key, key + keyLen);
-      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-      KeyExpansion(key, cachedRoundKeys.data());
-    }
-    roundKeys = cachedRoundKeys;
-  }
+  prepare_round_keys(key, roundKeys);
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   unsigned char encryptedBlock[blockBytesLen];
@@ -224,18 +172,7 @@ unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char iv[]) {
   std::vector<unsigned char> roundKeys;
-  {
-    std::lock_guard<std::mutex> lock(cacheMutex);
-    const size_t keyLen = 4 * Nk;
-    if (cachedKey.size() != keyLen ||
-        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-      cachedKey.assign(key, key + keyLen);
-      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-      KeyExpansion(key, cachedRoundKeys.data());
-    }
-    roundKeys = cachedRoundKeys;
-  }
+  prepare_round_keys(key, roundKeys);
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char counter[blockBytesLen];
   unsigned char encryptedCounter[blockBytesLen];
@@ -271,18 +208,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
                                const unsigned char aad[], size_t aadLen,
                                unsigned char tag[]) {
   std::vector<unsigned char> roundKeys;
-  {
-    std::lock_guard<std::mutex> lock(cacheMutex);
-    const size_t keyLen = 4 * Nk;
-    if (cachedKey.size() != keyLen ||
-        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-      cachedKey.assign(key, key + keyLen);
-      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-      KeyExpansion(key, cachedRoundKeys.data());
-    }
-    roundKeys = cachedRoundKeys;
-  }
+  prepare_round_keys(key, roundKeys);
   auto out = std::make_unique<unsigned char[]>(inLen);
 
   // Генерация H
@@ -349,18 +275,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
                                const unsigned char aad[], size_t aadLen,
                                const unsigned char tag[]) {
   std::vector<unsigned char> roundKeys;
-  {
-    std::lock_guard<std::mutex> lock(cacheMutex);
-    const size_t keyLen = 4 * Nk;
-    if (cachedKey.size() != keyLen ||
-        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-      cachedKey.assign(key, key + keyLen);
-      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-      KeyExpansion(key, cachedRoundKeys.data());
-    }
-    roundKeys = cachedRoundKeys;
-  }
+  prepare_round_keys(key, roundKeys);
   auto out = std::make_unique<unsigned char[]>(inLen);
 
   // Генерация H

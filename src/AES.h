@@ -182,6 +182,9 @@ class AES {
 
   void KeyExpansion(const unsigned char key[], unsigned char w[]);
 
+  void prepare_round_keys(const unsigned char *key,
+                          std::vector<unsigned char> &roundKeys);
+
   void EncryptBlock(const unsigned char in[], unsigned char out[],
                     unsigned char *roundKeys);
 
