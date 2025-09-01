@@ -17,14 +17,21 @@ jobs:
       - name: Install LLVM 17 (Chocolatey)
         shell: pwsh
         run: |
-          choco install -y llvm --version=17.0.6
+          choco upgrade -y llvm --version=17.0.6 --allow-downgrade --force
           echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
+
+      - name: Check clang-format version
+        run: |
+          CF="C:/Program Files/LLVM/bin/clang-format.exe"
+          "$CF" --version
+          "$CF" --version | grep -q "version 17." || { echo "Need clang-format 17.x"; exit 1; }
 
       - name: Code style (check only) — clang-format 17
         run: |
           files="$(git ls-files '*.h' '*.hpp' '*.c' '*.cc' '*.cpp' || true)"
           if [ -n "$files" ]; then
-            "/c/Program Files/LLVM/bin/clang-format.exe" -style=file -n --Werror $files
+            CF="/c/Program Files/LLVM/bin/clang-format.exe"
+            printf '%s\n' "$files" | xargs -r "$CF" -style=file -n --Werror
           fi
 
       - name: Setup MSYS2 toolchain
