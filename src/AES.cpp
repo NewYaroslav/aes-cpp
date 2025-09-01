@@ -20,6 +20,10 @@ static constexpr unsigned char R[16] = {
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0x87};  // Полином: x^128 + x^7 + x^2 + x + 1
 
+static constexpr uint8_t RCON_TABLE[] = {0x01, 0x02, 0x04, 0x08, 0x10,
+                                         0x20, 0x40, 0x80, 0x1B, 0x36,
+                                         0x6C, 0xD8, 0xAB, 0x4D, 0x9A};
+
 AES::AES(const AESKeyLength keyLength) {
   switch (keyLength) {
     case AESKeyLength::AES_128:
@@ -554,14 +558,7 @@ void AES::XorWords(unsigned char *a, unsigned char *b, unsigned char *c) {
 }
 
 void AES::Rcon(unsigned char *a, unsigned int n) {
-  unsigned int i;
-  unsigned char c = 1;
-
-  for (i = 0; i < n - 1; i++) {
-    c = xtime(c);
-  }
-
-  a[0] = c;
+  a[0] = RCON_TABLE[n - 1];
   a[1] = a[2] = a[3] = 0;
 }
 
