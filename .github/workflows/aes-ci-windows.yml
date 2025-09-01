@@ -1,0 +1,68 @@
+name: CI Windows
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM 17 (Chocolatey)
+        shell: pwsh
+        run: |
+          choco upgrade -y llvm --version=17.0.6 --allow-downgrade --force
+          echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
+
+      - name: Code style (clang-format 17 check only)
+        shell: pwsh
+        run: |
+          $CF = "C:\Program Files\LLVM\bin\clang-format.exe"
+          & "$CF" --version
+          if (-not ((& "$CF" --version) -match "version 17\."))
+          {
+            Write-Error "Need clang-format 17.x"
+            exit 1
+          }
+
+          $files = git ls-files -- '*.h' '*.hpp' '*.c' '*.cc' '*.cpp'
+          if ($files) {
+            & "$CF" -style=file -n --Werror $files
+          }
+
+      - name: Setup MSYS2 toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-make
+            mingw-w64-x86_64-gtest
+            git
+
+      - name: Prepare gtest
+        run: |
+          mkdir -p /usr/lib
+          if [ -f /mingw64/lib/libgtest.a ]; then
+            ln -s /mingw64/lib/libgtest.a /usr/lib/libgtest.a
+          else
+            ln -s /mingw64/lib/libgtest.dll.a /usr/lib/libgtest.a
+          fi
+
+      - name: Tests
+        run: |
+          mingw32-make workflow_build_test
+          ./bin/test.exe
+
+      - name: Speed test
+        run: |
+          mingw32-make workflow_build_speed_test
+          ./bin/speedtest.exe
+
