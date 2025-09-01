@@ -216,6 +216,14 @@ unsigned char *AES::EncryptGCM (const unsigned char in[], unsigned int inLen,
     for(int i=0;i<8;i++) ghashInput[aadLen+inLen+8+i]=(unsigned char)(lenBits>>(56-8*i));
 
     GHASH (H, ghashInput, totalLen, tag);
+    unsigned char J0[16] = {0};
+    memcpy (J0, iv, 12);
+    J0[15] = 1;
+    unsigned char S[16] = {0};
+    EncryptBlock (J0, S, roundKeys);
+    for (int i = 0; i < 16; i++) {
+        tag[i] ^= S[i];
+    }
 
     delete[] roundKeys;
     delete[] ghashInput;
@@ -268,6 +276,14 @@ unsigned char *AES::DecryptGCM (const unsigned char in[], unsigned int inLen,
 
     unsigned char calculatedTag[16] = {0};
     GHASH (H, ghashInput.data (), totalLen, calculatedTag);
+    unsigned char J0[16] = {0};
+    memcpy (J0, iv, 12);
+    J0[15] = 1;
+    unsigned char S[16] = {0};
+    EncryptBlock (J0, S, roundKeys.data ());
+    for (int i = 0; i < 16; i++) {
+        calculatedTag[i] ^= S[i];
+    }
 
     if (memcmp (tag, calculatedTag, 16) != 0) {
         delete[] out;
