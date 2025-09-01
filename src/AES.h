@@ -50,51 +50,95 @@ class AES {
                             const unsigned char aad[], size_t aadLen,
                             const unsigned char tag[]);
 
-  std::vector<unsigned char> EncryptECB(std::vector<unsigned char> in,
-                                        std::vector<unsigned char> key);
+  std::vector<unsigned char> EncryptECB(const std::vector<unsigned char> &in,
+                                        const std::vector<unsigned char> &key);
 
-  std::vector<unsigned char> DecryptECB(std::vector<unsigned char> in,
-                                        std::vector<unsigned char> key);
+  std::vector<unsigned char> EncryptECB(std::vector<unsigned char> &&in,
+                                        std::vector<unsigned char> &&key);
 
-  std::vector<unsigned char> EncryptCBC(std::vector<unsigned char> in,
-                                        std::vector<unsigned char> key,
-                                        std::vector<unsigned char> iv);
+  std::vector<unsigned char> DecryptECB(const std::vector<unsigned char> &in,
+                                        const std::vector<unsigned char> &key);
 
-  std::vector<unsigned char> DecryptCBC(std::vector<unsigned char> in,
-                                        std::vector<unsigned char> key,
-                                        std::vector<unsigned char> iv);
+  std::vector<unsigned char> DecryptECB(std::vector<unsigned char> &&in,
+                                        std::vector<unsigned char> &&key);
 
-  std::vector<unsigned char> EncryptCFB(std::vector<unsigned char> in,
-                                        std::vector<unsigned char> key,
-                                        std::vector<unsigned char> iv);
+  std::vector<unsigned char> EncryptCBC(const std::vector<unsigned char> &in,
+                                        const std::vector<unsigned char> &key,
+                                        const std::vector<unsigned char> &iv);
 
-  std::vector<unsigned char> DecryptCFB(std::vector<unsigned char> in,
-                                        std::vector<unsigned char> key,
-                                        std::vector<unsigned char> iv);
+  std::vector<unsigned char> EncryptCBC(std::vector<unsigned char> &&in,
+                                        std::vector<unsigned char> &&key,
+                                        std::vector<unsigned char> &&iv);
 
-  std::vector<unsigned char> EncryptCTR(std::vector<unsigned char> in,
-                                        std::vector<unsigned char> key,
-                                        std::vector<unsigned char> iv);
+  std::vector<unsigned char> DecryptCBC(const std::vector<unsigned char> &in,
+                                        const std::vector<unsigned char> &key,
+                                        const std::vector<unsigned char> &iv);
 
-  std::vector<unsigned char> DecryptCTR(std::vector<unsigned char> in,
-                                        std::vector<unsigned char> key,
-                                        std::vector<unsigned char> iv);
+  std::vector<unsigned char> DecryptCBC(std::vector<unsigned char> &&in,
+                                        std::vector<unsigned char> &&key,
+                                        std::vector<unsigned char> &&iv);
 
-  std::vector<unsigned char> EncryptGCM(std::vector<unsigned char> in,
-                                        std::vector<unsigned char> key,
-                                        std::vector<unsigned char> iv,
-                                        std::vector<unsigned char> aad,
+  std::vector<unsigned char> EncryptCFB(const std::vector<unsigned char> &in,
+                                        const std::vector<unsigned char> &key,
+                                        const std::vector<unsigned char> &iv);
+
+  std::vector<unsigned char> EncryptCFB(std::vector<unsigned char> &&in,
+                                        std::vector<unsigned char> &&key,
+                                        std::vector<unsigned char> &&iv);
+
+  std::vector<unsigned char> DecryptCFB(const std::vector<unsigned char> &in,
+                                        const std::vector<unsigned char> &key,
+                                        const std::vector<unsigned char> &iv);
+
+  std::vector<unsigned char> DecryptCFB(std::vector<unsigned char> &&in,
+                                        std::vector<unsigned char> &&key,
+                                        std::vector<unsigned char> &&iv);
+
+  std::vector<unsigned char> EncryptCTR(const std::vector<unsigned char> &in,
+                                        const std::vector<unsigned char> &key,
+                                        const std::vector<unsigned char> &iv);
+
+  std::vector<unsigned char> EncryptCTR(std::vector<unsigned char> &&in,
+                                        std::vector<unsigned char> &&key,
+                                        std::vector<unsigned char> &&iv);
+
+  std::vector<unsigned char> DecryptCTR(const std::vector<unsigned char> &in,
+                                        const std::vector<unsigned char> &key,
+                                        const std::vector<unsigned char> &iv);
+
+  std::vector<unsigned char> DecryptCTR(std::vector<unsigned char> &&in,
+                                        std::vector<unsigned char> &&key,
+                                        std::vector<unsigned char> &&iv);
+
+  std::vector<unsigned char> EncryptGCM(const std::vector<unsigned char> &in,
+                                        const std::vector<unsigned char> &key,
+                                        const std::vector<unsigned char> &iv,
+                                        const std::vector<unsigned char> &aad,
                                         std::vector<unsigned char> &tag);
 
-  std::vector<unsigned char> DecryptGCM(std::vector<unsigned char> in,
-                                        std::vector<unsigned char> key,
-                                        std::vector<unsigned char> iv,
-                                        std::vector<unsigned char> aad,
-                                        std::vector<unsigned char> tag);
+  std::vector<unsigned char> EncryptGCM(std::vector<unsigned char> &&in,
+                                        std::vector<unsigned char> &&key,
+                                        std::vector<unsigned char> &&iv,
+                                        std::vector<unsigned char> &&aad,
+                                        std::vector<unsigned char> &tag);
+
+  std::vector<unsigned char> DecryptGCM(const std::vector<unsigned char> &in,
+                                        const std::vector<unsigned char> &key,
+                                        const std::vector<unsigned char> &iv,
+                                        const std::vector<unsigned char> &aad,
+                                        const std::vector<unsigned char> &tag);
+
+  std::vector<unsigned char> DecryptGCM(std::vector<unsigned char> &&in,
+                                        std::vector<unsigned char> &&key,
+                                        std::vector<unsigned char> &&iv,
+                                        std::vector<unsigned char> &&aad,
+                                        std::vector<unsigned char> &&tag);
 
   void printHexArray(unsigned char a[], size_t n);
 
-  void printHexVector(std::vector<unsigned char> a);
+  void printHexVector(const std::vector<unsigned char> &a);
+
+  void printHexVector(std::vector<unsigned char> &&a);
 
  private:
   static constexpr unsigned int Nb = 4;
