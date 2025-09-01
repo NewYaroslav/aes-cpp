@@ -292,11 +292,10 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   ctr[15] = 1;  // Установить начальное значение счетчика
   unsigned char encryptedCtr[16] = {0};
 
-  // GHASH для AAD
+  // GHASH для AAD без промежуточных буферов
   memset(tag, 0, 16);
   for (size_t i = 0; i < aadLen; i += 16) {
-    size_t blockLen = std::min<size_t>(16, aadLen - i);
-    GHASH(H, aad + i, blockLen, tag);
+    GHASH(H, aad + i, std::min<size_t>(16, aadLen - i), tag);
   }
 
   for (size_t i = 0; i < inLen; i += 16) {
@@ -372,9 +371,9 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   unsigned char encryptedCtr[16] = {0};
 
   unsigned char calculatedTag[16] = {0};
+  // GHASH для AAD без формирования объединённого буфера
   for (size_t i = 0; i < aadLen; i += 16) {
-    size_t blockLen = std::min<size_t>(16, aadLen - i);
-    GHASH(H, aad + i, blockLen, calculatedTag);
+    GHASH(H, aad + i, std::min<size_t>(16, aadLen - i), calculatedTag);
   }
 
   for (size_t i = 0; i < inLen; i += 16) {
@@ -505,19 +504,13 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
 void AES::GHASH(const unsigned char *H, const unsigned char *X, size_t len,
                 unsigned char *tag) {
   unsigned char block[16] = {0};
+  memcpy(block, X, len);
 
-  for (size_t i = 0; i < len; i += 16) {
-    size_t blockLen = std::min(len - i, (size_t)16);
-    memcpy(block, X + i, blockLen);
-
-    for (int j = 0; j < 16; j++) {
-      tag[j] ^= block[j];
-    }
-
-    GF_Multiply(tag, H, tag);
-    secure_zero(block, sizeof(block));
+  for (int j = 0; j < 16; j++) {
+    tag[j] ^= block[j];
   }
 
+  GF_Multiply(tag, H, tag);
   secure_zero(block, sizeof(block));
 }
 

@@ -194,7 +194,8 @@ class AES {
   void GF_Multiply(const unsigned char *X, const unsigned char *Y,
                    unsigned char *Z);
 
-  // Incrementally update GHASH state in `tag` with `len` bytes from `X`.
+  // Update GHASH state in `tag` with a single block of `len` bytes from `X`.
+  // `len` must be at most 16 and missing bytes are treated as zero.
   void GHASH(const unsigned char *H, const unsigned char *X, size_t len,
              unsigned char *tag);
 
