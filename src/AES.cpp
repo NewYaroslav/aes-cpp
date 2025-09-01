@@ -212,8 +212,8 @@ unsigned char *AES::EncryptGCM (const unsigned char in[], unsigned int inLen,
 
     uint64_t aadBits = aadLen * 8;
     uint64_t lenBits = inLen * 8;
-    memcpy (ghashInput + aadLen + inLen, &aadBits, 8);
-    memcpy (ghashInput + aadLen + inLen + 8, &lenBits, 8);
+    for(int i=0;i<8;i++) ghashInput[aadLen+inLen+i]=(unsigned char)(aadBits>>(56-8*i));
+    for(int i=0;i<8;i++) ghashInput[aadLen+inLen+8+i]=(unsigned char)(lenBits>>(56-8*i));
 
     GHASH (H, ghashInput, totalLen, tag);
 
@@ -263,8 +263,8 @@ unsigned char *AES::DecryptGCM (const unsigned char in[], unsigned int inLen,
 
     uint64_t aadBits = aadLen * 8;
     uint64_t lenBits = inLen * 8;
-    memcpy (ghashInput.data () + aadLen + inLen, &aadBits, 8);
-    memcpy (ghashInput.data () + aadLen + inLen + 8, &lenBits, 8);
+    for(int i=0;i<8;i++) ghashInput.data()[aadLen+inLen+i]=(unsigned char)(aadBits>>(56-8*i));
+    for(int i=0;i<8;i++) ghashInput.data()[aadLen+inLen+8+i]=(unsigned char)(lenBits>>(56-8*i));
 
     unsigned char calculatedTag[16] = {0};
     GHASH (H, ghashInput.data (), totalLen, calculatedTag);
