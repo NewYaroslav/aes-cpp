@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -196,6 +197,10 @@ class AES {
   std::vector<unsigned char> ArrayToVector(unsigned char *a, size_t len);
 
   unsigned char *VectorToArray(std::vector<unsigned char> &a);
+
+  std::vector<unsigned char> cachedKey;
+  std::vector<unsigned char> cachedRoundKeys;
+  std::mutex cacheMutex;
 };
 
 const unsigned char sbox[16][16] = {
