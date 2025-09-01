@@ -507,11 +507,13 @@ TEST(GCM, DecryptInvalidTag) {
       aes.EncryptGCM(plain, sizeof(plain), key, iv, nullptr, 0, tag);
   tag[0] ^= 0x01;  // Corrupt the tag
 
-  EXPECT_THROW({
-    unsigned char *out =
-        aes.DecryptGCM(cipher, sizeof(plain), key, iv, nullptr, 0, tag);
-    delete[] out;
-  }, std::runtime_error);
+  EXPECT_THROW(
+      {
+        unsigned char *out =
+            aes.DecryptGCM(cipher, sizeof(plain), key, iv, nullptr, 0, tag);
+        delete[] out;
+      },
+      std::runtime_error);
 
   delete[] cipher;
 }
