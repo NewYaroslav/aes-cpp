@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -184,8 +185,8 @@ class AES {
 
   void KeyExpansion(const unsigned char key[], unsigned char w[]);
 
-  void prepare_round_keys(const unsigned char *key,
-                          std::vector<unsigned char> &roundKeys);
+  std::shared_ptr<const std::vector<unsigned char>> prepare_round_keys(
+      const unsigned char *key);
 
   void EncryptBlock(const unsigned char in[], unsigned char out[],
                     unsigned char *roundKeys);
@@ -209,7 +210,7 @@ class AES {
   unsigned char *VectorToArray(std::vector<unsigned char> &a);
 
   std::vector<unsigned char> cachedKey;
-  std::vector<unsigned char> cachedRoundKeys;
+  std::shared_ptr<const std::vector<unsigned char>> cachedRoundKeys;
   std::mutex cacheMutex;
 };
 
