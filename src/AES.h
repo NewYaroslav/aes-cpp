@@ -40,12 +40,6 @@ public:
                                const unsigned char key[], const unsigned char iv[]);
 
     unsigned char *EncryptGCM (const unsigned char in[], unsigned int inLen,
-                               const unsigned char key[], const unsigned char iv[]);
-
-    unsigned char *DecryptGCM (const unsigned char in[], unsigned int inLen,
-                               const unsigned char key[], const unsigned char iv[]);
-
-    unsigned char *EncryptGCM (const unsigned char in[], unsigned int inLen,
                                const unsigned char key[], const unsigned char iv[],
                                const unsigned char aad[], unsigned int aadLen,
                                unsigned char tag[]);
