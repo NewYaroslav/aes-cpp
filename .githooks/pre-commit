@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+files="$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(c|cc|cpp|cxx|h|hpp)$' || true)"
+[ -z "$files" ] && exit 0
+# Use project .clang-format; fallback to LLVM if missing
+if command -v clang-format >/dev/null 2>&1; then
+  clang-format -style=file -i $files || clang-format -i $files
+else
+  echo "clang-format not found"; exit 1
+fi
+git add $files
