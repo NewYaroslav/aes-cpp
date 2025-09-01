@@ -185,26 +185,33 @@ EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
                       AesMode mode) {
   AES aes(key_length_from_key(key));
   auto iv = generate_iv();
-  std::vector<uint8_t> padded = add_padding(plain);
+  const std::vector<uint8_t> *src = &plain;
+  std::vector<uint8_t> padded;
+  if (mode == AesMode::CBC) {
+    padded = add_padding(plain);
+    src = &padded;
+  }
 
   std::unique_ptr<unsigned char[]> encrypted;
   switch (mode) {
     case AesMode::CBC:
       encrypted.reset(
-          aes.EncryptCBC(padded.data(), padded.size(), key.data(), iv.data()));
+          aes.EncryptCBC(src->data(), src->size(), key.data(), iv.data()));
       break;
     case AesMode::CFB:
       encrypted.reset(
-          aes.EncryptCFB(padded.data(), padded.size(), key.data(), iv.data()));
+          aes.EncryptCFB(src->data(), src->size(), key.data(), iv.data()));
       break;
     default:
       throw std::invalid_argument("Invalid AES mode");
   }
 
   std::vector<uint8_t> ciphertext(encrypted.get(),
-                                  encrypted.get() + padded.size());
-  secure_zero(encrypted.get(), padded.size());
-  secure_zero(padded.data(), padded.size());
+                                  encrypted.get() + src->size());
+  secure_zero(encrypted.get(), src->size());
+  if (mode == AesMode::CBC) {
+    secure_zero(padded.data(), padded.size());
+  }
   return {std::chrono::system_clock::now(), iv, std::move(ciphertext)};
 }
 
@@ -238,9 +245,12 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
   std::vector<uint8_t> plain(decrypted.get(),
                              decrypted.get() + data.ciphertext.size());
   secure_zero(decrypted.get(), data.ciphertext.size());
-  auto result = remove_padding(plain);
-  secure_zero(plain.data(), plain.size());
-  return result;
+  if (mode == AesMode::CBC) {
+    auto result = remove_padding(plain);
+    secure_zero(plain.data(), plain.size());
+    return result;
+  }
+  return plain;
 }
 
 template <class T>
