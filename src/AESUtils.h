@@ -4,6 +4,7 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <memory>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -112,23 +113,23 @@ EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
   auto iv = generate_iv();
   std::vector<uint8_t> padded = add_padding(plain);
 
-  unsigned char *encrypted = nullptr;
+  std::unique_ptr<unsigned char[]> encrypted;
   switch (mode) {
     case AesMode::CBC:
-      encrypted =
-          aes.EncryptCBC(padded.data(), padded.size(), key.data(), iv.data());
+      encrypted.reset(
+          aes.EncryptCBC(padded.data(), padded.size(), key.data(), iv.data()));
       break;
     case AesMode::CFB:
-      encrypted =
-          aes.EncryptCFB(padded.data(), padded.size(), key.data(), iv.data());
+      encrypted.reset(
+          aes.EncryptCFB(padded.data(), padded.size(), key.data(), iv.data()));
       break;
     default:
       throw std::invalid_argument("Invalid AES mode");
   }
 
-  std::vector<uint8_t> ciphertext(encrypted, encrypted + padded.size());
-  secure_zero(encrypted, padded.size());
-  delete[] encrypted;
+  std::vector<uint8_t> ciphertext(encrypted.get(),
+                                  encrypted.get() + padded.size());
+  secure_zero(encrypted.get(), padded.size());
   secure_zero(padded.data(), padded.size());
   return {std::chrono::system_clock::now(), iv, std::move(ciphertext)};
 }
@@ -144,23 +145,25 @@ template <class T>
 std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
                              AesMode mode) {
   AES aes(key_length_from_key(key));
-  unsigned char *decrypted = nullptr;
+  std::unique_ptr<unsigned char[]> decrypted;
   switch (mode) {
     case AesMode::CBC:
-      decrypted = aes.DecryptCBC(data.ciphertext.data(), data.ciphertext.size(),
-                                 key.data(), data.iv.data());
+      decrypted.reset(aes.DecryptCBC(data.ciphertext.data(),
+                                     data.ciphertext.size(), key.data(),
+                                     data.iv.data()));
       break;
     case AesMode::CFB:
-      decrypted = aes.DecryptCFB(data.ciphertext.data(), data.ciphertext.size(),
-                                 key.data(), data.iv.data());
+      decrypted.reset(aes.DecryptCFB(data.ciphertext.data(),
+                                     data.ciphertext.size(), key.data(),
+                                     data.iv.data()));
       break;
     default:
       throw std::invalid_argument("Invalid AES mode");
   }
 
-  std::vector<uint8_t> plain(decrypted, decrypted + data.ciphertext.size());
-  secure_zero(decrypted, data.ciphertext.size());
-  delete[] decrypted;
+  std::vector<uint8_t> plain(decrypted.get(),
+                             decrypted.get() + data.ciphertext.size());
+  secure_zero(decrypted.get(), data.ciphertext.size());
   auto result = remove_padding(plain);
   secure_zero(plain.data(), plain.size());
   return result;
