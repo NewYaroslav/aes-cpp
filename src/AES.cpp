@@ -250,11 +250,19 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   ctr[15] = 1;  // Установить начальное значение счетчика
   unsigned char encryptedCtr[16] = {0};
 
+  // GHASH для AAD
+  memset(tag, 0, 16);
+  for (size_t i = 0; i < aadLen; i += 16) {
+    size_t blockLen = std::min<size_t>(16, aadLen - i);
+    GHASH(H, aad + i, blockLen, tag);
+  }
+
   for (size_t i = 0; i < inLen; i += 16) {
     EncryptBlock(ctr, encryptedCtr, cachedRoundKeys.data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
     XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
+    GHASH(H, out.get() + i, blockLen, tag);
 
     // Увеличиваем счетчик
     for (int j = 15; j >= 0; --j) {
@@ -262,24 +270,15 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
     }
   }
 
-  // Вычисление тега с помощью GHASH
-  size_t aad_padded_len = ((aadLen + 15) / 16) * 16;
-  size_t data_padded_len = ((inLen + 15) / 16) * 16;
-  size_t totalLen = aad_padded_len + data_padded_len + 16;
-  std::vector<unsigned char> ghashInput(totalLen, 0);
-  memcpy(ghashInput.data(), aad, aadLen);
-  memcpy(ghashInput.data() + aad_padded_len, out.get(), inLen);
-
+  unsigned char lenBlock[16] = {0};
   uint64_t aadBits = static_cast<uint64_t>(aadLen) * 8;
   uint64_t lenBits = static_cast<uint64_t>(inLen) * 8;
   for (int i = 0; i < 8; i++)
-    ghashInput[aad_padded_len + data_padded_len + i] =
-        static_cast<unsigned char>(aadBits >> (56 - 8 * i));
+    lenBlock[i] = static_cast<unsigned char>(aadBits >> (56 - 8 * i));
   for (int i = 0; i < 8; i++)
-    ghashInput[aad_padded_len + data_padded_len + 8 + i] =
-        static_cast<unsigned char>(lenBits >> (56 - 8 * i));
+    lenBlock[8 + i] = static_cast<unsigned char>(lenBits >> (56 - 8 * i));
+  GHASH(H, lenBlock, 16, tag);
 
-  GHASH(H, ghashInput.data(), totalLen, tag);
   unsigned char J0[16] = {0};
   memcpy(J0, iv, 12);
   J0[15] = 1;
@@ -289,8 +288,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
     tag[i] ^= S[i];
   }
 
-  secure_zero(ghashInput.data(), ghashInput.size());
-
+  secure_zero(lenBlock, sizeof(lenBlock));
   secure_zero(H, sizeof(H));
   secure_zero(zeroBlock, sizeof(zeroBlock));
   secure_zero(ctr, sizeof(ctr));
@@ -327,11 +325,18 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   ctr[15] = 1;  // Установить начальное значение счетчика
   unsigned char encryptedCtr[16] = {0};
 
+  unsigned char calculatedTag[16] = {0};
+  for (size_t i = 0; i < aadLen; i += 16) {
+    size_t blockLen = std::min<size_t>(16, aadLen - i);
+    GHASH(H, aad + i, blockLen, calculatedTag);
+  }
+
   for (size_t i = 0; i < inLen; i += 16) {
     EncryptBlock(ctr, encryptedCtr, cachedRoundKeys.data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
     XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
+    GHASH(H, in + i, blockLen, calculatedTag);
 
     // Увеличиваем счетчик
     for (int j = 15; j >= 0; --j) {
@@ -339,25 +344,15 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
     }
   }
 
-  // Проверка тега
-  size_t aad_padded_len = ((aadLen + 15) / 16) * 16;
-  size_t data_padded_len = ((inLen + 15) / 16) * 16;
-  size_t totalLen = aad_padded_len + data_padded_len + 16;
-  std::vector<unsigned char> ghashInput(totalLen, 0);
-  memcpy(ghashInput.data(), aad, aadLen);
-  memcpy(ghashInput.data() + aad_padded_len, in, inLen);
-
+  unsigned char lenBlock[16] = {0};
   uint64_t aadBits = static_cast<uint64_t>(aadLen) * 8;
   uint64_t lenBits = static_cast<uint64_t>(inLen) * 8;
   for (int i = 0; i < 8; i++)
-    ghashInput[aad_padded_len + data_padded_len + i] =
-        static_cast<unsigned char>(aadBits >> (56 - 8 * i));
+    lenBlock[i] = static_cast<unsigned char>(aadBits >> (56 - 8 * i));
   for (int i = 0; i < 8; i++)
-    ghashInput[aad_padded_len + data_padded_len + 8 + i] =
-        static_cast<unsigned char>(lenBits >> (56 - 8 * i));
+    lenBlock[8 + i] = static_cast<unsigned char>(lenBits >> (56 - 8 * i));
+  GHASH(H, lenBlock, 16, calculatedTag);
 
-  unsigned char calculatedTag[16] = {0};
-  GHASH(H, ghashInput.data(), totalLen, calculatedTag);
   unsigned char J0[16] = {0};
   memcpy(J0, iv, 12);
   J0[15] = 1;
@@ -369,7 +364,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
 
   if (memcmp(tag, calculatedTag, 16) != 0) {
     secure_zero(out.get(), inLen);
-    secure_zero(ghashInput.data(), ghashInput.size());
+    secure_zero(lenBlock, sizeof(lenBlock));
     secure_zero(H, sizeof(H));
     secure_zero(zeroBlock, sizeof(zeroBlock));
     secure_zero(ctr, sizeof(ctr));
@@ -380,7 +375,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
     throw std::runtime_error("Authentication failed");
   }
 
-  secure_zero(ghashInput.data(), ghashInput.size());
+  secure_zero(lenBlock, sizeof(lenBlock));
   secure_zero(H, sizeof(H));
   secure_zero(zeroBlock, sizeof(zeroBlock));
   secure_zero(ctr, sizeof(ctr));
@@ -469,25 +464,20 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
 
 void AES::GHASH(const unsigned char *H, const unsigned char *X, size_t len,
                 unsigned char *tag) {
-  unsigned char Z[16] = {0};  // Инициализируем Z вектором нулей
   unsigned char block[16] = {0};
 
   for (size_t i = 0; i < len; i += 16) {
     size_t blockLen = std::min(len - i, (size_t)16);
     memcpy(block, X + i, blockLen);
 
-    // XOR текущего блока с Z
     for (int j = 0; j < 16; j++) {
-      Z[j] ^= block[j];
+      tag[j] ^= block[j];
     }
 
-    // Умножение в GF(2^128)
-    GF_Multiply(Z, H, Z);
+    GF_Multiply(tag, H, tag);
     secure_zero(block, sizeof(block));
   }
 
-  memcpy(tag, Z, 16);
-  secure_zero(Z, sizeof(Z));
   secure_zero(block, sizeof(block));
 }
 
