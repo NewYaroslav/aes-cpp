@@ -1,4 +1,5 @@
 #include "AES.h"
+#include <cstdint>
 
 AES::AES (const AESKeyLength keyLength) {
     switch (keyLength) {
@@ -230,9 +231,9 @@ unsigned char *AES::DecryptGCM (const unsigned char in[], unsigned int inLen,
     // Генерация H
     unsigned char H[16] = {0};
     unsigned char zeroBlock[16] = {0};
-    unsigned char *roundKeys = new unsigned char[4 * Nb * (Nr + 1)];
-    KeyExpansion (key, roundKeys);
-    EncryptBlock (zeroBlock, H, roundKeys);
+    std::vector<unsigned char> roundKeys (4 * Nb * (Nr + 1));
+    KeyExpansion (key, roundKeys.data ());
+    EncryptBlock (zeroBlock, H, roundKeys.data ());
 
     // Расшифровка данных в режиме CTR
     unsigned char ctr[16] = {0};
@@ -241,7 +242,7 @@ unsigned char *AES::DecryptGCM (const unsigned char in[], unsigned int inLen,
 
     for (unsigned int i = 0; i < inLen; i += 16) {
         unsigned char encryptedCtr[16] = {0};
-        EncryptBlock (ctr, encryptedCtr, roundKeys);
+        EncryptBlock (ctr, encryptedCtr, roundKeys.data ());
 
         unsigned int blockLen = std::min (16u, inLen - i);
         XorBlocks (in + i, encryptedCtr, out + i, blockLen);
@@ -255,26 +256,22 @@ unsigned char *AES::DecryptGCM (const unsigned char in[], unsigned int inLen,
 
     // Проверка тега
     unsigned int totalLen = aadLen + inLen + 16;
-    unsigned char *ghashInput = new unsigned char[totalLen]();
-    memcpy (ghashInput, aad, aadLen);
-    memcpy (ghashInput + aadLen, in, inLen);
+    std::vector<unsigned char> ghashInput (totalLen, 0);
+    memcpy (ghashInput.data (), aad, aadLen);
+    memcpy (ghashInput.data () + aadLen, in, inLen);
 
     uint64_t aadBits = aadLen * 8;
     uint64_t lenBits = inLen * 8;
-    memcpy (ghashInput + aadLen + inLen, &aadBits, 8);
-    memcpy (ghashInput + aadLen + inLen + 8, &lenBits, 8);
+    memcpy (ghashInput.data () + aadLen + inLen, &aadBits, 8);
+    memcpy (ghashInput.data () + aadLen + inLen + 8, &lenBits, 8);
 
     unsigned char calculatedTag[16] = {0};
-    GHASH (H, ghashInput, totalLen, calculatedTag);
+    GHASH (H, ghashInput.data (), totalLen, calculatedTag);
 
     if (memcmp (tag, calculatedTag, 16) != 0) {
-        delete[] ghashInput;
-        delete[] roundKeys;
+        delete[] out;
         throw std::runtime_error ("Authentication failed");
     }
-
-    delete[] roundKeys;
-    delete[] ghashInput;
 
     return out;
 }

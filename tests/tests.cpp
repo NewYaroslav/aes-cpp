@@ -493,6 +493,26 @@ TEST(LongData, EncryptDecryptVectorOneKb) {
   ASSERT_EQ(innew, plain);
 }
 
+TEST(GCM, DecryptInvalidTag) {
+  AES aes(AESKeyLength::AES_128);
+  unsigned char plain[16] = {0};
+  unsigned char key[16] = {0};
+  unsigned char iv[12] = {0};
+  unsigned char tag[16] = {0};
+
+  unsigned char *cipher =
+      aes.EncryptGCM(plain, sizeof(plain), key, iv, nullptr, 0, tag);
+  tag[0] ^= 0x01;  // Corrupt the tag
+
+  EXPECT_THROW({
+    unsigned char *out =
+        aes.DecryptGCM(cipher, sizeof(plain), key, iv, nullptr, 0, tag);
+    delete[] out;
+  }, std::runtime_error);
+
+  delete[] cipher;
+}
+
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
