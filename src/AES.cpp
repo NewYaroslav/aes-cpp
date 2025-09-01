@@ -6,6 +6,15 @@
 
 #include "secure_zero.h"
 
+static bool constant_time_eq(const unsigned char *a, const unsigned char *b,
+                             size_t len) {
+  unsigned char diff = 0;
+  for (size_t i = 0; i < len; ++i) {
+    diff |= a[i] ^ b[i];
+  }
+  return diff == 0;
+}
+
 AES::AES(const AESKeyLength keyLength) {
   switch (keyLength) {
     case AESKeyLength::AES_128:
@@ -397,19 +406,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   for (int i = 0; i < 16; i++) {
     calculatedTag[i] ^= S[i];
   }
-
-  if (memcmp(tag, calculatedTag, 16) != 0) {
-    secure_zero(out.get(), inLen);
-    secure_zero(lenBlock, sizeof(lenBlock));
-    secure_zero(H, sizeof(H));
-    secure_zero(zeroBlock, sizeof(zeroBlock));
-    secure_zero(ctr, sizeof(ctr));
-    secure_zero(encryptedCtr, sizeof(encryptedCtr));
-    secure_zero(calculatedTag, sizeof(calculatedTag));
-    secure_zero(J0, sizeof(J0));
-    secure_zero(S, sizeof(S));
-    throw std::runtime_error("Authentication failed");
-  }
+  bool tagMatch = constant_time_eq(tag, calculatedTag, 16);
 
   secure_zero(lenBlock, sizeof(lenBlock));
   secure_zero(H, sizeof(H));
@@ -419,6 +416,12 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   secure_zero(calculatedTag, sizeof(calculatedTag));
   secure_zero(J0, sizeof(J0));
   secure_zero(S, sizeof(S));
+
+  if (!tagMatch) {
+    secure_zero(out.get(), inLen);
+    throw std::runtime_error("Authentication failed");
+  }
+
   return out.release();
 }
 
