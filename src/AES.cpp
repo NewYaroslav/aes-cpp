@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 
 #include "secure_zero.h"
 
@@ -41,12 +42,12 @@ unsigned char *AES::EncryptECB(const unsigned char in[], size_t inLen,
       cachedRoundKeys.resize(4 * Nb * (Nr + 1));
     KeyExpansion(key, cachedRoundKeys.data());
   }
-  unsigned char *out = new unsigned char[inLen];
+  auto out = std::make_unique<unsigned char[]>(inLen);
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(in + i, out + i, cachedRoundKeys.data());
+    EncryptBlock(in + i, out.get() + i, cachedRoundKeys.data());
   }
 
-  return out;
+  return out.release();
 }
 
 unsigned char *AES::DecryptECB(const unsigned char in[], size_t inLen,
@@ -61,12 +62,12 @@ unsigned char *AES::DecryptECB(const unsigned char in[], size_t inLen,
       cachedRoundKeys.resize(4 * Nb * (Nr + 1));
     KeyExpansion(key, cachedRoundKeys.data());
   }
-  unsigned char *out = new unsigned char[inLen];
+  auto out = std::make_unique<unsigned char[]>(inLen);
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    DecryptBlock(in + i, out + i, cachedRoundKeys.data());
+    DecryptBlock(in + i, out.get() + i, cachedRoundKeys.data());
   }
 
-  return out;
+  return out.release();
 }
 
 unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
@@ -82,18 +83,18 @@ unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
       cachedRoundKeys.resize(4 * Nb * (Nr + 1));
     KeyExpansion(key, cachedRoundKeys.data());
   }
-  unsigned char *out = new unsigned char[inLen];
+  auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     XorBlocks(block, in + i, block, blockBytesLen);
-    EncryptBlock(block, out + i, cachedRoundKeys.data());
-    memcpy(block, out + i, blockBytesLen);
+    EncryptBlock(block, out.get() + i, cachedRoundKeys.data());
+    memcpy(block, out.get() + i, blockBytesLen);
   }
 
   secure_zero(block, sizeof(block));
-  return out;
+  return out.release();
 }
 
 unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
@@ -109,18 +110,18 @@ unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
       cachedRoundKeys.resize(4 * Nb * (Nr + 1));
     KeyExpansion(key, cachedRoundKeys.data());
   }
-  unsigned char *out = new unsigned char[inLen];
+  auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    DecryptBlock(in + i, out + i, cachedRoundKeys.data());
-    XorBlocks(block, out + i, out + i, blockBytesLen);
+    DecryptBlock(in + i, out.get() + i, cachedRoundKeys.data());
+    XorBlocks(block, out.get() + i, out.get() + i, blockBytesLen);
     memcpy(block, in + i, blockBytesLen);
   }
 
   secure_zero(block, sizeof(block));
-  return out;
+  return out.release();
 }
 
 unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
@@ -135,7 +136,7 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
       cachedRoundKeys.resize(4 * Nb * (Nr + 1));
     KeyExpansion(key, cachedRoundKeys.data());
   }
-  unsigned char *out = new unsigned char[inLen];
+  auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   unsigned char encryptedBlock[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
@@ -143,13 +144,13 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     EncryptBlock(block, encryptedBlock, cachedRoundKeys.data());
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
-    XorBlocks(in + i, encryptedBlock, out + i, blockLen);
-    memcpy(block, out + i, blockLen);
+    XorBlocks(in + i, encryptedBlock, out.get() + i, blockLen);
+    memcpy(block, out.get() + i, blockLen);
   }
 
   secure_zero(block, sizeof(block));
   secure_zero(encryptedBlock, sizeof(encryptedBlock));
-  return out;
+  return out.release();
 }
 
 unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
@@ -164,7 +165,7 @@ unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
       cachedRoundKeys.resize(4 * Nb * (Nr + 1));
     KeyExpansion(key, cachedRoundKeys.data());
   }
-  unsigned char *out = new unsigned char[inLen];
+  auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   unsigned char encryptedBlock[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
@@ -172,13 +173,13 @@ unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     EncryptBlock(block, encryptedBlock, cachedRoundKeys.data());
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
-    XorBlocks(in + i, encryptedBlock, out + i, blockLen);
+    XorBlocks(in + i, encryptedBlock, out.get() + i, blockLen);
     memcpy(block, in + i, blockLen);
   }
 
   secure_zero(block, sizeof(block));
   secure_zero(encryptedBlock, sizeof(encryptedBlock));
-  return out;
+  return out.release();
 }
 
 unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
@@ -193,7 +194,7 @@ unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
       cachedRoundKeys.resize(4 * Nb * (Nr + 1));
     KeyExpansion(key, cachedRoundKeys.data());
   }
-  unsigned char *out = new unsigned char[inLen];
+  auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char counter[blockBytesLen];
   unsigned char encryptedCounter[blockBytesLen];
   memcpy(counter, iv, blockBytesLen);
@@ -202,7 +203,7 @@ unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
     EncryptBlock(counter, encryptedCounter, cachedRoundKeys.data());
 
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
-    XorBlocks(in + i, encryptedCounter, out + i, blockLen);
+    XorBlocks(in + i, encryptedCounter, out.get() + i, blockLen);
 
     for (int j = blockBytesLen - 1; j >= 0; --j) {
       if (++counter[j] != 0) {
@@ -213,7 +214,7 @@ unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
 
   secure_zero(counter, sizeof(counter));
   secure_zero(encryptedCounter, sizeof(encryptedCounter));
-  return out;
+  return out.release();
 }
 
 unsigned char *AES::DecryptCTR(const unsigned char in[], size_t inLen,
@@ -236,7 +237,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
       cachedRoundKeys.resize(4 * Nb * (Nr + 1));
     KeyExpansion(key, cachedRoundKeys.data());
   }
-  unsigned char *out = new unsigned char[inLen];
+  auto out = std::make_unique<unsigned char[]>(inLen);
 
   // Генерация H
   unsigned char H[16] = {0};
@@ -246,14 +247,14 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   // Шифрование данных в режиме CTR
   unsigned char ctr[16] = {0};
   memcpy(ctr, iv, 12);  // IV занимает 12 байт
-  ctr[15] = 1;  // Установить начальное значение счетчика
+  ctr[15] = 1;          // Установить начальное значение счетчика
   unsigned char encryptedCtr[16] = {0};
 
   for (size_t i = 0; i < inLen; i += 16) {
     EncryptBlock(ctr, encryptedCtr, cachedRoundKeys.data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
-    XorBlocks(in + i, encryptedCtr, out + i, blockLen);
+    XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
 
     // Увеличиваем счетчик
     for (int j = 15; j >= 0; --j) {
@@ -265,9 +266,9 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   size_t aad_padded_len = ((aadLen + 15) / 16) * 16;
   size_t data_padded_len = ((inLen + 15) / 16) * 16;
   size_t totalLen = aad_padded_len + data_padded_len + 16;
-  unsigned char *ghashInput = new unsigned char[totalLen]();
-  memcpy(ghashInput, aad, aadLen);
-  memcpy(ghashInput + aad_padded_len, out, inLen);
+  std::vector<unsigned char> ghashInput(totalLen, 0);
+  memcpy(ghashInput.data(), aad, aadLen);
+  memcpy(ghashInput.data() + aad_padded_len, out.get(), inLen);
 
   uint64_t aadBits = static_cast<uint64_t>(aadLen) * 8;
   uint64_t lenBits = static_cast<uint64_t>(inLen) * 8;
@@ -278,7 +279,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
     ghashInput[aad_padded_len + data_padded_len + 8 + i] =
         static_cast<unsigned char>(lenBits >> (56 - 8 * i));
 
-  GHASH(H, ghashInput, totalLen, tag);
+  GHASH(H, ghashInput.data(), totalLen, tag);
   unsigned char J0[16] = {0};
   memcpy(J0, iv, 12);
   J0[15] = 1;
@@ -288,8 +289,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
     tag[i] ^= S[i];
   }
 
-  secure_zero(ghashInput, totalLen);
-  delete[] ghashInput;
+  secure_zero(ghashInput.data(), ghashInput.size());
 
   secure_zero(H, sizeof(H));
   secure_zero(zeroBlock, sizeof(zeroBlock));
@@ -297,7 +297,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   secure_zero(encryptedCtr, sizeof(encryptedCtr));
   secure_zero(J0, sizeof(J0));
   secure_zero(S, sizeof(S));
-  return out;
+  return out.release();
 }
 
 unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
@@ -314,7 +314,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
       cachedRoundKeys.resize(4 * Nb * (Nr + 1));
     KeyExpansion(key, cachedRoundKeys.data());
   }
-  unsigned char *out = new unsigned char[inLen];
+  auto out = std::make_unique<unsigned char[]>(inLen);
 
   // Генерация H
   unsigned char H[16] = {0};
@@ -331,7 +331,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
     EncryptBlock(ctr, encryptedCtr, cachedRoundKeys.data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
-    XorBlocks(in + i, encryptedCtr, out + i, blockLen);
+    XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
 
     // Увеличиваем счетчик
     for (int j = 15; j >= 0; --j) {
@@ -368,8 +368,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   }
 
   if (memcmp(tag, calculatedTag, 16) != 0) {
-    secure_zero(out, inLen);
-    delete[] out;
+    secure_zero(out.get(), inLen);
     secure_zero(ghashInput.data(), ghashInput.size());
     secure_zero(H, sizeof(H));
     secure_zero(zeroBlock, sizeof(zeroBlock));
@@ -389,7 +388,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   secure_zero(calculatedTag, sizeof(calculatedTag));
   secure_zero(J0, sizeof(J0));
   secure_zero(S, sizeof(S));
-  return out;
+  return out.release();
 }
 
 void AES::CheckLength(size_t len) {
@@ -744,158 +743,158 @@ unsigned char *AES::VectorToArray(std::vector<unsigned char> &a) {
 std::vector<unsigned char> AES::EncryptECB(
     const std::vector<unsigned char> &in,
     const std::vector<unsigned char> &key) {
-  unsigned char *out = EncryptECB(in.data(), in.size(), key.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      EncryptECB(in.data(), in.size(), key.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::EncryptECB(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&key) {
-  unsigned char *out = EncryptECB(in.data(), in.size(), key.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      EncryptECB(in.data(), in.size(), key.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::DecryptECB(
     const std::vector<unsigned char> &in,
     const std::vector<unsigned char> &key) {
-  unsigned char *out = DecryptECB(in.data(), in.size(), key.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      DecryptECB(in.data(), in.size(), key.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::DecryptECB(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&key) {
-  unsigned char *out = DecryptECB(in.data(), in.size(), key.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      DecryptECB(in.data(), in.size(), key.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::EncryptCBC(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  unsigned char *out = EncryptCBC(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      EncryptCBC(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::EncryptCBC(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&key,
                                            std::vector<unsigned char> &&iv) {
-  unsigned char *out = EncryptCBC(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      EncryptCBC(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::DecryptCBC(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  unsigned char *out = DecryptCBC(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      DecryptCBC(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::DecryptCBC(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&key,
                                            std::vector<unsigned char> &&iv) {
-  unsigned char *out = DecryptCBC(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      DecryptCBC(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::EncryptCFB(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  unsigned char *out = EncryptCFB(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      EncryptCFB(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::EncryptCFB(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&key,
                                            std::vector<unsigned char> &&iv) {
-  unsigned char *out = EncryptCFB(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      EncryptCFB(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::DecryptCFB(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  unsigned char *out = DecryptCFB(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      DecryptCFB(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::DecryptCFB(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&key,
                                            std::vector<unsigned char> &&iv) {
-  unsigned char *out = DecryptCFB(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      DecryptCFB(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::EncryptCTR(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  unsigned char *out = EncryptCTR(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      EncryptCTR(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::EncryptCTR(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&key,
                                            std::vector<unsigned char> &&iv) {
-  unsigned char *out = EncryptCTR(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      EncryptCTR(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::DecryptCTR(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  unsigned char *out = DecryptCTR(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      DecryptCTR(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
 std::vector<unsigned char> AES::DecryptCTR(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&key,
                                            std::vector<unsigned char> &&iv) {
-  unsigned char *out = DecryptCTR(in.data(), in.size(), key.data(), iv.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      DecryptCTR(in.data(), in.size(), key.data(), iv.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
@@ -904,11 +903,11 @@ std::vector<unsigned char> AES::EncryptGCM(
     const std::vector<unsigned char> &iv, const std::vector<unsigned char> &aad,
     std::vector<unsigned char> &tag) {
   if (tag.size() < 16) tag.resize(16);
-  unsigned char *out = EncryptGCM(in.data(), in.size(), key.data(), iv.data(),
-                                  aad.data(), aad.size(), tag.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      EncryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
+                 aad.size(), tag.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
@@ -918,11 +917,11 @@ std::vector<unsigned char> AES::EncryptGCM(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&aad,
                                            std::vector<unsigned char> &tag) {
   if (tag.size() < 16) tag.resize(16);
-  unsigned char *out = EncryptGCM(in.data(), in.size(), key.data(), iv.data(),
-                                  aad.data(), aad.size(), tag.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      EncryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
+                 aad.size(), tag.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
@@ -930,11 +929,11 @@ std::vector<unsigned char> AES::DecryptGCM(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv, const std::vector<unsigned char> &aad,
     const std::vector<unsigned char> &tag) {
-  unsigned char *out = DecryptGCM(in.data(), in.size(), key.data(), iv.data(),
-                                  aad.data(), aad.size(), tag.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      DecryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
+                 aad.size(), tag.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
 
@@ -944,10 +943,10 @@ std::vector<unsigned char> AES::DecryptGCM(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&aad,
                                            std::vector<unsigned char> &&tag) {
   if (tag.size() < 16) tag.resize(16);
-  unsigned char *out = DecryptGCM(in.data(), in.size(), key.data(), iv.data(),
-                                  aad.data(), aad.size(), tag.data());
-  std::vector<unsigned char> v = ArrayToVector(out, in.size());
-  secure_zero(out, in.size());
-  delete[] out;
+  std::unique_ptr<unsigned char[]> out(
+      DecryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
+                 aad.size(), tag.data()));
+  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
+  secure_zero(out.get(), in.size());
   return v;
 }
