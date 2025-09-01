@@ -16,6 +16,10 @@ static bool constant_time_eq(const unsigned char *a, const unsigned char *b,
   return diff == 0;
 }
 
+static constexpr unsigned char R[16] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0x87};  // Полином: x^128 + x^7 + x^2 + x + 1
+
 AES::AES(const AESKeyLength keyLength) {
   switch (keyLength) {
     case AESKeyLength::AES_128:
@@ -468,9 +472,6 @@ void AES::EncryptBlock(const unsigned char in[], unsigned char out[],
 void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
                       unsigned char *Z) {
   unsigned char V[16];
-  unsigned char R[16] = {
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0x87};  // Полином: x^128 + x^7 + x^2 + x + 1
   memset(Z, 0, 16);
   memcpy(V, Y, 16);
 
@@ -498,7 +499,6 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
     }
   }
   secure_zero(V, sizeof(V));
-  secure_zero(R, sizeof(R));
 }
 
 void AES::GHASH(const unsigned char *H, const unsigned char *X, size_t len,
