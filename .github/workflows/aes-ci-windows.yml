@@ -27,7 +27,7 @@ jobs:
       - name: Code style (check only)
         run: |
           files="$(git ls-files '*.h' '*.hpp' '*.c' '*.cc' '*.cpp' || true)"
-          [ -n "$files" ] && clang-format -style=file -n --Werror $files
+          [ -n "$files" ] && clang-format-17 -style=file -n --Werror $files
       - name: Prepare gtest
         run: |
           mkdir -p /usr/lib
