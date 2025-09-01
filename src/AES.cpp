@@ -468,7 +468,7 @@ void AES::SubBytes(unsigned char state[4][Nb]) {
   for (i = 0; i < 4; i++) {
     for (j = 0; j < Nb; j++) {
       t = state[i][j];
-      state[i][j] = sbox[t / 16][t % 16];
+      state[i][j] = sbox[t];
     }
   }
 }
@@ -533,7 +533,7 @@ void AES::SubWord(unsigned char *a) {
   int i;
 
   for (i = 0; i < 4; i++) {
-    a[i] = sbox[a[i] / 16][a[i] % 16];
+    a[i] = sbox[a[i]];
   }
 }
 
@@ -612,7 +612,7 @@ void AES::InvSubBytes(unsigned char state[4][Nb]) {
   for (i = 0; i < 4; i++) {
     for (j = 0; j < Nb; j++) {
       t = state[i][j];
-      state[i][j] = inv_sbox[t / 16][t % 16];
+      state[i][j] = inv_sbox[t];
     }
   }
 }
