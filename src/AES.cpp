@@ -856,6 +856,8 @@ std::vector<unsigned char> AES::EncryptGCM(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&aad,
                                            std::vector<unsigned char> &tag) {
   if (iv.size() != 12) throw std::invalid_argument("IV size must be 12 bytes");
+  if (tag.size() > 16)
+    throw std::invalid_argument("Tag size must be at most 16 bytes");
   if (tag.size() < 16) tag.resize(16);
   std::unique_ptr<unsigned char[]> out(
       EncryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
@@ -870,9 +872,13 @@ std::vector<unsigned char> AES::DecryptGCM(
     const std::vector<unsigned char> &iv, const std::vector<unsigned char> &aad,
     const std::vector<unsigned char> &tag) {
   if (iv.size() != 12) throw std::invalid_argument("IV size must be 12 bytes");
+  if (tag.size() > 16)
+    throw std::invalid_argument("Tag size must be at most 16 bytes");
+  std::vector<unsigned char> tagCopy = tag;
+  if (tagCopy.size() < 16) tagCopy.resize(16);
   std::unique_ptr<unsigned char[]> out(
       DecryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
-                 aad.size(), tag.data()));
+                 aad.size(), tagCopy.data()));
   std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
   secure_zero(out.get(), in.size());
   return v;
@@ -884,6 +890,8 @@ std::vector<unsigned char> AES::DecryptGCM(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&aad,
                                            std::vector<unsigned char> &&tag) {
   if (iv.size() != 12) throw std::invalid_argument("IV size must be 12 bytes");
+  if (tag.size() > 16)
+    throw std::invalid_argument("Tag size must be at most 16 bytes");
   if (tag.size() < 16) tag.resize(16);
   std::unique_ptr<unsigned char[]> out(
       DecryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
