@@ -55,6 +55,8 @@
 #include "AES.h"
 #include "secure_zero.h"
 
+namespace aescpp {
+
 namespace aesutils {
 
 constexpr std::size_t BLOCK_SIZE = 16;
@@ -115,3 +117,5 @@ std::string decrypt_to_string(const EncryptedData &data, const T &key,
                               AesMode mode);
 
 }  // namespace aesutils
+
+}  // namespace aescpp

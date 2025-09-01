@@ -13,6 +13,8 @@
 #include <windows.h>
 #endif
 
+namespace aescpp {
+
 inline void secure_zero(void *p, size_t n) {
 #if defined(_WIN32)
   SecureZeroMemory(p, n);
@@ -26,3 +28,5 @@ inline void secure_zero(void *p, size_t n) {
   while (n--) *v++ = 0;
 #endif
 }
+
+}  // namespace aescpp

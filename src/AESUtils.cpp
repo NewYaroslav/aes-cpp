@@ -2,6 +2,8 @@
 
 // Implementation for AES utility helpers.
 
+namespace aescpp {
+
 namespace aesutils {
 
 namespace detail {
@@ -315,3 +317,5 @@ template std::string decrypt_to_string<std::array<uint8_t, 32>>(
     const EncryptedData &, const std::array<uint8_t, 32> &, AesMode);
 
 }  // namespace aesutils
+
+}  // namespace aescpp

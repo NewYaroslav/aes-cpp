@@ -11,6 +11,8 @@
 #include <wmmintrin.h>
 #endif
 
+namespace aescpp {
+
 static bool constant_time_eq(const unsigned char *a, const unsigned char *b,
                              size_t len) {
   unsigned char diff = 0;
@@ -950,3 +952,5 @@ std::vector<unsigned char> AES::DecryptGCM(std::vector<unsigned char> &&in,
   secure_zero(out.get(), in.size());
   return v;
 }
+
+}  // namespace aescpp

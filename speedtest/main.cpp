@@ -34,7 +34,7 @@ int main() {
 
   unsigned char *plain = getRandomPlain(plainLength);
 
-  AES aes(AESKeyLength::AES_256);
+  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
   unsigned long start = getMicroseconds();
   unsigned char *out = aes.EncryptECB(plain, plainLength, key);
   unsigned long delta = getMicroseconds() - start;
