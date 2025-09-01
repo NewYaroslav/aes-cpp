@@ -670,7 +670,7 @@ void AES::printHexVector(std::vector<unsigned char> &&a) {
 }
 
 std::vector<unsigned char> AES::ArrayToVector(unsigned char *a, size_t len) {
-  std::vector<unsigned char> v(a, a + len * sizeof(unsigned char));
+  std::vector<unsigned char> v(a, a + len);
   return v;
 }
 
