@@ -112,6 +112,7 @@ class AES {
                                         std::vector<unsigned char> &&key,
                                         std::vector<unsigned char> &&iv);
 
+  // GCM mode requires a 12-byte (96-bit) IV.
   std::vector<unsigned char> EncryptGCM(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key,
                                         const std::vector<unsigned char> &iv,
@@ -124,6 +125,7 @@ class AES {
                                         std::vector<unsigned char> &&aad,
                                         std::vector<unsigned char> &tag);
 
+  // GCM mode requires a 12-byte (96-bit) IV.
   std::vector<unsigned char> DecryptGCM(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key,
                                         const std::vector<unsigned char> &iv,

@@ -35,10 +35,14 @@ auto restored = aes.DecryptCBC(cipher.get(), sizeof(plain), key, iv);
 ```
 
 ### GCM Tagging
+GCM mode requires a 12-byte (96-bit) IV.
 ```c++
+unsigned char gcm_iv[12] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+                             0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b };
 unsigned char tag[16];
 AES aesGcm(AESKeyLength::AES_128);
-auto cipherGcm = aesGcm.EncryptGCM(plain, sizeof(plain), key, iv, tag);
+auto cipherGcm =
+    aesGcm.EncryptGCM(plain, sizeof(plain), key, gcm_iv, tag);
 // 'tag' now contains the authentication tag for the ciphertext
 ```
 
