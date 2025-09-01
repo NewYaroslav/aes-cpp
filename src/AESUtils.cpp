@@ -130,15 +130,17 @@ std::vector<uint8_t> remove_padding(const std::vector<uint8_t> &data) {
   }
   uint8_t padding = data.back();
   bool invalid = padding == 0 || padding > BLOCK_SIZE || padding > data.size();
-  std::size_t to_check = padding;
-  if (to_check > data.size()) {
-    to_check = data.size();
+  uint8_t diff = 0;
+  std::size_t len = data.size();
+  for (std::size_t i = 0; i < BLOCK_SIZE; ++i) {
+    uint8_t byte = 0;
+    if (i < len) {
+      byte = data[len - 1 - i];
+    }
+    uint8_t mask = static_cast<uint8_t>(i < padding ? 0xFF : 0x00);
+    diff |= (byte ^ padding) & mask;
   }
-  std::size_t start = data.size() - to_check;
-  for (std::size_t i = start; i < data.size(); ++i) {
-    invalid |= (data[i] != padding);
-  }
-  if (invalid) {
+  if (invalid || diff) {
     throw std::invalid_argument("Invalid padding detected.");
   }
   return std::vector<uint8_t>(data.begin(), data.end() - padding);
