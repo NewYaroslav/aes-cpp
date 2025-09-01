@@ -130,10 +130,11 @@ std::vector<uint8_t> remove_padding(const std::vector<uint8_t> &data) {
   }
   uint8_t padding = data.back();
   bool invalid = padding == 0 || padding > BLOCK_SIZE || padding > data.size();
-  std::size_t start = data.size();
-  if (!invalid) {
-    start -= padding;
+  std::size_t to_check = padding;
+  if (to_check > data.size()) {
+    to_check = data.size();
   }
+  std::size_t start = data.size() - to_check;
   for (std::size_t i = start; i < data.size(); ++i) {
     invalid |= (data[i] != padding);
   }
