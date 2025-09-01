@@ -334,7 +334,7 @@ void AES::EncryptBlock (const unsigned char in[], unsigned char out[],
 void AES::GF_Multiply (const unsigned char *X, const unsigned char *Y,
                        unsigned char *Z) {
     unsigned char V[16];
-    unsigned char R[16] = {0xE1}; // Полином: x^128 + x^7 + x^2 + x + 1
+    unsigned char R[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x87}; // Полином: x^128 + x^7 + x^2 + x + 1
     memset (Z, 0, 16);
     memcpy (V, Y, 16);
 
