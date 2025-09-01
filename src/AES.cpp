@@ -99,7 +99,6 @@ unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
 unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
-  CheckLength(inLen);
   unsigned char *out = new unsigned char[inLen];
   unsigned char block[blockBytesLen];
   unsigned char encryptedBlock[blockBytesLen];
@@ -109,8 +108,9 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     EncryptBlock(block, encryptedBlock, roundKeys);
-    XorBlocks(in + i, encryptedBlock, out + i, blockBytesLen);
-    memcpy(block, out + i, blockBytesLen);
+    size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
+    XorBlocks(in + i, encryptedBlock, out + i, blockLen);
+    memcpy(block, out + i, blockLen);
   }
 
   delete[] roundKeys;
@@ -121,7 +121,6 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
 unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
-  CheckLength(inLen);
   unsigned char *out = new unsigned char[inLen];
   unsigned char block[blockBytesLen];
   unsigned char encryptedBlock[blockBytesLen];
@@ -131,8 +130,9 @@ unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     EncryptBlock(block, encryptedBlock, roundKeys);
-    XorBlocks(in + i, encryptedBlock, out + i, blockBytesLen);
-    memcpy(block, in + i, blockBytesLen);
+    size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
+    XorBlocks(in + i, encryptedBlock, out + i, blockLen);
+    memcpy(block, in + i, blockLen);
   }
 
   delete[] roundKeys;
