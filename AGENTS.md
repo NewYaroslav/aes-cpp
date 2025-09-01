@@ -10,3 +10,7 @@
 
 - Keep diffs minimal and focused.
 - Do not refactor or apply style changes beyond the lines you directly touch.
+
+## Tooling
+- Run `./setup-hooks.sh` after cloning to enable the clang-format pre-commit hook.
+- Ensure C/C++ sources are formatted with `clang-format` before committing.
