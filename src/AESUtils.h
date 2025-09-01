@@ -4,6 +4,7 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <cstring>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -116,6 +117,7 @@ EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
   }
 
   std::vector<uint8_t> ciphertext(encrypted, encrypted + padded.size());
+  explicit_bzero(encrypted, padded.size());
   delete[] encrypted;
   return {std::chrono::system_clock::now(), iv, std::move(ciphertext)};
 }
@@ -146,6 +148,7 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
   }
 
   std::vector<uint8_t> plain(decrypted, decrypted + data.ciphertext.size());
+  explicit_bzero(decrypted, data.ciphertext.size());
   delete[] decrypted;
   return remove_padding(plain);
 }
