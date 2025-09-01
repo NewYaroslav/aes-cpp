@@ -5,10 +5,50 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
-#include <random>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+// --- feature-test wrapper for __has_include (C++11-safe) -----------------
+#ifndef AESUTILS_HAS_INCLUDE
+#if defined(__has_include)
+#define AESUTILS_HAS_INCLUDE(x) __has_include(x)
+#else
+#define AESUTILS_HAS_INCLUDE(x) 0
+#endif
+#endif
+
+// --- Platform detection (pull headers only when relevant) ------------------
+#if defined(_WIN32)
+#if !defined(_WIN32_WINNT)
+#define _WIN32_WINNT 0x0600  // Vista+
+#endif
+#if !defined(WINVER)
+#define WINVER _WIN32_WINNT
+#endif
+#if AESUTILS_HAS_INCLUDE(<bcrypt.h>)
+#define AESUTILS_HAVE_BCRYPT 1
+#include <bcrypt.h>
+#include <windows.h>
+#if defined(_MSC_VER)
+#pragma comment(lib, "bcrypt")
+#endif
+#endif
+#elif defined(__APPLE__) || defined(__OpenBSD__) || defined(__FreeBSD__) || \
+    defined(__NetBSD__) || defined(__DragonFly__)
+#define AESUTILS_HAVE_ARC4RANDOM 1
+#include <stdlib.h>
+#elif defined(__linux__)
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+// clang-format off
+#if AESUTILS_HAS_INCLUDE(<sys/random.h>)
+#define AESUTILS_HAVE_GETRANDOM 1
+#include <sys/random.h>
+#endif
+// clang-format on
+#endif
 
 #include "AES.h"
 #include "secure_zero.h"
@@ -17,23 +57,130 @@ namespace aesutils {
 
 constexpr std::size_t BLOCK_SIZE = 16;
 
+namespace detail {
+
+inline bool fill_os_random(void *data, size_t len) noexcept {
+#if defined(AESUTILS_HAVE_BCRYPT)
+  NTSTATUS s =
+      BCryptGenRandom(nullptr, static_cast<PUCHAR>(data),
+                      static_cast<ULONG>(len), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+  return s == 0;
+
+#elif defined(AESUTILS_HAVE_ARC4RANDOM)
+  arc4random_buf(data, len);
+  return true;
+
+#elif defined(__linux__)
+#if defined(AESUTILS_HAVE_GETRANDOM)
+  {
+    uint8_t *p = static_cast<uint8_t *>(data);
+    size_t left = len;
+    while (left > 0) {
+      ssize_t r = getrandom(p, left, 0);
+      if (r < 0) {
+        if (errno == EINTR) continue;
+        if (errno == ENOSYS) break;
+        return false;
+      }
+      p += static_cast<size_t>(r);
+      left -= static_cast<size_t>(r);
+    }
+    if (left == 0) return true;
+  }
+#endif
+  int fd = open("/dev/urandom", O_RDONLY
+#ifdef O_CLOEXEC
+                                    | O_CLOEXEC
+#endif
+  );
+  if (fd < 0) return false;
+  uint8_t *p = static_cast<uint8_t *>(data);
+  size_t left = len;
+  while (left > 0) {
+    ssize_t r = read(fd, p, left);
+    if (r < 0) {
+      if (errno == EINTR) continue;
+      close(fd);
+      return false;
+    }
+    if (r == 0) {
+      close(fd);
+      return false;
+    }
+    p += static_cast<size_t>(r);
+    left -= static_cast<size_t>(r);
+  }
+  close(fd);
+  return true;
+
+#else
+  (void)data;
+  (void)len;
+  return false;
+#endif
+}
+
+}  // namespace detail
+
+#ifdef AESUTILS_TRUST_STD_RANDOM_DEVICE
+#include <random>
+#endif
+#ifdef AESUTILS_ALLOW_WEAK_FALLBACK
+#include <chrono>
+#include <cstring>
+#if !defined(_WIN32)
+#include <unistd.h>
+#else
+#include <processthreadsapi.h>
+#endif
+#endif
+
 inline std::array<uint8_t, BLOCK_SIZE> generate_iv() {
   std::array<uint8_t, BLOCK_SIZE> iv{};
-  std::random_device rd;
-  std::uniform_int_distribution<int> distribution(0, 255);
-  if (rd.entropy() > 0) {
-    for (auto &byte : iv) {
-      byte = static_cast<uint8_t>(distribution(rd));
-    }
-  } else {
-    auto seed = static_cast<unsigned long>(
-        std::chrono::steady_clock::now().time_since_epoch().count());
-    std::mt19937 gen(seed);
-    for (auto &byte : iv) {
-      byte = static_cast<uint8_t>(distribution(gen));
-    }
+
+  if (detail::fill_os_random(iv.data(), iv.size())) return iv;
+
+#if defined(AESUTILS_TRUST_STD_RANDOM_DEVICE)
+  {
+    std::random_device rd;
+    for (auto &b : iv) b = static_cast<uint8_t>(rd());
+    return iv;
   }
-  return iv;
+#endif
+
+#if defined(AESUTILS_ALLOW_WEAK_FALLBACK)
+  {
+    auto now =
+        std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    uint64_t seed = static_cast<uint64_t>(now);
+    seed ^= (static_cast<uint64_t>(reinterpret_cast<uintptr_t>(&seed)) << 13);
+#if defined(_WIN32)
+    seed ^= static_cast<uint64_t>(GetCurrentProcessId()) << 27;
+#else
+    seed ^= static_cast<uint64_t>(::getpid()) << 27;
+#endif
+    auto splitmix64 = [](uint64_t &x) noexcept {
+      x += 0x9e3779b97f4a7c15ull;
+      uint64_t z = x;
+      z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ull;
+      z = (z ^ (z >> 27)) * 0x94d049bb133111ebull;
+      return z ^ (z >> 31);
+    };
+    uint8_t *p = iv.data();
+    size_t left = iv.size();
+    while (left) {
+      uint64_t r = splitmix64(seed);
+      size_t take = left < sizeof(r) ? left : sizeof(r);
+      std::memcpy(p, &r, take);
+      p += take;
+      left -= take;
+    }
+    return iv;
+  }
+#endif
+
+  throw std::runtime_error(
+      "No secure random source available on this platform");
 }
 
 inline std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data) {
