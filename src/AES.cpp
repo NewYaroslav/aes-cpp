@@ -192,7 +192,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   // Шифрование данных в режиме CTR
   unsigned char ctr[16] = {0};
   memcpy(ctr, iv, 12);  // IV занимает 12 байт
-  ctr[15] = 1;          // Установить начальное значение счетчика
+  ctr[15] = 1;  // Установить начальное значение счетчика
 
   for (size_t i = 0; i < inLen; i += 16) {
     unsigned char encryptedCtr[16] = {0};
