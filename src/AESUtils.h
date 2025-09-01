@@ -47,13 +47,16 @@ inline std::vector<uint8_t> remove_padding(const std::vector<uint8_t> &data) {
     throw std::invalid_argument("Data is empty, cannot remove padding.");
   }
   uint8_t padding = data.back();
-  if (padding == 0 || padding > BLOCK_SIZE || padding > data.size()) {
-    throw std::invalid_argument("Invalid padding size.");
+  bool invalid = padding == 0 || padding > BLOCK_SIZE || padding > data.size();
+  std::size_t start = data.size();
+  if (!invalid) {
+    start -= padding;
   }
-  for (std::size_t i = data.size() - padding; i < data.size(); ++i) {
-    if (data[i] != padding) {
-      throw std::invalid_argument("Invalid padding detected.");
-    }
+  for (std::size_t i = start; i < data.size(); ++i) {
+    invalid |= (data[i] != padding);
+  }
+  if (invalid) {
+    throw std::invalid_argument("Invalid padding detected.");
   }
   return std::vector<uint8_t>(data.begin(), data.end() - padding);
 }
