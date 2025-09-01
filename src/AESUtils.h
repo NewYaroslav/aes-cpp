@@ -21,15 +21,17 @@
 // --- Platform detection (pull headers only when relevant) ------------------
 #if defined(_WIN32)
 #if !defined(_WIN32_WINNT)
-#define _WIN32_WINNT 0x0600  // Vista+
+#define _WIN32_WINNT 0x0601  // Windows 7 or later
 #endif
 #if !defined(WINVER)
 #define WINVER _WIN32_WINNT
 #endif
 #if AESUTILS_HAS_INCLUDE(<bcrypt.h>)
 #define AESUTILS_HAVE_BCRYPT 1
-#include <bcrypt.h>
+// clang-format off
 #include <windows.h>
+#include <bcrypt.h>
+// clang-format on
 #if defined(_MSC_VER)
 #pragma comment(lib, "bcrypt")
 #endif
