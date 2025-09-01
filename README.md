@@ -1,7 +1,7 @@
 # AES
 C++ AES(Advanced Encryption Standard) implementation  
  
-![Build Status](https://github.com/SergeyBel/AES/actions/workflows/aes-ci.yml/badge.svg?branch=master)
+![Build Status](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci.yml/badge.svg?branch=main)
 
 ## Prerequisites
 * C++ compiler
