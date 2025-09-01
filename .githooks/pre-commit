@@ -2,10 +2,17 @@
 set -euo pipefail
 files="$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(c|cc|cpp|cxx|h|hpp)$' || true)"
 [ -z "$files" ] && exit 0
-# Use project .clang-format; fallback to LLVM if missing
-if command -v clang-format >/dev/null 2>&1; then
-  clang-format -style=file -i $files || clang-format -i $files
+
+# Prefer clang-format-17 to match CI; fallback to generic clang-format
+if command -v clang-format-17 >/dev/null 2>&1; then
+  CF=clang-format-17
+elif command -v clang-format >/dev/null 2>&1; then
+  CF=clang-format
 else
-  echo "clang-format not found"; exit 1
+  echo "clang-format not found" >&2
+  exit 1
 fi
+
+"$CF" -style=file -i $files || "$CF" -i $files
 git add $files
+
