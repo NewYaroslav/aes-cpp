@@ -14,6 +14,7 @@ enum class AESKeyLength { AES_128, AES_192, AES_256 };
 class AES {
  public:
   explicit AES(const AESKeyLength keyLength = AESKeyLength::AES_256);
+  ~AES();
 
   unsigned char *EncryptECB(const unsigned char in[], size_t inLen,
                             const unsigned char key[]);

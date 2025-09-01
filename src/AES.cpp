@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstdint>
 
+#include "secure_zero.h"
+
 AES::AES(const AESKeyLength keyLength) {
   switch (keyLength) {
     case AESKeyLength::AES_128:
@@ -20,6 +22,11 @@ AES::AES(const AESKeyLength keyLength) {
       this->Nr = 14;
       break;
   }
+}
+
+AES::~AES() {
+  secure_zero(cachedRoundKeys.data(), cachedRoundKeys.size());
+  secure_zero(cachedKey.data(), cachedKey.size());
 }
 
 unsigned char *AES::EncryptECB(const unsigned char in[], size_t inLen,
@@ -85,6 +92,7 @@ unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
     memcpy(block, out + i, blockBytesLen);
   }
 
+  secure_zero(block, sizeof(block));
   return out;
 }
 
@@ -111,6 +119,7 @@ unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
     memcpy(block, in + i, blockBytesLen);
   }
 
+  secure_zero(block, sizeof(block));
   return out;
 }
 
@@ -138,6 +147,8 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
     memcpy(block, out + i, blockLen);
   }
 
+  secure_zero(block, sizeof(block));
+  secure_zero(encryptedBlock, sizeof(encryptedBlock));
   return out;
 }
 
@@ -165,6 +176,8 @@ unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
     memcpy(block, in + i, blockLen);
   }
 
+  secure_zero(block, sizeof(block));
+  secure_zero(encryptedBlock, sizeof(encryptedBlock));
   return out;
 }
 
@@ -198,6 +211,8 @@ unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
     }
   }
 
+  secure_zero(counter, sizeof(counter));
+  secure_zero(encryptedCounter, sizeof(encryptedCounter));
   return out;
 }
 
@@ -232,9 +247,9 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   unsigned char ctr[16] = {0};
   memcpy(ctr, iv, 12);  // IV занимает 12 байт
   ctr[15] = 1;  // Установить начальное значение счетчика
+  unsigned char encryptedCtr[16] = {0};
 
   for (size_t i = 0; i < inLen; i += 16) {
-    unsigned char encryptedCtr[16] = {0};
     EncryptBlock(ctr, encryptedCtr, cachedRoundKeys.data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
@@ -273,8 +288,15 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
     tag[i] ^= S[i];
   }
 
+  secure_zero(ghashInput, totalLen);
   delete[] ghashInput;
 
+  secure_zero(H, sizeof(H));
+  secure_zero(zeroBlock, sizeof(zeroBlock));
+  secure_zero(ctr, sizeof(ctr));
+  secure_zero(encryptedCtr, sizeof(encryptedCtr));
+  secure_zero(J0, sizeof(J0));
+  secure_zero(S, sizeof(S));
   return out;
 }
 
@@ -303,9 +325,9 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   unsigned char ctr[16] = {0};
   memcpy(ctr, iv, 12);
   ctr[15] = 1;  // Установить начальное значение счетчика
+  unsigned char encryptedCtr[16] = {0};
 
   for (size_t i = 0; i < inLen; i += 16) {
-    unsigned char encryptedCtr[16] = {0};
     EncryptBlock(ctr, encryptedCtr, cachedRoundKeys.data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
@@ -346,10 +368,27 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   }
 
   if (memcmp(tag, calculatedTag, 16) != 0) {
+    secure_zero(out, inLen);
     delete[] out;
+    secure_zero(ghashInput.data(), ghashInput.size());
+    secure_zero(H, sizeof(H));
+    secure_zero(zeroBlock, sizeof(zeroBlock));
+    secure_zero(ctr, sizeof(ctr));
+    secure_zero(encryptedCtr, sizeof(encryptedCtr));
+    secure_zero(calculatedTag, sizeof(calculatedTag));
+    secure_zero(J0, sizeof(J0));
+    secure_zero(S, sizeof(S));
     throw std::runtime_error("Authentication failed");
   }
 
+  secure_zero(ghashInput.data(), ghashInput.size());
+  secure_zero(H, sizeof(H));
+  secure_zero(zeroBlock, sizeof(zeroBlock));
+  secure_zero(ctr, sizeof(ctr));
+  secure_zero(encryptedCtr, sizeof(encryptedCtr));
+  secure_zero(calculatedTag, sizeof(calculatedTag));
+  secure_zero(J0, sizeof(J0));
+  secure_zero(S, sizeof(S));
   return out;
 }
 
@@ -390,6 +429,7 @@ void AES::EncryptBlock(const unsigned char in[], unsigned char out[],
       out[i + 4 * j] = state[i][j];
     }
   }
+  secure_zero(state, sizeof(state));
 }
 
 void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
@@ -424,16 +464,16 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
       }
     }
   }
+  secure_zero(V, sizeof(V));
+  secure_zero(R, sizeof(R));
 }
 
 void AES::GHASH(const unsigned char *H, const unsigned char *X, size_t len,
                 unsigned char *tag) {
   unsigned char Z[16] = {0};  // Инициализируем Z вектором нулей
+  unsigned char block[16] = {0};
 
   for (size_t i = 0; i < len; i += 16) {
-    unsigned char block[16] = {0};
-
-    // Копируем следующий блок данных
     size_t blockLen = std::min(len - i, (size_t)16);
     memcpy(block, X + i, blockLen);
 
@@ -444,9 +484,12 @@ void AES::GHASH(const unsigned char *H, const unsigned char *X, size_t len,
 
     // Умножение в GF(2^128)
     GF_Multiply(Z, H, Z);
+    secure_zero(block, sizeof(block));
   }
 
   memcpy(tag, Z, 16);
+  secure_zero(Z, sizeof(Z));
+  secure_zero(block, sizeof(block));
 }
 
 void AES::DecryptBlock(const unsigned char in[], unsigned char out[],
@@ -478,6 +521,7 @@ void AES::DecryptBlock(const unsigned char in[], unsigned char out[],
       out[i + 4 * j] = state[i][j];
     }
   }
+  secure_zero(state, sizeof(state));
 }
 
 void AES::SubBytes(unsigned char state[4][Nb]) {
@@ -501,6 +545,7 @@ void AES::ShiftRow(unsigned char state[4][Nb], unsigned int i,
   }
 
   memcpy(state[i], tmp, Nb * sizeof(unsigned char));
+  secure_zero(tmp, sizeof(tmp));
 }
 
 void AES::ShiftRows(unsigned char state[4][Nb]) {
@@ -534,6 +579,7 @@ void AES::MixColumns(unsigned char state[4][Nb]) {
   for (size_t i = 0; i < 4; ++i) {
     memcpy(state[i], temp_state[i], 4);
   }
+  secure_zero(temp_state, sizeof(temp_state));
 }
 
 void AES::AddRoundKey(unsigned char state[4][Nb], unsigned char *key) {
@@ -618,6 +664,8 @@ void AES::KeyExpansion(const unsigned char key[], unsigned char w[]) {
     w[i + 3] = w[i + 3 - 4 * Nk] ^ temp[3];
     i += 4;
   }
+  secure_zero(temp, sizeof(temp));
+  secure_zero(rcon, sizeof(rcon));
 }
 
 void AES::InvSubBytes(unsigned char state[4][Nb]) {
@@ -650,6 +698,7 @@ void AES::InvMixColumns(unsigned char state[4][Nb]) {
   for (size_t i = 0; i < 4; ++i) {
     memcpy(state[i], temp_state[i], 4);
   }
+  secure_zero(temp_state, sizeof(temp_state));
 }
 
 void AES::InvShiftRows(unsigned char state[4][Nb]) {
@@ -697,6 +746,7 @@ std::vector<unsigned char> AES::EncryptECB(
     const std::vector<unsigned char> &key) {
   unsigned char *out = EncryptECB(in.data(), in.size(), key.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -705,6 +755,7 @@ std::vector<unsigned char> AES::EncryptECB(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&key) {
   unsigned char *out = EncryptECB(in.data(), in.size(), key.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -714,6 +765,7 @@ std::vector<unsigned char> AES::DecryptECB(
     const std::vector<unsigned char> &key) {
   unsigned char *out = DecryptECB(in.data(), in.size(), key.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -722,6 +774,7 @@ std::vector<unsigned char> AES::DecryptECB(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&key) {
   unsigned char *out = DecryptECB(in.data(), in.size(), key.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -731,6 +784,7 @@ std::vector<unsigned char> AES::EncryptCBC(
     const std::vector<unsigned char> &iv) {
   unsigned char *out = EncryptCBC(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -740,6 +794,7 @@ std::vector<unsigned char> AES::EncryptCBC(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&iv) {
   unsigned char *out = EncryptCBC(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -749,6 +804,7 @@ std::vector<unsigned char> AES::DecryptCBC(
     const std::vector<unsigned char> &iv) {
   unsigned char *out = DecryptCBC(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -758,6 +814,7 @@ std::vector<unsigned char> AES::DecryptCBC(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&iv) {
   unsigned char *out = DecryptCBC(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -767,6 +824,7 @@ std::vector<unsigned char> AES::EncryptCFB(
     const std::vector<unsigned char> &iv) {
   unsigned char *out = EncryptCFB(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -776,6 +834,7 @@ std::vector<unsigned char> AES::EncryptCFB(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&iv) {
   unsigned char *out = EncryptCFB(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -785,6 +844,7 @@ std::vector<unsigned char> AES::DecryptCFB(
     const std::vector<unsigned char> &iv) {
   unsigned char *out = DecryptCFB(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -794,6 +854,7 @@ std::vector<unsigned char> AES::DecryptCFB(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&iv) {
   unsigned char *out = DecryptCFB(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -803,6 +864,7 @@ std::vector<unsigned char> AES::EncryptCTR(
     const std::vector<unsigned char> &iv) {
   unsigned char *out = EncryptCTR(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -812,6 +874,7 @@ std::vector<unsigned char> AES::EncryptCTR(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&iv) {
   unsigned char *out = EncryptCTR(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -821,6 +884,7 @@ std::vector<unsigned char> AES::DecryptCTR(
     const std::vector<unsigned char> &iv) {
   unsigned char *out = DecryptCTR(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -830,6 +894,7 @@ std::vector<unsigned char> AES::DecryptCTR(std::vector<unsigned char> &&in,
                                            std::vector<unsigned char> &&iv) {
   unsigned char *out = DecryptCTR(in.data(), in.size(), key.data(), iv.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -842,6 +907,7 @@ std::vector<unsigned char> AES::EncryptGCM(
   unsigned char *out = EncryptGCM(in.data(), in.size(), key.data(), iv.data(),
                                   aad.data(), aad.size(), tag.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -855,6 +921,7 @@ std::vector<unsigned char> AES::EncryptGCM(std::vector<unsigned char> &&in,
   unsigned char *out = EncryptGCM(in.data(), in.size(), key.data(), iv.data(),
                                   aad.data(), aad.size(), tag.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -866,6 +933,7 @@ std::vector<unsigned char> AES::DecryptGCM(
   unsigned char *out = DecryptGCM(in.data(), in.size(), key.data(), iv.data(),
                                   aad.data(), aad.size(), tag.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }
@@ -879,6 +947,7 @@ std::vector<unsigned char> AES::DecryptGCM(std::vector<unsigned char> &&in,
   unsigned char *out = DecryptGCM(in.data(), in.size(), key.data(), iv.data(),
                                   aad.data(), aad.size(), tag.data());
   std::vector<unsigned char> v = ArrayToVector(out, in.size());
+  secure_zero(out, in.size());
   delete[] out;
   return v;
 }

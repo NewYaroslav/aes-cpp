@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "AES.h"
+#include "secure_zero.h"
 
 namespace aesutils {
 
@@ -123,7 +124,9 @@ EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
   }
 
   std::vector<uint8_t> ciphertext(encrypted, encrypted + padded.size());
+  secure_zero(encrypted, padded.size());
   delete[] encrypted;
+  secure_zero(padded.data(), padded.size());
   return {std::chrono::system_clock::now(), iv, std::move(ciphertext)};
 }
 
@@ -153,15 +156,20 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
   }
 
   std::vector<uint8_t> plain(decrypted, decrypted + data.ciphertext.size());
+  secure_zero(decrypted, data.ciphertext.size());
   delete[] decrypted;
-  return remove_padding(plain);
+  auto result = remove_padding(plain);
+  secure_zero(plain.data(), plain.size());
+  return result;
 }
 
 template <class T>
 std::string decrypt_to_string(const EncryptedData &data, const T &key,
                               AesMode mode) {
   std::vector<uint8_t> plain = decrypt(data, key, mode);
-  return std::string(plain.begin(), plain.end());
+  std::string result(plain.begin(), plain.end());
+  secure_zero(plain.data(), plain.size());
+  return result;
 }
 
 }  // namespace aesutils
