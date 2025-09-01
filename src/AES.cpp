@@ -1,5 +1,6 @@
 #include "AES.h"
 #include <cstdint>
+#include <algorithm>
 
 AES::AES (const AESKeyLength keyLength) {
     switch (keyLength) {
