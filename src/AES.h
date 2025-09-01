@@ -15,38 +15,38 @@ public:
 
     explicit AES (const AESKeyLength keyLength = AESKeyLength::AES_256);
 
-    unsigned char *EncryptECB (const unsigned char in[], unsigned int inLen,
+    unsigned char *EncryptECB (const unsigned char in[], size_t inLen,
                                const unsigned char key[]);
 
-    unsigned char *DecryptECB (const unsigned char in[], unsigned int inLen,
+    unsigned char *DecryptECB (const unsigned char in[], size_t inLen,
                                const unsigned char key[]);
 
-    unsigned char *EncryptCBC (const unsigned char in[], unsigned int inLen,
+    unsigned char *EncryptCBC (const unsigned char in[], size_t inLen,
                                const unsigned char key[], const unsigned char *iv);
 
-    unsigned char *DecryptCBC (const unsigned char in[], unsigned int inLen,
+    unsigned char *DecryptCBC (const unsigned char in[], size_t inLen,
                                const unsigned char key[], const unsigned char *iv);
 
-    unsigned char *EncryptCFB (const unsigned char in[], unsigned int inLen,
+    unsigned char *EncryptCFB (const unsigned char in[], size_t inLen,
                                const unsigned char key[], const unsigned char *iv);
 
-    unsigned char *DecryptCFB (const unsigned char in[], unsigned int inLen,
+    unsigned char *DecryptCFB (const unsigned char in[], size_t inLen,
                                const unsigned char key[], const unsigned char *iv);
 
-    unsigned char *EncryptCTR (const unsigned char in[], unsigned int inLen,
+    unsigned char *EncryptCTR (const unsigned char in[], size_t inLen,
                                const unsigned char key[], const unsigned char iv[]);
 
-    unsigned char *DecryptCTR (const unsigned char in[], unsigned int inLen,
+    unsigned char *DecryptCTR (const unsigned char in[], size_t inLen,
                                const unsigned char key[], const unsigned char iv[]);
 
-    unsigned char *EncryptGCM (const unsigned char in[], unsigned int inLen,
+    unsigned char *EncryptGCM (const unsigned char in[], size_t inLen,
                                const unsigned char key[], const unsigned char iv[],
-                               const unsigned char aad[], unsigned int aadLen,
+                               const unsigned char aad[], size_t aadLen,
                                unsigned char tag[]);
 
-    unsigned char *DecryptGCM (const unsigned char in[], unsigned int inLen,
+    unsigned char *DecryptGCM (const unsigned char in[], size_t inLen,
                                const unsigned char key[], const unsigned char iv[],
-                               const unsigned char aad[], unsigned int aadLen,
+                               const unsigned char aad[], size_t aadLen,
                                const unsigned char tag[]);
 
     std::vector<unsigned char> EncryptECB (std::vector<unsigned char> in,
@@ -91,7 +91,7 @@ public:
                                            std::vector<unsigned char> aad,
                                            std::vector<unsigned char> tag);
 
-    void printHexArray (unsigned char a[], unsigned int n);
+    void printHexArray (unsigned char a[], size_t n);
 
     void printHexVector (std::vector<unsigned char> a);
 
@@ -129,7 +129,7 @@ private:
 
     void InvShiftRows (unsigned char state[4][Nb]);
 
-    void CheckLength (unsigned int len);
+    void CheckLength (size_t len);
 
     void KeyExpansion (const unsigned char key[], unsigned char w[]);
 
@@ -140,7 +140,7 @@ private:
                        unsigned char *roundKeys);
 
     void XorBlocks (const unsigned char *a, const unsigned char *b,
-                    unsigned char *c, unsigned int len);
+                    unsigned char *c, size_t len);
 
     void GF_Multiply (const unsigned char *X, const unsigned char *Y,
                       unsigned char *Z);
@@ -148,7 +148,7 @@ private:
     void GHASH (const unsigned char *H, const unsigned char *X, size_t len,
                 unsigned char *tag);
 
-    std::vector<unsigned char> ArrayToVector (unsigned char *a, unsigned int len);
+    std::vector<unsigned char> ArrayToVector (unsigned char *a, size_t len);
 
     unsigned char *VectorToArray (std::vector<unsigned char> &a);
 };
