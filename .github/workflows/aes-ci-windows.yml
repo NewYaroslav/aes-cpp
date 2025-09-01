@@ -20,19 +20,21 @@ jobs:
           choco upgrade -y llvm --version=17.0.6 --allow-downgrade --force
           echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
 
-      - name: Check clang-format version
+      - name: Code style (clang-format 17 check only)
+        shell: pwsh
         run: |
-          CF="C:/Program Files/LLVM/bin/clang-format.exe"
-          "$CF" --version
-          "$CF" --version | grep -q "version 17." || { echo "Need clang-format 17.x"; exit 1; }
+          $CF = "C:\Program Files\LLVM\bin\clang-format.exe"
+          & "$CF" --version
+          if (-not ((& "$CF" --version) -match "version 17\."))
+          {
+            Write-Error "Need clang-format 17.x"
+            exit 1
+          }
 
-      - name: Code style (check only) — clang-format 17
-        run: |
-          files="$(git ls-files '*.h' '*.hpp' '*.c' '*.cc' '*.cpp' || true)"
-          if [ -n "$files" ]; then
-            CF="/c/Program Files/LLVM/bin/clang-format.exe"
-            printf '%s\n' "$files" | xargs -r "$CF" -style=file -n --Werror
-          fi
+          $files = git ls-files -- '*.h' '*.hpp' '*.c' '*.cc' '*.cpp'
+          if ($files) {
+            & "$CF" -style=file -n --Werror $files
+          }
 
       - name: Setup MSYS2 toolchain
         uses: msys2/setup-msys2@v2
