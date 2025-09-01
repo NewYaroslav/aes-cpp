@@ -16,7 +16,7 @@ jobs:
       - name: Code style
         run: |
           sudo apt install clang-format-17
-          clang-format --dry-run --Werror -i src/*.cpp src/*.h tests/*.cpp
+          clang-format-17 --dry-run --Werror -i src/*.cpp src/*.h tests/*.cpp
         
       - name: Build gtest
         run: |
@@ -40,4 +40,5 @@ jobs:
       
       
       
+
 
