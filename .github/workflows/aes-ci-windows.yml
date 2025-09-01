@@ -12,8 +12,22 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup MSYS2
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM 17 (Chocolatey)
+        shell: pwsh
+        run: |
+          choco install -y llvm --version=17.0.6
+          echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
+
+      - name: Code style (check only) — clang-format 17
+        run: |
+          files="$(git ls-files '*.h' '*.hpp' '*.c' '*.cc' '*.cpp' || true)"
+          if [ -n "$files" ]; then
+            "/c/Program Files/LLVM/bin/clang-format.exe" -style=file -n --Werror $files
+          fi
+
+      - name: Setup MSYS2 toolchain
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
@@ -22,12 +36,8 @@ jobs:
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-make
             mingw-w64-x86_64-gtest
-            mingw-w64-x86_64-clang
             git
-      - name: Code style (check only)
-        run: |
-          files="$(git ls-files '*.h' '*.hpp' '*.c' '*.cc' '*.cpp' || true)"
-          [ -n "$files" ] && clang-format-17 -style=file -n --Werror $files
+
       - name: Prepare gtest
         run: |
           mkdir -p /usr/lib
@@ -36,11 +46,14 @@ jobs:
           else
             ln -s /mingw64/lib/libgtest.dll.a /usr/lib/libgtest.a
           fi
+
       - name: Tests
         run: |
           make workflow_build_test
           ./bin/test.exe
+
       - name: Speed test
         run: |
           make workflow_build_speed_test
           ./bin/speedtest.exe
+
