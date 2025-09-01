@@ -1,5 +1,11 @@
 FLAGS = -Wall -Wextra
 
+ifeq ($(OS),Windows_NT)
+GTEST_LIBS = -L/mingw64/lib -lgtest -lbcrypt
+else
+GTEST_LIBS = -pthread /usr/lib/libgtest.a
+endif
+
 build_all: clean build_test build_debug build_profile build_release build_speed_test
 
 build_test:
@@ -42,7 +48,7 @@ clean:
 
 
 workflow_build_test:
-	g++ $(FLAGS) -g -pthread ./src/AES.cpp ./src/AESUtils.cpp ./tests/tests.cpp /usr/lib/libgtest.a -o bin/test
+	g++ $(FLAGS) -g ./src/AES.cpp ./src/AESUtils.cpp ./tests/tests.cpp $(GTEST_LIBS) -o bin/test
 
 workflow_build_speed_test:
 	g++ $(FLAGS) -O2 ./src/AES.cpp ./src/AESUtils.cpp ./speedtest/main.cpp -o bin/speedtest
