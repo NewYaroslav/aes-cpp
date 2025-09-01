@@ -33,18 +33,22 @@ AES::~AES() {
 unsigned char *AES::EncryptECB(const unsigned char in[], size_t inLen,
                                const unsigned char key[]) {
   CheckLength(inLen);
-  std::lock_guard<std::mutex> lock(cacheMutex);
-  const size_t keyLen = 4 * Nk;
-  if (cachedKey.size() != keyLen ||
-      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-    cachedKey.assign(key, key + keyLen);
-    if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-      cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-    KeyExpansion(key, cachedRoundKeys.data());
+  std::vector<unsigned char> roundKeys;
+  {
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    const size_t keyLen = 4 * Nk;
+    if (cachedKey.size() != keyLen ||
+        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+      cachedKey.assign(key, key + keyLen);
+      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
+        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
+      KeyExpansion(key, cachedRoundKeys.data());
+    }
+    roundKeys = cachedRoundKeys;
   }
   auto out = std::make_unique<unsigned char[]>(inLen);
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(in + i, out.get() + i, cachedRoundKeys.data());
+    EncryptBlock(in + i, out.get() + i, roundKeys.data());
   }
 
   return out.release();
@@ -53,18 +57,22 @@ unsigned char *AES::EncryptECB(const unsigned char in[], size_t inLen,
 unsigned char *AES::DecryptECB(const unsigned char in[], size_t inLen,
                                const unsigned char key[]) {
   CheckLength(inLen);
-  std::lock_guard<std::mutex> lock(cacheMutex);
-  const size_t keyLen = 4 * Nk;
-  if (cachedKey.size() != keyLen ||
-      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-    cachedKey.assign(key, key + keyLen);
-    if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-      cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-    KeyExpansion(key, cachedRoundKeys.data());
+  std::vector<unsigned char> roundKeys;
+  {
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    const size_t keyLen = 4 * Nk;
+    if (cachedKey.size() != keyLen ||
+        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+      cachedKey.assign(key, key + keyLen);
+      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
+        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
+      KeyExpansion(key, cachedRoundKeys.data());
+    }
+    roundKeys = cachedRoundKeys;
   }
   auto out = std::make_unique<unsigned char[]>(inLen);
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    DecryptBlock(in + i, out.get() + i, cachedRoundKeys.data());
+    DecryptBlock(in + i, out.get() + i, roundKeys.data());
   }
 
   return out.release();
@@ -74,14 +82,18 @@ unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
   CheckLength(inLen);
-  std::lock_guard<std::mutex> lock(cacheMutex);
-  const size_t keyLen = 4 * Nk;
-  if (cachedKey.size() != keyLen ||
-      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-    cachedKey.assign(key, key + keyLen);
-    if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-      cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-    KeyExpansion(key, cachedRoundKeys.data());
+  std::vector<unsigned char> roundKeys;
+  {
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    const size_t keyLen = 4 * Nk;
+    if (cachedKey.size() != keyLen ||
+        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+      cachedKey.assign(key, key + keyLen);
+      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
+        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
+      KeyExpansion(key, cachedRoundKeys.data());
+    }
+    roundKeys = cachedRoundKeys;
   }
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
@@ -89,7 +101,7 @@ unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     XorBlocks(block, in + i, block, blockBytesLen);
-    EncryptBlock(block, out.get() + i, cachedRoundKeys.data());
+    EncryptBlock(block, out.get() + i, roundKeys.data());
     memcpy(block, out.get() + i, blockBytesLen);
   }
 
@@ -101,21 +113,25 @@ unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
   CheckLength(inLen);
-  std::lock_guard<std::mutex> lock(cacheMutex);
-  const size_t keyLen = 4 * Nk;
-  if (cachedKey.size() != keyLen ||
-      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-    cachedKey.assign(key, key + keyLen);
-    if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-      cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-    KeyExpansion(key, cachedRoundKeys.data());
+  std::vector<unsigned char> roundKeys;
+  {
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    const size_t keyLen = 4 * Nk;
+    if (cachedKey.size() != keyLen ||
+        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+      cachedKey.assign(key, key + keyLen);
+      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
+        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
+      KeyExpansion(key, cachedRoundKeys.data());
+    }
+    roundKeys = cachedRoundKeys;
   }
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    DecryptBlock(in + i, out.get() + i, cachedRoundKeys.data());
+    DecryptBlock(in + i, out.get() + i, roundKeys.data());
     XorBlocks(block, out.get() + i, out.get() + i, blockBytesLen);
     memcpy(block, in + i, blockBytesLen);
   }
@@ -127,14 +143,18 @@ unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
 unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
-  std::lock_guard<std::mutex> lock(cacheMutex);
-  const size_t keyLen = 4 * Nk;
-  if (cachedKey.size() != keyLen ||
-      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-    cachedKey.assign(key, key + keyLen);
-    if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-      cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-    KeyExpansion(key, cachedRoundKeys.data());
+  std::vector<unsigned char> roundKeys;
+  {
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    const size_t keyLen = 4 * Nk;
+    if (cachedKey.size() != keyLen ||
+        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+      cachedKey.assign(key, key + keyLen);
+      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
+        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
+      KeyExpansion(key, cachedRoundKeys.data());
+    }
+    roundKeys = cachedRoundKeys;
   }
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
@@ -142,7 +162,7 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(block, encryptedBlock, cachedRoundKeys.data());
+    EncryptBlock(block, encryptedBlock, roundKeys.data());
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
     XorBlocks(in + i, encryptedBlock, out.get() + i, blockLen);
     memcpy(block, out.get() + i, blockLen);
@@ -156,14 +176,18 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
 unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char *iv) {
-  std::lock_guard<std::mutex> lock(cacheMutex);
-  const size_t keyLen = 4 * Nk;
-  if (cachedKey.size() != keyLen ||
-      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-    cachedKey.assign(key, key + keyLen);
-    if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-      cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-    KeyExpansion(key, cachedRoundKeys.data());
+  std::vector<unsigned char> roundKeys;
+  {
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    const size_t keyLen = 4 * Nk;
+    if (cachedKey.size() != keyLen ||
+        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+      cachedKey.assign(key, key + keyLen);
+      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
+        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
+      KeyExpansion(key, cachedRoundKeys.data());
+    }
+    roundKeys = cachedRoundKeys;
   }
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
@@ -171,7 +195,7 @@ unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(block, encryptedBlock, cachedRoundKeys.data());
+    EncryptBlock(block, encryptedBlock, roundKeys.data());
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
     XorBlocks(in + i, encryptedBlock, out.get() + i, blockLen);
     memcpy(block, in + i, blockLen);
@@ -185,14 +209,18 @@ unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
 unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
                                const unsigned char key[],
                                const unsigned char iv[]) {
-  std::lock_guard<std::mutex> lock(cacheMutex);
-  const size_t keyLen = 4 * Nk;
-  if (cachedKey.size() != keyLen ||
-      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-    cachedKey.assign(key, key + keyLen);
-    if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-      cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-    KeyExpansion(key, cachedRoundKeys.data());
+  std::vector<unsigned char> roundKeys;
+  {
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    const size_t keyLen = 4 * Nk;
+    if (cachedKey.size() != keyLen ||
+        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+      cachedKey.assign(key, key + keyLen);
+      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
+        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
+      KeyExpansion(key, cachedRoundKeys.data());
+    }
+    roundKeys = cachedRoundKeys;
   }
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char counter[blockBytesLen];
@@ -200,7 +228,7 @@ unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
   memcpy(counter, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(counter, encryptedCounter, cachedRoundKeys.data());
+    EncryptBlock(counter, encryptedCounter, roundKeys.data());
 
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
     XorBlocks(in + i, encryptedCounter, out.get() + i, blockLen);
@@ -228,21 +256,25 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
                                const unsigned char iv[],
                                const unsigned char aad[], size_t aadLen,
                                unsigned char tag[]) {
-  std::lock_guard<std::mutex> lock(cacheMutex);
-  const size_t keyLen = 4 * Nk;
-  if (cachedKey.size() != keyLen ||
-      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-    cachedKey.assign(key, key + keyLen);
-    if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-      cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-    KeyExpansion(key, cachedRoundKeys.data());
+  std::vector<unsigned char> roundKeys;
+  {
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    const size_t keyLen = 4 * Nk;
+    if (cachedKey.size() != keyLen ||
+        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+      cachedKey.assign(key, key + keyLen);
+      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
+        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
+      KeyExpansion(key, cachedRoundKeys.data());
+    }
+    roundKeys = cachedRoundKeys;
   }
   auto out = std::make_unique<unsigned char[]>(inLen);
 
   // Генерация H
   unsigned char H[16] = {0};
   unsigned char zeroBlock[16] = {0};
-  EncryptBlock(zeroBlock, H, cachedRoundKeys.data());
+  EncryptBlock(zeroBlock, H, roundKeys.data());
 
   // Шифрование данных в режиме CTR
   unsigned char ctr[16] = {0};
@@ -258,7 +290,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   }
 
   for (size_t i = 0; i < inLen; i += 16) {
-    EncryptBlock(ctr, encryptedCtr, cachedRoundKeys.data());
+    EncryptBlock(ctr, encryptedCtr, roundKeys.data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
     XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
@@ -283,7 +315,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   memcpy(J0, iv, 12);
   J0[15] = 1;
   unsigned char S[16] = {0};
-  EncryptBlock(J0, S, cachedRoundKeys.data());
+  EncryptBlock(J0, S, roundKeys.data());
   for (int i = 0; i < 16; i++) {
     tag[i] ^= S[i];
   }
@@ -303,21 +335,25 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
                                const unsigned char iv[],
                                const unsigned char aad[], size_t aadLen,
                                const unsigned char tag[]) {
-  std::lock_guard<std::mutex> lock(cacheMutex);
-  const size_t keyLen = 4 * Nk;
-  if (cachedKey.size() != keyLen ||
-      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
-    cachedKey.assign(key, key + keyLen);
-    if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
-      cachedRoundKeys.resize(4 * Nb * (Nr + 1));
-    KeyExpansion(key, cachedRoundKeys.data());
+  std::vector<unsigned char> roundKeys;
+  {
+    std::lock_guard<std::mutex> lock(cacheMutex);
+    const size_t keyLen = 4 * Nk;
+    if (cachedKey.size() != keyLen ||
+        !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+      cachedKey.assign(key, key + keyLen);
+      if (cachedRoundKeys.size() != 4 * Nb * (Nr + 1))
+        cachedRoundKeys.resize(4 * Nb * (Nr + 1));
+      KeyExpansion(key, cachedRoundKeys.data());
+    }
+    roundKeys = cachedRoundKeys;
   }
   auto out = std::make_unique<unsigned char[]>(inLen);
 
   // Генерация H
   unsigned char H[16] = {0};
   unsigned char zeroBlock[16] = {0};
-  EncryptBlock(zeroBlock, H, cachedRoundKeys.data());
+  EncryptBlock(zeroBlock, H, roundKeys.data());
 
   // Расшифровка данных в режиме CTR
   unsigned char ctr[16] = {0};
@@ -332,7 +368,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   }
 
   for (size_t i = 0; i < inLen; i += 16) {
-    EncryptBlock(ctr, encryptedCtr, cachedRoundKeys.data());
+    EncryptBlock(ctr, encryptedCtr, roundKeys.data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
     XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
@@ -357,7 +393,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   memcpy(J0, iv, 12);
   J0[15] = 1;
   unsigned char S[16] = {0};
-  EncryptBlock(J0, S, cachedRoundKeys.data());
+  EncryptBlock(J0, S, roundKeys.data());
   for (int i = 0; i < 16; i++) {
     calculatedTag[i] ^= S[i];
   }
