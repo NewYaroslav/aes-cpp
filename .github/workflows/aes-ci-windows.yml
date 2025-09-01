@@ -58,11 +58,11 @@ jobs:
 
       - name: Tests
         run: |
-          make workflow_build_test
+          mingw32-make workflow_build_test
           ./bin/test.exe
 
       - name: Speed test
         run: |
-          make workflow_build_speed_test
+          mingw32-make workflow_build_speed_test
           ./bin/speedtest.exe
 
