@@ -47,15 +47,6 @@ jobs:
             mingw-w64-x86_64-gtest
             git
 
-      - name: Prepare gtest
-        run: |
-          mkdir -p /usr/lib
-          if [ -f /mingw64/lib/libgtest.a ]; then
-            ln -s /mingw64/lib/libgtest.a /usr/lib/libgtest.a
-          else
-            ln -s /mingw64/lib/libgtest.dll.a /usr/lib/libgtest.a
-          fi
-
       - name: Tests
         run: |
           mingw32-make workflow_build_test
