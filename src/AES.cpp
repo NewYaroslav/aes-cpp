@@ -205,15 +205,21 @@ unsigned char *AES::EncryptGCM (const unsigned char in[], unsigned int inLen,
     }
 
     // Вычисление тега с помощью GHASH
-    unsigned int totalLen = aadLen + inLen + 16;
+    unsigned int aad_padded_len = ((aadLen + 15) / 16) * 16;
+    unsigned int data_padded_len = ((inLen + 15) / 16) * 16;
+    unsigned int totalLen = aad_padded_len + data_padded_len + 16;
     unsigned char *ghashInput = new unsigned char[totalLen]();
     memcpy (ghashInput, aad, aadLen);
-    memcpy (ghashInput + aadLen, out, inLen);
+    memcpy (ghashInput + aad_padded_len, out, inLen);
 
-    uint64_t aadBits = aadLen * 8;
-    uint64_t lenBits = inLen * 8;
-    for(int i=0;i<8;i++) ghashInput[aadLen+inLen+i]=(unsigned char)(aadBits>>(56-8*i));
-    for(int i=0;i<8;i++) ghashInput[aadLen+inLen+8+i]=(unsigned char)(lenBits>>(56-8*i));
+    uint64_t aadBits = static_cast<uint64_t> (aadLen) * 8;
+    uint64_t lenBits = static_cast<uint64_t> (inLen) * 8;
+    for (int i = 0; i < 8; i++)
+        ghashInput[aad_padded_len + data_padded_len + i] =
+            static_cast<unsigned char> (aadBits >> (56 - 8 * i));
+    for (int i = 0; i < 8; i++)
+        ghashInput[aad_padded_len + data_padded_len + 8 + i] =
+            static_cast<unsigned char> (lenBits >> (56 - 8 * i));
 
     GHASH (H, ghashInput, totalLen, tag);
     unsigned char J0[16] = {0};
@@ -264,15 +270,21 @@ unsigned char *AES::DecryptGCM (const unsigned char in[], unsigned int inLen,
     }
 
     // Проверка тега
-    unsigned int totalLen = aadLen + inLen + 16;
+    unsigned int aad_padded_len = ((aadLen + 15) / 16) * 16;
+    unsigned int data_padded_len = ((inLen + 15) / 16) * 16;
+    unsigned int totalLen = aad_padded_len + data_padded_len + 16;
     std::vector<unsigned char> ghashInput (totalLen, 0);
     memcpy (ghashInput.data (), aad, aadLen);
-    memcpy (ghashInput.data () + aadLen, in, inLen);
+    memcpy (ghashInput.data () + aad_padded_len, in, inLen);
 
-    uint64_t aadBits = aadLen * 8;
-    uint64_t lenBits = inLen * 8;
-    for(int i=0;i<8;i++) ghashInput.data()[aadLen+inLen+i]=(unsigned char)(aadBits>>(56-8*i));
-    for(int i=0;i<8;i++) ghashInput.data()[aadLen+inLen+8+i]=(unsigned char)(lenBits>>(56-8*i));
+    uint64_t aadBits = static_cast<uint64_t> (aadLen) * 8;
+    uint64_t lenBits = static_cast<uint64_t> (inLen) * 8;
+    for (int i = 0; i < 8; i++)
+        ghashInput[aad_padded_len + data_padded_len + i] =
+            static_cast<unsigned char> (aadBits >> (56 - 8 * i));
+    for (int i = 0; i < 8; i++)
+        ghashInput[aad_padded_len + data_padded_len + 8 + i] =
+            static_cast<unsigned char> (lenBits >> (56 - 8 * i));
 
     unsigned char calculatedTag[16] = {0};
     GHASH (H, ghashInput.data (), totalLen, calculatedTag);
