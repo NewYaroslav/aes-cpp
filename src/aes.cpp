@@ -92,6 +92,42 @@ static bool has_aesni() {
 }
 #endif
 
+#if defined(__PCLMUL__) && (defined(__x86_64__) || defined(_M_X64) || \
+                            defined(__i386) || defined(_M_IX86))
+static bool has_pclmul() {
+#if defined(_MSC_VER)
+  static const bool result = []() {
+    int info[4];
+    __cpuid(info, 1);
+    return (info[2] & (1 << 1)) != 0;
+  }();
+  return result;
+#elif defined(__GNUC__) || defined(__clang__)
+#ifdef __get_cpuid
+  static const bool result = []() {
+    unsigned int eax, ebx, ecx, edx;
+    if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
+      return (ecx & bit_PCLMUL) != 0;
+    }
+    return false;
+  }();
+  return result;
+#else
+  static const bool result = []() {
+    unsigned int eax, ebx, ecx, edx;
+    __asm__ volatile("cpuid"
+                     : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+                     : "a"(1));
+    return (ecx & (1u << 1)) != 0;
+  }();
+  return result;
+#endif
+#else
+  return false;
+#endif
+}
+#endif
+
 static constexpr unsigned char R[16] = {
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0x87};  // Polynomial: x^128 + x^7 + x^2 + x + 1
@@ -587,38 +623,41 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
                       unsigned char *Z) {
 #if defined(__PCLMUL__) && (defined(__x86_64__) || defined(_M_X64) || \
                             defined(__i386) || defined(_M_IX86))
-  const __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(X));
-  const __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i *>(Y));
+  if (has_pclmul()) {
+    const __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(X));
+    const __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i *>(Y));
 
-  const __m128i swap =
-      _mm_set_epi8(0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06,
-                   0x05, 0x04, 0x03, 0x02, 0x01, 0x00);
-  __m128i x = _mm_shuffle_epi8(a, swap);
-  __m128i y = _mm_shuffle_epi8(b, swap);
+    const __m128i swap =
+        _mm_set_epi8(0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06,
+                     0x05, 0x04, 0x03, 0x02, 0x01, 0x00);
+    __m128i x = _mm_shuffle_epi8(a, swap);
+    __m128i y = _mm_shuffle_epi8(b, swap);
 
-  const __m128i z0 = _mm_clmulepi64_si128(x, y, 0x00);
-  const __m128i z1 = _mm_clmulepi64_si128(x, y, 0x10);
-  const __m128i z2 = _mm_clmulepi64_si128(x, y, 0x01);
-  const __m128i z3 = _mm_clmulepi64_si128(x, y, 0x11);
+    const __m128i z0 = _mm_clmulepi64_si128(x, y, 0x00);
+    const __m128i z1 = _mm_clmulepi64_si128(x, y, 0x10);
+    const __m128i z2 = _mm_clmulepi64_si128(x, y, 0x01);
+    const __m128i z3 = _mm_clmulepi64_si128(x, y, 0x11);
 
-  const __m128i t = _mm_xor_si128(z1, z2);
-  const __m128i t_lo = _mm_slli_si128(t, 8);
-  const __m128i t_hi = _mm_srli_si128(t, 8);
+    const __m128i t = _mm_xor_si128(z1, z2);
+    const __m128i t_lo = _mm_slli_si128(t, 8);
+    const __m128i t_hi = _mm_srli_si128(t, 8);
 
-  __m128i low = _mm_xor_si128(z0, t_lo);
-  __m128i high = _mm_xor_si128(z3, t_hi);
+    __m128i low = _mm_xor_si128(z0, t_lo);
+    __m128i high = _mm_xor_si128(z3, t_hi);
 
-  const __m128i R128 = _mm_set_epi32(0, 0, 0, 0x87);
-  __m128i tmp = _mm_clmulepi64_si128(high, R128, 0x00);
-  __m128i tmp2 = _mm_clmulepi64_si128(_mm_srli_si128(high, 8), R128, 0x00);
-  tmp = _mm_xor_si128(tmp, _mm_slli_si128(tmp2, 8));
-  low = _mm_xor_si128(low, tmp);
-  tmp2 = _mm_clmulepi64_si128(tmp, R128, 0x00);
-  low = _mm_xor_si128(low, _mm_slli_si128(tmp2, 8));
+    const __m128i R128 = _mm_set_epi32(0, 0, 0, 0x87);
+    __m128i tmp = _mm_clmulepi64_si128(high, R128, 0x00);
+    __m128i tmp2 = _mm_clmulepi64_si128(_mm_srli_si128(high, 8), R128, 0x00);
+    tmp = _mm_xor_si128(tmp, _mm_slli_si128(tmp2, 8));
+    low = _mm_xor_si128(low, tmp);
+    tmp2 = _mm_clmulepi64_si128(tmp, R128, 0x00);
+    low = _mm_xor_si128(low, _mm_slli_si128(tmp2, 8));
 
-  low = _mm_shuffle_epi8(low, swap);
-  _mm_storeu_si128(reinterpret_cast<__m128i *>(Z), low);
-#else
+    low = _mm_shuffle_epi8(low, swap);
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(Z), low);
+    return;
+  }
+#endif
   unsigned char V[16];
   memset(Z, 0, 16);
   memcpy(V, Y, 16);
@@ -647,7 +686,6 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
     }
   }
   secure_zero(V, sizeof(V));
-#endif
 }
 
 void AES::GHASH(const unsigned char *H, const unsigned char *X, size_t len,
