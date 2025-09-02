@@ -359,12 +359,10 @@ GcmEncryptedData encrypt_gcm(const std::vector<uint8_t> &plain, const T &key,
   AES aes(key_length_from_key(key));
   auto iv = generate_iv_12();
   std::array<uint8_t, 16> tag{};
-  std::unique_ptr<unsigned char[]> encrypted(aes.EncryptGCM(
-      plain.data(), plain.size(), key.data(), iv.data(),
-      aad.empty() ? nullptr : aad.data(), aad.size(), tag.data()));
-  std::vector<uint8_t> ciphertext(encrypted.get(),
-                                  encrypted.get() + plain.size());
-  secure_zero(encrypted.get(), plain.size());
+  std::vector<uint8_t> ciphertext(plain.size());
+  aes.EncryptGCM(plain.data(), plain.size(), key.data(), iv.data(),
+                 aad.empty() ? nullptr : aad.data(), aad.size(), tag.data(),
+                 ciphertext.data());
   return {std::chrono::system_clock::now(), iv, std::move(ciphertext), tag};
 }
 
@@ -379,13 +377,10 @@ template <class T>
 std::vector<uint8_t> decrypt_gcm(const GcmEncryptedData &data, const T &key,
                                  const std::vector<uint8_t> &aad) {
   AES aes(key_length_from_key(key));
-  std::unique_ptr<unsigned char[]> decrypted(
-      aes.DecryptGCM(data.ciphertext.data(), data.ciphertext.size(), key.data(),
-                     data.iv.data(), aad.empty() ? nullptr : aad.data(),
-                     aad.size(), data.tag.data()));
-  std::vector<uint8_t> plain(decrypted.get(),
-                             decrypted.get() + data.ciphertext.size());
-  secure_zero(decrypted.get(), data.ciphertext.size());
+  std::vector<uint8_t> plain(data.ciphertext.size());
+  aes.DecryptGCM(data.ciphertext.data(), data.ciphertext.size(), key.data(),
+                 data.iv.data(), aad.empty() ? nullptr : aad.data(), aad.size(),
+                 data.tag.data(), plain.data());
   return plain;
 }
 
