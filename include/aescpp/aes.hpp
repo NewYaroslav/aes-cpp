@@ -14,141 +14,294 @@
 
 namespace aescpp {
 
+/// \brief Overwrite a memory region with zeros.
+/// \param p Pointer to the memory block to clear.
+/// \param n Size of the block in bytes.
 void secure_zero(void *p, size_t n);
 
+/// \brief Supported AES key lengths.
 enum class AESKeyLength { AES_128, AES_192, AES_256 };
 
+/// \brief AES cipher implementation with multiple block modes.
+///
+/// Example usage:
+/// \code
+/// aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+/// auto cipher = aes.EncryptECB(plain, sizeof(plain), key);
+/// \endcode
 class AES {
  public:
+  /// \brief Construct an AES object.
+  /// \param keyLength Desired key length variant.
   explicit AES(const AESKeyLength keyLength = AESKeyLength::AES_256);
+
+  /// \brief Destroy the AES object and securely clear cached keys.
   ~AES();
 
+  /// \brief Encrypt data using ECB mode.
+  /// \param in Input buffer.
+  /// \param inLen Length of input in bytes; must be divisible by 16.
+  /// \param key Encryption key.
+  /// \return Newly allocated ciphertext; caller must delete[] using `delete[]`.
   unsigned char *EncryptECB(const unsigned char in[], size_t inLen,
                             const unsigned char key[]);
 
+  /// \brief Decrypt data previously encrypted with ECB mode.
+  /// \param in Ciphertext buffer.
+  /// \param inLen Length of ciphertext in bytes; must be divisible by 16.
+  /// \param key Decryption key.
+  /// \return Newly allocated plaintext; caller must delete[] using `delete[]`.
   unsigned char *DecryptECB(const unsigned char in[], size_t inLen,
                             const unsigned char key[]);
 
+  /// \brief Encrypt data using CBC mode.
+  /// \param in Input buffer.
+  /// \param inLen Length of input in bytes; must be divisible by 16.
+  /// \param key Encryption key.
+  /// \param iv Initialization vector (16 bytes).
+  /// \return Newly allocated ciphertext; caller must delete[] using `delete[]`.
   unsigned char *EncryptCBC(const unsigned char in[], size_t inLen,
                             const unsigned char key[], const unsigned char *iv);
 
+  /// \brief Decrypt data encrypted with CBC mode.
+  /// \param in Ciphertext buffer.
+  /// \param inLen Length of ciphertext in bytes; must be divisible by 16.
+  /// \param key Decryption key.
+  /// \param iv Initialization vector used for encryption (16 bytes).
+  /// \return Newly allocated plaintext; caller must delete[] using `delete[]`.
   unsigned char *DecryptCBC(const unsigned char in[], size_t inLen,
                             const unsigned char key[], const unsigned char *iv);
 
+  /// \brief Encrypt data using CFB mode.
+  /// \param in Input buffer.
+  /// \param inLen Length of input in bytes; must be divisible by 16.
+  /// \param key Encryption key.
+  /// \param iv Initialization vector (16 bytes).
+  /// \return Newly allocated ciphertext; caller must delete[] using `delete[]`.
   unsigned char *EncryptCFB(const unsigned char in[], size_t inLen,
                             const unsigned char key[], const unsigned char *iv);
 
+  /// \brief Decrypt data encrypted with CFB mode.
+  /// \param in Ciphertext buffer.
+  /// \param inLen Length of ciphertext in bytes; must be divisible by 16.
+  /// \param key Decryption key.
+  /// \param iv Initialization vector used for encryption (16 bytes).
+  /// \return Newly allocated plaintext; caller must delete[] using `delete[]`.
   unsigned char *DecryptCFB(const unsigned char in[], size_t inLen,
                             const unsigned char key[], const unsigned char *iv);
 
+  /// \brief Encrypt data using CTR mode.
+  /// \param in Input buffer.
+  /// \param inLen Length of input in bytes; must be divisible by 16.
+  /// \param key Encryption key.
+  /// \param iv Initialization vector (16 bytes).
+  /// \return Newly allocated ciphertext; caller must delete[] using `delete[]`.
   unsigned char *EncryptCTR(const unsigned char in[], size_t inLen,
                             const unsigned char key[],
                             const unsigned char iv[]);
 
+  /// \brief Decrypt data encrypted with CTR mode.
+  /// \param in Ciphertext buffer.
+  /// \param inLen Length of ciphertext in bytes; must be divisible by 16.
+  /// \param key Decryption key.
+  /// \param iv Initialization vector used for encryption (16 bytes).
+  /// \return Newly allocated plaintext; caller must delete[] using `delete[]`.
   unsigned char *DecryptCTR(const unsigned char in[], size_t inLen,
                             const unsigned char key[],
                             const unsigned char iv[]);
 
+  /// \brief Encrypt data using GCM mode.
+  /// \param in Input buffer.
+  /// \param inLen Length of input in bytes.
+  /// \param key Encryption key.
+  /// \param iv 12-byte initialization vector.
+  /// \param aad Additional authenticated data, may be nullptr when \p aadLen is
+  /// 0.
+  /// \param aadLen Length of \p aad in bytes.
+  /// \param tag Output buffer for 16-byte authentication tag.
+  /// \return Newly allocated ciphertext; caller must delete[] using `delete[]`.
+  /// \note IV length must be exactly 12 bytes.
   unsigned char *EncryptGCM(const unsigned char in[], size_t inLen,
                             const unsigned char key[], const unsigned char iv[],
                             const unsigned char aad[], size_t aadLen,
                             unsigned char tag[]);
 
+  /// \brief Decrypt data encrypted with GCM mode.
+  /// \param in Ciphertext buffer.
+  /// \param inLen Length of ciphertext in bytes.
+  /// \param key Decryption key.
+  /// \param iv 12-byte initialization vector used for encryption.
+  /// \param aad Additional authenticated data; may be nullptr when \p aadLen is
+  /// 0.
+  /// \param aadLen Length of \p aad in bytes.
+  /// \param tag Expected 16-byte authentication tag.
+  /// \return Newly allocated plaintext; caller must delete[] using `delete[]`.
+  /// \throws std::runtime_error If authentication fails.
+  /// \note IV length must be exactly 12 bytes.
   unsigned char *DecryptGCM(const unsigned char in[], size_t inLen,
                             const unsigned char key[], const unsigned char iv[],
                             const unsigned char aad[], size_t aadLen,
                             const unsigned char tag[]);
 
+  /// \brief Encrypt data in ECB mode.
+  /// \param in Input vector.
+  /// \param key Encryption key.
+  /// \return Ciphertext of the same length as \p in.
   std::vector<unsigned char> EncryptECB(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key);
 
+  /// \overload
   std::vector<unsigned char> EncryptECB(std::vector<unsigned char> &&in,
                                         std::vector<unsigned char> &&key);
 
+  /// \brief Decrypt data encrypted with ECB mode.
+  /// \param in Ciphertext vector.
+  /// \param key Decryption key.
+  /// \return Plaintext of the same length as \p in.
   std::vector<unsigned char> DecryptECB(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key);
 
+  /// \overload
   std::vector<unsigned char> DecryptECB(std::vector<unsigned char> &&in,
                                         std::vector<unsigned char> &&key);
 
+  /// \brief Encrypt data using CBC mode.
+  /// \param in Input vector.
+  /// \param key Encryption key.
+  /// \param iv Initialization vector (16 bytes).
+  /// \return Ciphertext of the same length as \p in.
   std::vector<unsigned char> EncryptCBC(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key,
                                         const std::vector<unsigned char> &iv);
 
+  /// \overload
   std::vector<unsigned char> EncryptCBC(std::vector<unsigned char> &&in,
                                         std::vector<unsigned char> &&key,
                                         std::vector<unsigned char> &&iv);
 
+  /// \brief Decrypt data encrypted with CBC mode.
+  /// \param in Ciphertext vector.
+  /// \param key Decryption key.
+  /// \param iv Initialization vector used for encryption (16 bytes).
+  /// \return Plaintext of the same length as \p in.
   std::vector<unsigned char> DecryptCBC(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key,
                                         const std::vector<unsigned char> &iv);
 
+  /// \overload
   std::vector<unsigned char> DecryptCBC(std::vector<unsigned char> &&in,
                                         std::vector<unsigned char> &&key,
                                         std::vector<unsigned char> &&iv);
 
+  /// \brief Encrypt data using CFB mode.
+  /// \param in Input vector.
+  /// \param key Encryption key.
+  /// \param iv Initialization vector (16 bytes).
+  /// \return Ciphertext of the same length as \p in.
   std::vector<unsigned char> EncryptCFB(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key,
                                         const std::vector<unsigned char> &iv);
 
+  /// \overload
   std::vector<unsigned char> EncryptCFB(std::vector<unsigned char> &&in,
                                         std::vector<unsigned char> &&key,
                                         std::vector<unsigned char> &&iv);
 
+  /// \brief Decrypt data encrypted with CFB mode.
+  /// \param in Ciphertext vector.
+  /// \param key Decryption key.
+  /// \param iv Initialization vector used for encryption (16 bytes).
+  /// \return Plaintext of the same length as \p in.
   std::vector<unsigned char> DecryptCFB(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key,
                                         const std::vector<unsigned char> &iv);
 
+  /// \overload
   std::vector<unsigned char> DecryptCFB(std::vector<unsigned char> &&in,
                                         std::vector<unsigned char> &&key,
                                         std::vector<unsigned char> &&iv);
 
+  /// \brief Encrypt data using CTR mode.
+  /// \param in Input vector.
+  /// \param key Encryption key.
+  /// \param iv Initialization vector (16 bytes).
+  /// \return Ciphertext of the same length as \p in.
   std::vector<unsigned char> EncryptCTR(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key,
                                         const std::vector<unsigned char> &iv);
 
+  /// \overload
   std::vector<unsigned char> EncryptCTR(std::vector<unsigned char> &&in,
                                         std::vector<unsigned char> &&key,
                                         std::vector<unsigned char> &&iv);
 
+  /// \brief Decrypt data encrypted with CTR mode.
+  /// \param in Ciphertext vector.
+  /// \param key Decryption key.
+  /// \param iv Initialization vector used for encryption (16 bytes).
+  /// \return Plaintext of the same length as \p in.
   std::vector<unsigned char> DecryptCTR(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key,
                                         const std::vector<unsigned char> &iv);
 
+  /// \overload
   std::vector<unsigned char> DecryptCTR(std::vector<unsigned char> &&in,
                                         std::vector<unsigned char> &&key,
                                         std::vector<unsigned char> &&iv);
 
-  // GCM mode requires a 12-byte (96-bit) IV.
+  /// \brief Encrypt data using GCM mode.
+  /// \param in Input vector.
+  /// \param key Encryption key.
+  /// \param iv 12-byte initialization vector.
+  /// \param aad Additional authenticated data.
+  /// \param tag Output tag resized to 16 bytes.
+  /// \return Ciphertext of the same length as \p in.
+  /// \note IV must be 12 bytes.
   std::vector<unsigned char> EncryptGCM(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key,
                                         const std::vector<unsigned char> &iv,
                                         const std::vector<unsigned char> &aad,
                                         std::vector<unsigned char> &tag);
 
+  /// \overload
   std::vector<unsigned char> EncryptGCM(std::vector<unsigned char> &&in,
                                         std::vector<unsigned char> &&key,
                                         std::vector<unsigned char> &&iv,
                                         std::vector<unsigned char> &&aad,
                                         std::vector<unsigned char> &tag);
 
-  // GCM mode requires a 12-byte (96-bit) IV.
+  /// \brief Decrypt data encrypted with GCM mode.
+  /// \param in Ciphertext vector.
+  /// \param key Decryption key.
+  /// \param iv 12-byte initialization vector used for encryption.
+  /// \param aad Additional authenticated data.
+  /// \param tag Authentication tag to verify.
+  /// \return Plaintext of the same length as \p in.
+  /// \throws std::runtime_error If authentication fails.
+  /// \note IV must be 12 bytes.
   std::vector<unsigned char> DecryptGCM(const std::vector<unsigned char> &in,
                                         const std::vector<unsigned char> &key,
                                         const std::vector<unsigned char> &iv,
                                         const std::vector<unsigned char> &aad,
                                         const std::vector<unsigned char> &tag);
 
+  /// \overload
   std::vector<unsigned char> DecryptGCM(std::vector<unsigned char> &&in,
                                         std::vector<unsigned char> &&key,
                                         std::vector<unsigned char> &&iv,
                                         std::vector<unsigned char> &&aad,
                                         std::vector<unsigned char> &&tag);
 
+  /// \brief Print byte array as hexadecimal values.
+  /// \param a Array to print.
+  /// \param n Number of bytes in \p a.
   void printHexArray(unsigned char a[], size_t n);
 
+  /// \brief Print vector contents as hexadecimal values.
+  /// \param a Vector to print.
   void printHexVector(const std::vector<unsigned char> &a);
 
+  /// \overload
   void printHexVector(std::vector<unsigned char> &&a);
 
  private:
