@@ -10,6 +10,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        std: [11, 17]
     steps:
       - uses: actions/checkout@v2
 
@@ -31,13 +34,13 @@ jobs:
       
       - name: Tests
         run: |
-          make workflow_build_test
+          make workflow_build_test FLAGS="-Wall -Wextra -I./include -std=c++${{ matrix.std }}"
           ./bin/test
 
       
       - name: Speed test
         run: |
-          make workflow_build_speed_test
+          make workflow_build_speed_test FLAGS="-Wall -Wextra -I./include -std=c++${{ matrix.std }}"
           ./bin/speedtest
       
       
