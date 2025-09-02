@@ -527,6 +527,22 @@ TEST(Utils, EncryptDecryptStringCBC) {
   ASSERT_EQ(text, dec);
 }
 
+TEST(Utils, EncryptDecryptCtrZeroLength) {
+  std::vector<uint8_t> plain;
+  std::array<uint8_t, 16> key = {0};
+  auto enc = aescpp::utils::encrypt(plain, key, aescpp::utils::AesMode::CTR);
+  auto dec = aescpp::utils::decrypt(enc, key, aescpp::utils::AesMode::CTR);
+  ASSERT_EQ(dec, plain);
+}
+
+TEST(Utils, EncryptDecryptCtrNonBlockSize) {
+  std::vector<uint8_t> plain = {'n', 'o', 'n', 'b', 'l', 'o', 'c', 'k'};
+  std::array<uint8_t, 16> key = {0};
+  auto enc = aescpp::utils::encrypt(plain, key, aescpp::utils::AesMode::CTR);
+  auto dec = aescpp::utils::decrypt(enc, key, aescpp::utils::AesMode::CTR);
+  ASSERT_EQ(dec, plain);
+}
+
 TEST(Utils, EncryptDecryptStringGCM) {
   std::string text = "hello gcm";
   std::array<uint8_t, 16> key = {0};
