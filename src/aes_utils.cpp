@@ -31,10 +31,12 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#if AESUTILS_HAS_INCLUDE(<sys / random.h>)
+// clang-format off
+#if AESUTILS_HAS_INCLUDE(<sys/random.h>)
 #define AESUTILS_HAVE_GETRANDOM 1
 #include <sys/random.h>
 #endif
+// clang-format on
 #endif
 
 #include <aescpp/aes_utils.hpp>
