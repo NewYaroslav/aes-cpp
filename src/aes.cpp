@@ -372,16 +372,15 @@ void AES::EncryptGCM(const unsigned char in[], size_t inLen,
   }
 
   for (size_t i = 0; i < inLen; i += 16) {
+    // Increment counter - GCM requires incrementing J0 before processing data
+    for (int j = 15; j >= 0; --j) {
+      if (++ctr[j]) break;
+    }
     EncryptBlock(ctr, encryptedCtr, roundKeys->data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
     XorBlocks(in + i, encryptedCtr, out + i, blockLen);
     GHASH(H, out + i, blockLen, tag);
-
-    // Increment counter
-    for (int j = 15; j >= 0; --j) {
-      if (++ctr[j]) break;
-    }
   }
 
   unsigned char lenBlock[16] = {0};
@@ -447,16 +446,15 @@ void AES::DecryptGCM(const unsigned char in[], size_t inLen,
   }
 
   for (size_t i = 0; i < inLen; i += 16) {
+    // Increment counter - GCM requires incrementing J0 before processing data
+    for (int j = 15; j >= 0; --j) {
+      if (++ctr[j]) break;
+    }
     EncryptBlock(ctr, encryptedCtr, roundKeys->data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
     XorBlocks(in + i, encryptedCtr, out + i, blockLen);
     GHASH(H, in + i, blockLen, calculatedTag);
-
-    // Increment counter
-    for (int j = 15; j >= 0; --j) {
-      if (++ctr[j]) break;
-    }
   }
 
   unsigned char lenBlock[16] = {0};
