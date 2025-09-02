@@ -15,12 +15,20 @@
 #if defined(_WIN32)
 #include <windows.h>
 #endif
-#if defined(__PCLMUL__) && (defined(__x86_64__) || defined(_M_X64) || \
-                            defined(__i386) || defined(_M_IX86))
+#if (defined(__PCLMUL__) || defined(__AES__)) &&                  \
+    (defined(__x86_64__) || defined(_M_X64) || defined(__i386) || \
+     defined(_M_IX86))
 #include <wmmintrin.h>
 #endif
 #if defined(__SSE2__)
 #include <emmintrin.h>
+#endif
+#if defined(_MSC_VER)
+#include <intrin.h>
+#elif defined(__has_include)
+#if __has_include(<cpuid.h>)
+#include <cpuid.h>
+#endif
 #endif
 
 namespace aescpp {
@@ -47,6 +55,35 @@ static bool constant_time_eq(const unsigned char *a, const unsigned char *b,
   }
   return diff == 0;
 }
+
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || \
+    defined(_M_IX86)
+static bool has_aesni() {
+#if defined(_MSC_VER)
+  int info[4];
+  __cpuid(info, 1);
+  return (info[2] & (1 << 25)) != 0;
+#elif defined(__GNUC__) || defined(__clang__)
+#ifdef __get_cpuid
+  unsigned int eax, ebx, ecx, edx;
+  if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
+    return (ecx & bit_AES) != 0;
+  }
+  return false;
+#else
+  unsigned int eax, ebx, ecx, edx;
+  __asm__ volatile("cpuid"
+                   : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+                   : "a"(1));
+  return (ecx & (1u << 25)) != 0;
+#endif
+#else
+  return false;
+#endif
+}
+#else
+static bool has_aesni() { return false; }
+#endif
 
 static constexpr unsigned char R[16] = {
     0, 0, 0, 0, 0, 0, 0, 0,
@@ -398,8 +435,51 @@ void AES::CheckLength(size_t len) {
   }
 }
 
+#if defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
+                         defined(__i386) || defined(_M_IX86))
+static void EncryptBlockAESNI(const unsigned char in[], unsigned char out[],
+                              const unsigned char *roundKeys, unsigned int Nr) {
+  __m128i m = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in));
+  m = _mm_xor_si128(
+      m, _mm_loadu_si128(reinterpret_cast<const __m128i *>(roundKeys)));
+  for (unsigned int i = 1; i < Nr; ++i) {
+    m = _mm_aesenc_si128(
+        m,
+        _mm_loadu_si128(reinterpret_cast<const __m128i *>(roundKeys + i * 16)));
+  }
+  m = _mm_aesenclast_si128(
+      m,
+      _mm_loadu_si128(reinterpret_cast<const __m128i *>(roundKeys + Nr * 16)));
+  _mm_storeu_si128(reinterpret_cast<__m128i *>(out), m);
+}
+
+static void DecryptBlockAESNI(const unsigned char in[], unsigned char out[],
+                              const unsigned char *roundKeys, unsigned int Nr) {
+  __m128i m = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in));
+  m = _mm_xor_si128(
+      m,
+      _mm_loadu_si128(reinterpret_cast<const __m128i *>(roundKeys + Nr * 16)));
+  for (unsigned int i = Nr - 1; i > 0; --i) {
+    __m128i rk =
+        _mm_loadu_si128(reinterpret_cast<const __m128i *>(roundKeys + i * 16));
+    m = _mm_aesdec_si128(m, _mm_aesimc_si128(rk));
+  }
+  m = _mm_aesdeclast_si128(
+      m, _mm_loadu_si128(reinterpret_cast<const __m128i *>(roundKeys)));
+  _mm_storeu_si128(reinterpret_cast<__m128i *>(out), m);
+}
+#endif
+
 void AES::EncryptBlock(const unsigned char in[], unsigned char out[],
                        const unsigned char *roundKeys) {
+#if defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
+                         defined(__i386) || defined(_M_IX86))
+  static bool useAESNI = has_aesni();
+  if (useAESNI) {
+    EncryptBlockAESNI(in, out, roundKeys, Nr);
+    return;
+  }
+#endif
   unsigned char state[4][Nb];
   unsigned int i, j, round;
 
@@ -512,6 +592,14 @@ void AES::GHASH(const unsigned char *H, const unsigned char *X, size_t len,
 
 void AES::DecryptBlock(const unsigned char in[], unsigned char out[],
                        const unsigned char *roundKeys) {
+#if defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
+                         defined(__i386) || defined(_M_IX86))
+  static bool useAESNI = has_aesni();
+  if (useAESNI) {
+    DecryptBlockAESNI(in, out, roundKeys, Nr);
+    return;
+  }
+#endif
   unsigned char state[4][Nb];
   unsigned int i, j, round;
 

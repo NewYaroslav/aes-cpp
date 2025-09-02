@@ -1,4 +1,4 @@
-# AES
+#AES
 C++ AES(Advanced Encryption Standard) implementation
 
 Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
@@ -9,6 +9,11 @@ Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 ## Prerequisites
 * C++ compiler
 * CMake 2.8 or newer
+
+## Hardware Acceleration
+On x86 CPUs this library checks for AES-NI support at runtime and uses
+hardware-accelerated instructions when available. If AES-NI is missing, a
+portable software implementation is used instead.
 
 ## Supported Modes
 ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an authentication tag for message integrity.
@@ -78,23 +83,19 @@ auto data = utils::encrypt_gcm(text, key, aad);
 auto plain = utils::decrypt_gcm_to_string(data, key, aad);
 ```
 
-
-
-
-# Padding
+#Padding
 This library does not provide any padding because padding is not part of AES standard.
 For ECB and CBC modes plaintext and ciphertext length in bytes must be divisible by
 16. CFB, CTR and GCM modes operate on data of any length. If the length for ECB or
 CBC doesn't satisfy this condition an exception will be thrown
 
-
-# Links
+#Links
 
 
 * [Wiki](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
 * [NIST](https://www.nist.gov/publications/advanced-encryption-standard-aes)
 
-# Development:
+#Development:
 
 1. `git clone https://github.com/SergeyBel/AES.git`
 1. `docker-compose up -d`
