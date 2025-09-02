@@ -74,7 +74,7 @@ class AES {
 
   /// \brief Encrypt data using CFB mode.
   /// \param in Input buffer.
-  /// \param inLen Length of input in bytes; must be divisible by 16.
+  /// \param inLen Length of input in bytes; may be any value.
   /// \param key Encryption key.
   /// \param iv Initialization vector (16 bytes).
   /// \return Newly allocated ciphertext; caller must delete[] using `delete[]`.
@@ -83,7 +83,7 @@ class AES {
 
   /// \brief Decrypt data encrypted with CFB mode.
   /// \param in Ciphertext buffer.
-  /// \param inLen Length of ciphertext in bytes; must be divisible by 16.
+  /// \param inLen Length of ciphertext in bytes; may be any value.
   /// \param key Decryption key.
   /// \param iv Initialization vector used for encryption (16 bytes).
   /// \return Newly allocated plaintext; caller must delete[] using `delete[]`.
@@ -92,7 +92,7 @@ class AES {
 
   /// \brief Encrypt data using CTR mode.
   /// \param in Input buffer.
-  /// \param inLen Length of input in bytes; must be divisible by 16.
+  /// \param inLen Length of input in bytes; may be any value.
   /// \param key Encryption key.
   /// \param iv Initialization vector (16 bytes).
   /// \return Newly allocated ciphertext; caller must delete[] using `delete[]`.
@@ -102,7 +102,7 @@ class AES {
 
   /// \brief Decrypt data encrypted with CTR mode.
   /// \param in Ciphertext buffer.
-  /// \param inLen Length of ciphertext in bytes; must be divisible by 16.
+  /// \param inLen Length of ciphertext in bytes; may be any value.
   /// \param key Decryption key.
   /// \param iv Initialization vector used for encryption (16 bytes).
   /// \return Newly allocated plaintext; caller must delete[] using `delete[]`.
