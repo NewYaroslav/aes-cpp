@@ -41,7 +41,6 @@
 
 #include <aescpp/aes_utils.hpp>
 #include <algorithm>
-#include <memory>
 #include <stdexcept>
 
 #ifdef AESUTILS_TRUST_STD_RANDOM_DEVICE
@@ -270,28 +269,24 @@ EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
     src = &padded;
   }
 
-  std::unique_ptr<unsigned char[]> encrypted;
+  std::vector<uint8_t> ciphertext(src->size());
   switch (mode) {
     case AesMode::CBC:
-      encrypted.reset(
-          aes.EncryptCBC(src->data(), src->size(), key.data(), iv.data()));
+      aes.EncryptCBC(src->data(), src->size(), key.data(), iv.data(),
+                     ciphertext.data());
       break;
     case AesMode::CFB:
-      encrypted.reset(
-          aes.EncryptCFB(src->data(), src->size(), key.data(), iv.data()));
+      aes.EncryptCFB(src->data(), src->size(), key.data(), iv.data(),
+                     ciphertext.data());
       break;
     case AesMode::CTR:
-      encrypted.reset(
-          aes.EncryptCTR(src->data(), src->size(), key.data(), iv.data()));
+      aes.EncryptCTR(src->data(), src->size(), key.data(), iv.data(),
+                     ciphertext.data());
       break;
     default:
       throw std::invalid_argument(
           "Invalid AES mode; expected CBC, CFB, or CTR");
   }
-
-  std::vector<uint8_t> ciphertext(encrypted.get(),
-                                  encrypted.get() + src->size());
-  secure_zero(encrypted.get(), src->size());
   if (mode == AesMode::CBC) {
     secure_zero(padded.data(), padded.size());
   }
@@ -309,31 +304,24 @@ template <class T>
 std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
                              AesMode mode) {
   AES aes(key_length_from_key(key));
-  std::unique_ptr<unsigned char[]> decrypted;
+  std::vector<uint8_t> plain(data.ciphertext.size());
   switch (mode) {
     case AesMode::CBC:
-      decrypted.reset(aes.DecryptCBC(data.ciphertext.data(),
-                                     data.ciphertext.size(), key.data(),
-                                     data.iv.data()));
+      aes.DecryptCBC(data.ciphertext.data(), data.ciphertext.size(), key.data(),
+                     data.iv.data(), plain.data());
       break;
     case AesMode::CFB:
-      decrypted.reset(aes.DecryptCFB(data.ciphertext.data(),
-                                     data.ciphertext.size(), key.data(),
-                                     data.iv.data()));
+      aes.DecryptCFB(data.ciphertext.data(), data.ciphertext.size(), key.data(),
+                     data.iv.data(), plain.data());
       break;
     case AesMode::CTR:
-      decrypted.reset(aes.DecryptCTR(data.ciphertext.data(),
-                                     data.ciphertext.size(), key.data(),
-                                     data.iv.data()));
+      aes.DecryptCTR(data.ciphertext.data(), data.ciphertext.size(), key.data(),
+                     data.iv.data(), plain.data());
       break;
     default:
       throw std::invalid_argument(
           "Invalid AES mode; expected CBC, CFB, or CTR");
   }
-
-  std::vector<uint8_t> plain(decrypted.get(),
-                             decrypted.get() + data.ciphertext.size());
-  secure_zero(decrypted.get(), data.ciphertext.size());
   if (mode == AesMode::CBC) {
     try {
       auto result = remove_padding(plain);
