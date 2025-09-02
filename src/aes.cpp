@@ -740,27 +740,17 @@ unsigned char AES::xtime(unsigned char b) {  // multiply on x
 }
 
 void AES::MixColumns(unsigned char state[4][Nb]) {
-  unsigned char temp_state[4][Nb];
+  for (size_t j = 0; j < Nb; ++j) {
+    const unsigned char s0 = state[0][j];
+    const unsigned char s1 = state[1][j];
+    const unsigned char s2 = state[2][j];
+    const unsigned char s3 = state[3][j];
 
-  for (size_t i = 0; i < 4; ++i) {
-    memset(temp_state[i], 0, 4);
+    state[0][j] = GF_MUL_TABLE[2][s0] ^ GF_MUL_TABLE[3][s1] ^ s2 ^ s3;
+    state[1][j] = s0 ^ GF_MUL_TABLE[2][s1] ^ GF_MUL_TABLE[3][s2] ^ s3;
+    state[2][j] = s0 ^ s1 ^ GF_MUL_TABLE[2][s2] ^ GF_MUL_TABLE[3][s3];
+    state[3][j] = GF_MUL_TABLE[3][s0] ^ s1 ^ s2 ^ GF_MUL_TABLE[2][s3];
   }
-
-  for (size_t i = 0; i < 4; ++i) {
-    for (size_t k = 0; k < 4; ++k) {
-      for (size_t j = 0; j < 4; ++j) {
-        if (CMDS[i][k] == 1)
-          temp_state[i][j] ^= state[k][j];
-        else
-          temp_state[i][j] ^= GF_MUL_TABLE[CMDS[i][k]][state[k][j]];
-      }
-    }
-  }
-
-  for (size_t i = 0; i < 4; ++i) {
-    memcpy(state[i], temp_state[i], 4);
-  }
-  secure_zero(temp_state, sizeof(temp_state));
 }
 
 void AES::AddRoundKey(unsigned char state[4][Nb], const unsigned char *key) {
@@ -851,24 +841,21 @@ void AES::InvSubBytes(unsigned char state[4][Nb]) {
 }
 
 void AES::InvMixColumns(unsigned char state[4][Nb]) {
-  unsigned char temp_state[4][Nb];
+  for (size_t j = 0; j < Nb; ++j) {
+    const unsigned char s0 = state[0][j];
+    const unsigned char s1 = state[1][j];
+    const unsigned char s2 = state[2][j];
+    const unsigned char s3 = state[3][j];
 
-  for (size_t i = 0; i < 4; ++i) {
-    memset(temp_state[i], 0, 4);
+    state[0][j] = GF_MUL_TABLE[14][s0] ^ GF_MUL_TABLE[11][s1] ^
+                  GF_MUL_TABLE[13][s2] ^ GF_MUL_TABLE[9][s3];
+    state[1][j] = GF_MUL_TABLE[9][s0] ^ GF_MUL_TABLE[14][s1] ^
+                  GF_MUL_TABLE[11][s2] ^ GF_MUL_TABLE[13][s3];
+    state[2][j] = GF_MUL_TABLE[13][s0] ^ GF_MUL_TABLE[9][s1] ^
+                  GF_MUL_TABLE[14][s2] ^ GF_MUL_TABLE[11][s3];
+    state[3][j] = GF_MUL_TABLE[11][s0] ^ GF_MUL_TABLE[13][s1] ^
+                  GF_MUL_TABLE[9][s2] ^ GF_MUL_TABLE[14][s3];
   }
-
-  for (size_t i = 0; i < 4; ++i) {
-    for (size_t k = 0; k < 4; ++k) {
-      for (size_t j = 0; j < 4; ++j) {
-        temp_state[i][j] ^= GF_MUL_TABLE[INV_CMDS[i][k]][state[k][j]];
-      }
-    }
-  }
-
-  for (size_t i = 0; i < 4; ++i) {
-    memcpy(state[i], temp_state[i], 4);
-  }
-  secure_zero(temp_state, sizeof(temp_state));
 }
 
 void AES::InvShiftRows(unsigned char state[4][Nb]) {
