@@ -74,8 +74,7 @@ AES::AES(const AESKeyLength keyLength) {
 
 AES::~AES() {
   if (cachedRoundKeys) {
-    secure_zero(const_cast<unsigned char *>(cachedRoundKeys->data()),
-                cachedRoundKeys->size());
+    secure_zero(cachedRoundKeys->data(), cachedRoundKeys->size());
   }
   secure_zero(cachedKey.data(), cachedKey.size());
 }
@@ -100,9 +99,8 @@ unsigned char *AES::EncryptECB(const unsigned char in[], size_t inLen,
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
-  auto rk = const_cast<unsigned char *>(roundKeys->data());
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(in + i, out.get() + i, rk);
+    EncryptBlock(in + i, out.get() + i, roundKeys->data());
   }
 
   return out.release();
@@ -113,9 +111,8 @@ unsigned char *AES::DecryptECB(const unsigned char in[], size_t inLen,
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
-  auto rk = const_cast<unsigned char *>(roundKeys->data());
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    DecryptBlock(in + i, out.get() + i, rk);
+    DecryptBlock(in + i, out.get() + i, roundKeys->data());
   }
 
   return out.release();
@@ -129,12 +126,11 @@ unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
-  auto rk = const_cast<unsigned char *>(roundKeys->data());
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     XorBlocks(block, in + i, block, blockBytesLen);
-    EncryptBlock(block, out.get() + i, rk);
+    EncryptBlock(block, out.get() + i, roundKeys->data());
     memcpy(block, out.get() + i, blockBytesLen);
   }
 
@@ -150,11 +146,10 @@ unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
-  auto rk = const_cast<unsigned char *>(roundKeys->data());
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    DecryptBlock(in + i, out.get() + i, rk);
+    DecryptBlock(in + i, out.get() + i, roundKeys->data());
     XorBlocks(block, out.get() + i, out.get() + i, blockBytesLen);
     memcpy(block, in + i, blockBytesLen);
   }
@@ -171,11 +166,10 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   unsigned char encryptedBlock[blockBytesLen];
-  auto rk = const_cast<unsigned char *>(roundKeys->data());
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(block, encryptedBlock, rk);
+    EncryptBlock(block, encryptedBlock, roundKeys->data());
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
     XorBlocks(in + i, encryptedBlock, out.get() + i, blockLen);
     memcpy(block, out.get() + i, blockLen);
@@ -194,11 +188,10 @@ unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char block[blockBytesLen];
   unsigned char encryptedBlock[blockBytesLen];
-  auto rk = const_cast<unsigned char *>(roundKeys->data());
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(block, encryptedBlock, rk);
+    EncryptBlock(block, encryptedBlock, roundKeys->data());
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
     XorBlocks(in + i, encryptedBlock, out.get() + i, blockLen);
     memcpy(block, in + i, blockLen);
@@ -217,11 +210,10 @@ unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
   auto out = std::make_unique<unsigned char[]>(inLen);
   unsigned char counter[blockBytesLen];
   unsigned char encryptedCounter[blockBytesLen];
-  auto rk = const_cast<unsigned char *>(roundKeys->data());
   memcpy(counter, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(counter, encryptedCounter, rk);
+    EncryptBlock(counter, encryptedCounter, roundKeys->data());
 
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
     XorBlocks(in + i, encryptedCounter, out.get() + i, blockLen);
@@ -258,8 +250,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   // Compute hash subkey H
   unsigned char H[16] = {0};
   unsigned char zeroBlock[16] = {0};
-  auto rk = const_cast<unsigned char *>(roundKeys->data());
-  EncryptBlock(zeroBlock, H, rk);
+  EncryptBlock(zeroBlock, H, roundKeys->data());
 
   // Encrypt data in CTR mode
   unsigned char ctr[16] = {0};
@@ -274,7 +265,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   }
 
   for (size_t i = 0; i < inLen; i += 16) {
-    EncryptBlock(ctr, encryptedCtr, rk);
+    EncryptBlock(ctr, encryptedCtr, roundKeys->data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
     XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
@@ -299,7 +290,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   memcpy(J0, iv, 12);
   J0[15] = 1;
   unsigned char S[16] = {0};
-  EncryptBlock(J0, S, rk);
+  EncryptBlock(J0, S, roundKeys->data());
   for (int i = 0; i < 16; i++) {
     tag[i] ^= S[i];
   }
@@ -327,8 +318,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   // Compute hash subkey H
   unsigned char H[16] = {0};
   unsigned char zeroBlock[16] = {0};
-  auto rk = const_cast<unsigned char *>(roundKeys->data());
-  EncryptBlock(zeroBlock, H, rk);
+  EncryptBlock(zeroBlock, H, roundKeys->data());
 
   // Decrypt data in CTR mode
   unsigned char ctr[16] = {0};
@@ -343,7 +333,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   }
 
   for (size_t i = 0; i < inLen; i += 16) {
-    EncryptBlock(ctr, encryptedCtr, rk);
+    EncryptBlock(ctr, encryptedCtr, roundKeys->data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
     XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
@@ -368,7 +358,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   memcpy(J0, iv, 12);
   J0[15] = 1;
   unsigned char S[16] = {0};
-  EncryptBlock(J0, S, rk);
+  EncryptBlock(J0, S, roundKeys->data());
   for (int i = 0; i < 16; i++) {
     calculatedTag[i] ^= S[i];
   }
@@ -400,7 +390,7 @@ void AES::CheckLength(size_t len) {
 }
 
 void AES::EncryptBlock(const unsigned char in[], unsigned char out[],
-                       unsigned char *roundKeys) {
+                       const unsigned char *roundKeys) {
   unsigned char state[4][Nb];
   unsigned int i, j, round;
 
@@ -512,7 +502,7 @@ void AES::GHASH(const unsigned char *H, const unsigned char *X, size_t len,
 }
 
 void AES::DecryptBlock(const unsigned char in[], unsigned char out[],
-                       unsigned char *roundKeys) {
+                       const unsigned char *roundKeys) {
   unsigned char state[4][Nb];
   unsigned int i, j, round;
 
@@ -601,7 +591,7 @@ void AES::MixColumns(unsigned char state[4][Nb]) {
   secure_zero(temp_state, sizeof(temp_state));
 }
 
-void AES::AddRoundKey(unsigned char state[4][Nb], unsigned char *key) {
+void AES::AddRoundKey(unsigned char state[4][Nb], const unsigned char *key) {
   unsigned int i, j;
 
   for (i = 0; i < 4; i++) {
