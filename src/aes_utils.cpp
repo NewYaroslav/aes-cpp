@@ -187,13 +187,6 @@ std::vector<uint8_t> generate_iv(std::size_t len) {
       "No secure random source available on this platform");
 }
 
-std::array<uint8_t, BLOCK_SIZE> generate_iv() {
-  auto iv_vec = generate_iv(BLOCK_SIZE);
-  std::array<uint8_t, BLOCK_SIZE> iv{};
-  std::copy_n(iv_vec.begin(), BLOCK_SIZE, iv.begin());
-  return iv;
-}
-
 std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data) {
   std::vector<uint8_t> padded = data;
   std::size_t padding = BLOCK_SIZE - (data.size() % BLOCK_SIZE);
@@ -263,7 +256,9 @@ template <class T>
 EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
                       AesMode mode) {
   AES aes(key_length_from_key(key));
-  auto iv = generate_iv();
+  auto iv_vec = generate_iv(BLOCK_SIZE);
+  std::array<uint8_t, BLOCK_SIZE> iv{};
+  std::copy_n(iv_vec.begin(), BLOCK_SIZE, iv.begin());
   const std::vector<uint8_t> *src = &plain;
   std::vector<uint8_t> padded;
   if (mode == AesMode::CBC) {
