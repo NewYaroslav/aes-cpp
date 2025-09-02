@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "AES.h"
-#include "secure_zero.h"
 
 namespace aescpp {
 

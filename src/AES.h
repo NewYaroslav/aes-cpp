@@ -14,6 +14,8 @@
 
 namespace aescpp {
 
+void secure_zero(void *p, size_t n);
+
 enum class AESKeyLength { AES_128, AES_192, AES_256 };
 
 class AES {

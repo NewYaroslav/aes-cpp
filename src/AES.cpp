@@ -1,17 +1,41 @@
 #include "AES.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 #include <stdexcept>
 
-#include "secure_zero.h"
+#if defined(__has_include)
+#if __has_include(<strings.h>)
+#include <strings.h>
+#endif
+#endif
+
+#if defined(_WIN32)
+#include <windows.h>
+#endif
 #if defined(__PCLMUL__) && (defined(__x86_64__) || defined(_M_X64) || \
                             defined(__i386) || defined(_M_IX86))
 #include <wmmintrin.h>
 #endif
 
 namespace aescpp {
+
+void secure_zero(void *p, size_t n) {
+#if defined(_WIN32)
+  SecureZeroMemory(p, n);
+#elif defined(explicit_bzero) || defined(__GLIBC__) || defined(__APPLE__) || \
+    defined(__OpenBSD__) || defined(__FreeBSD__)
+  explicit_bzero(p, n);
+#elif defined(__STDC_LIB_EXT1__)
+  memset_s(p, n, 0, n);
+#else
+  volatile unsigned char *v = static_cast<volatile unsigned char *>(p);
+  while (n--) *v++ = 0;
+#endif
+}
 
 static bool constant_time_eq(const unsigned char *a, const unsigned char *b,
                              size_t len) {
