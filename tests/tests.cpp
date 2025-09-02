@@ -1,10 +1,10 @@
+#include <aescpp/aes.hpp>
+#include <aescpp/aes_utils.hpp>
 #include <array>
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include "../src/AES.h"
-#include "../src/AESUtils.h"
 #include "gtest/gtest.h"
 
 const unsigned int BLOCK_BYTES_LENGTH = 16 * sizeof(unsigned char);
@@ -521,10 +521,9 @@ TEST(GCM, DecryptInvalidTag) {
 TEST(Utils, EncryptDecryptStringCBC) {
   std::string text = "hello world";
   std::array<uint8_t, 16> key = {0};
-  auto enc =
-      aescpp::aesutils::encrypt(text, key, aescpp::aesutils::AesMode::CBC);
-  std::string dec = aescpp::aesutils::decrypt_to_string(
-      enc, key, aescpp::aesutils::AesMode::CBC);
+  auto enc = aescpp::utils::encrypt(text, key, aescpp::utils::AesMode::CBC);
+  std::string dec =
+      aescpp::utils::decrypt_to_string(enc, key, aescpp::utils::AesMode::CBC);
   ASSERT_EQ(text, dec);
 }
 

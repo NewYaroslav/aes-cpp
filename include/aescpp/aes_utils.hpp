@@ -1,16 +1,15 @@
 #pragma once
 
+#include <aescpp/aes.hpp>
 #include <array>
 #include <chrono>
 #include <cstdint>
 #include <string>
 #include <vector>
 
-#include "AES.h"
-
 namespace aescpp {
 
-namespace aesutils {
+namespace utils {
 
 constexpr std::size_t BLOCK_SIZE = 16;
 
@@ -56,6 +55,6 @@ template <class T>
 std::string decrypt_to_string(const EncryptedData &data, const T &key,
                               AesMode mode);
 
-}  // namespace aesutils
+}  // namespace utils
 
 }  // namespace aescpp

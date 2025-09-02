@@ -37,11 +37,10 @@
 #endif
 #endif
 
+#include <aescpp/aes_utils.hpp>
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
-
-#include "AESUtils.h"
 
 #ifdef AESUTILS_TRUST_STD_RANDOM_DEVICE
 #include <random>
@@ -59,7 +58,7 @@
 
 namespace aescpp {
 
-namespace aesutils {
+namespace utils {
 
 namespace detail {
 
@@ -371,6 +370,6 @@ template std::string decrypt_to_string<std::array<uint8_t, 24>>(
 template std::string decrypt_to_string<std::array<uint8_t, 32>>(
     const EncryptedData &, const std::array<uint8_t, 32> &, AesMode);
 
-}  // namespace aesutils
+}  // namespace utils
 
 }  // namespace aescpp

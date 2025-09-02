@@ -1,9 +1,8 @@
 #include <sys/time.h>
 
+#include <aescpp/aes.hpp>
 #include <ctime>
 #include <iostream>
-
-#include "../src/AES.h"
 
 const unsigned int MICROSECONDS = 1000000;
 unsigned long getMicroseconds() {

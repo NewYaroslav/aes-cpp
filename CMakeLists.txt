@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 2.8)
 
 project(AES CXX)
 
-set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/AES.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/src/AESUtils.cpp)
-set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/aes.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/src/aes_utils.cpp)
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIR})
