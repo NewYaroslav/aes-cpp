@@ -94,8 +94,9 @@ std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
   return cachedRoundKeys;
 }
 
-unsigned char *AES::EncryptECB(const unsigned char in[], size_t inLen,
-                               const unsigned char key[]) {
+[[nodiscard]] unsigned char *AES::EncryptECB(const unsigned char in[],
+                                             size_t inLen,
+                                             const unsigned char key[]) {
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
@@ -106,8 +107,9 @@ unsigned char *AES::EncryptECB(const unsigned char in[], size_t inLen,
   return out.release();
 }
 
-unsigned char *AES::DecryptECB(const unsigned char in[], size_t inLen,
-                               const unsigned char key[]) {
+[[nodiscard]] unsigned char *AES::DecryptECB(const unsigned char in[],
+                                             size_t inLen,
+                                             const unsigned char key[]) {
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
@@ -118,9 +120,10 @@ unsigned char *AES::DecryptECB(const unsigned char in[], size_t inLen,
   return out.release();
 }
 
-unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
-                               const unsigned char key[],
-                               const unsigned char *iv) {
+[[nodiscard]] unsigned char *AES::EncryptCBC(const unsigned char in[],
+                                             size_t inLen,
+                                             const unsigned char key[],
+                                             const unsigned char *iv) {
   if (!key || !iv) throw std::invalid_argument("Null key or IV");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
@@ -138,9 +141,10 @@ unsigned char *AES::EncryptCBC(const unsigned char in[], size_t inLen,
   return out.release();
 }
 
-unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
-                               const unsigned char key[],
-                               const unsigned char *iv) {
+[[nodiscard]] unsigned char *AES::DecryptCBC(const unsigned char in[],
+                                             size_t inLen,
+                                             const unsigned char key[],
+                                             const unsigned char *iv) {
   if (!key || !iv) throw std::invalid_argument("Null key or IV");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
@@ -158,9 +162,10 @@ unsigned char *AES::DecryptCBC(const unsigned char in[], size_t inLen,
   return out.release();
 }
 
-unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
-                               const unsigned char key[],
-                               const unsigned char *iv) {
+[[nodiscard]] unsigned char *AES::EncryptCFB(const unsigned char in[],
+                                             size_t inLen,
+                                             const unsigned char key[],
+                                             const unsigned char *iv) {
   if (!key || !iv) throw std::invalid_argument("Null key or IV");
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
@@ -180,9 +185,10 @@ unsigned char *AES::EncryptCFB(const unsigned char in[], size_t inLen,
   return out.release();
 }
 
-unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
-                               const unsigned char key[],
-                               const unsigned char *iv) {
+[[nodiscard]] unsigned char *AES::DecryptCFB(const unsigned char in[],
+                                             size_t inLen,
+                                             const unsigned char key[],
+                                             const unsigned char *iv) {
   if (!key || !iv) throw std::invalid_argument("Null key or IV");
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
@@ -202,9 +208,10 @@ unsigned char *AES::DecryptCFB(const unsigned char in[], size_t inLen,
   return out.release();
 }
 
-unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
-                               const unsigned char key[],
-                               const unsigned char iv[]) {
+[[nodiscard]] unsigned char *AES::EncryptCTR(const unsigned char in[],
+                                             size_t inLen,
+                                             const unsigned char key[],
+                                             const unsigned char iv[]) {
   if (!key || !iv) throw std::invalid_argument("Null key or IV");
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
@@ -230,18 +237,18 @@ unsigned char *AES::EncryptCTR(const unsigned char in[], size_t inLen,
   return out.release();
 }
 
-unsigned char *AES::DecryptCTR(const unsigned char in[], size_t inLen,
-                               const unsigned char key[],
-                               const unsigned char iv[]) {
+[[nodiscard]] unsigned char *AES::DecryptCTR(const unsigned char in[],
+                                             size_t inLen,
+                                             const unsigned char key[],
+                                             const unsigned char iv[]) {
   if (!key || !iv) throw std::invalid_argument("Null key or IV");
   return EncryptCTR(in, inLen, key, iv);
 }
 
-unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
-                               const unsigned char key[],
-                               const unsigned char iv[],
-                               const unsigned char aad[], size_t aadLen,
-                               unsigned char tag[]) {
+[[nodiscard]] unsigned char *AES::EncryptGCM(
+    const unsigned char in[], size_t inLen, const unsigned char key[],
+    const unsigned char iv[], const unsigned char aad[], size_t aadLen,
+    unsigned char tag[]) {
   if (!key || !iv || (!aad && aadLen > 0) || !tag)
     throw std::invalid_argument("Null key, IV, AAD or tag");
   auto roundKeys = prepare_round_keys(key);
@@ -305,11 +312,10 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   return out.release();
 }
 
-unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
-                               const unsigned char key[],
-                               const unsigned char iv[],
-                               const unsigned char aad[], size_t aadLen,
-                               const unsigned char tag[]) {
+[[nodiscard]] unsigned char *AES::DecryptGCM(
+    const unsigned char in[], size_t inLen, const unsigned char key[],
+    const unsigned char iv[], const unsigned char aad[], size_t aadLen,
+    const unsigned char tag[]) {
   if (!key || !iv || (!aad && aadLen > 0) || !tag)
     throw std::invalid_argument("Null key, IV, AAD or tag");
   auto roundKeys = prepare_round_keys(key);
@@ -743,7 +749,7 @@ unsigned char *AES::VectorToArray(std::vector<unsigned char> &a) {
   return a.data();
 }
 
-std::vector<unsigned char> AES::EncryptECB(
+[[nodiscard]] std::vector<unsigned char> AES::EncryptECB(
     const std::vector<unsigned char> &in,
     const std::vector<unsigned char> &key) {
   std::unique_ptr<unsigned char[]> out(
@@ -753,8 +759,8 @@ std::vector<unsigned char> AES::EncryptECB(
   return v;
 }
 
-std::vector<unsigned char> AES::EncryptECB(std::vector<unsigned char> &&in,
-                                           std::vector<unsigned char> &&key) {
+[[nodiscard]] std::vector<unsigned char> AES::EncryptECB(
+    std::vector<unsigned char> &&in, std::vector<unsigned char> &&key) {
   std::unique_ptr<unsigned char[]> out(
       EncryptECB(in.data(), in.size(), key.data()));
   std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
@@ -762,7 +768,7 @@ std::vector<unsigned char> AES::EncryptECB(std::vector<unsigned char> &&in,
   return v;
 }
 
-std::vector<unsigned char> AES::DecryptECB(
+[[nodiscard]] std::vector<unsigned char> AES::DecryptECB(
     const std::vector<unsigned char> &in,
     const std::vector<unsigned char> &key) {
   std::unique_ptr<unsigned char[]> out(
@@ -772,8 +778,8 @@ std::vector<unsigned char> AES::DecryptECB(
   return v;
 }
 
-std::vector<unsigned char> AES::DecryptECB(std::vector<unsigned char> &&in,
-                                           std::vector<unsigned char> &&key) {
+[[nodiscard]] std::vector<unsigned char> AES::DecryptECB(
+    std::vector<unsigned char> &&in, std::vector<unsigned char> &&key) {
   std::unique_ptr<unsigned char[]> out(
       DecryptECB(in.data(), in.size(), key.data()));
   std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
@@ -781,7 +787,7 @@ std::vector<unsigned char> AES::DecryptECB(std::vector<unsigned char> &&in,
   return v;
 }
 
-std::vector<unsigned char> AES::EncryptCBC(
+[[nodiscard]] std::vector<unsigned char> AES::EncryptCBC(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
   std::unique_ptr<unsigned char[]> out(
@@ -791,9 +797,9 @@ std::vector<unsigned char> AES::EncryptCBC(
   return v;
 }
 
-std::vector<unsigned char> AES::EncryptCBC(std::vector<unsigned char> &&in,
-                                           std::vector<unsigned char> &&key,
-                                           std::vector<unsigned char> &&iv) {
+[[nodiscard]] std::vector<unsigned char> AES::EncryptCBC(
+    std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
+    std::vector<unsigned char> &&iv) {
   std::unique_ptr<unsigned char[]> out(
       EncryptCBC(in.data(), in.size(), key.data(), iv.data()));
   std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
@@ -801,7 +807,7 @@ std::vector<unsigned char> AES::EncryptCBC(std::vector<unsigned char> &&in,
   return v;
 }
 
-std::vector<unsigned char> AES::DecryptCBC(
+[[nodiscard]] std::vector<unsigned char> AES::DecryptCBC(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
   std::unique_ptr<unsigned char[]> out(
@@ -811,9 +817,9 @@ std::vector<unsigned char> AES::DecryptCBC(
   return v;
 }
 
-std::vector<unsigned char> AES::DecryptCBC(std::vector<unsigned char> &&in,
-                                           std::vector<unsigned char> &&key,
-                                           std::vector<unsigned char> &&iv) {
+[[nodiscard]] std::vector<unsigned char> AES::DecryptCBC(
+    std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
+    std::vector<unsigned char> &&iv) {
   std::unique_ptr<unsigned char[]> out(
       DecryptCBC(in.data(), in.size(), key.data(), iv.data()));
   std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
@@ -821,7 +827,7 @@ std::vector<unsigned char> AES::DecryptCBC(std::vector<unsigned char> &&in,
   return v;
 }
 
-std::vector<unsigned char> AES::EncryptCFB(
+[[nodiscard]] std::vector<unsigned char> AES::EncryptCFB(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
   std::unique_ptr<unsigned char[]> out(
@@ -831,9 +837,9 @@ std::vector<unsigned char> AES::EncryptCFB(
   return v;
 }
 
-std::vector<unsigned char> AES::EncryptCFB(std::vector<unsigned char> &&in,
-                                           std::vector<unsigned char> &&key,
-                                           std::vector<unsigned char> &&iv) {
+[[nodiscard]] std::vector<unsigned char> AES::EncryptCFB(
+    std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
+    std::vector<unsigned char> &&iv) {
   std::unique_ptr<unsigned char[]> out(
       EncryptCFB(in.data(), in.size(), key.data(), iv.data()));
   std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
@@ -841,7 +847,7 @@ std::vector<unsigned char> AES::EncryptCFB(std::vector<unsigned char> &&in,
   return v;
 }
 
-std::vector<unsigned char> AES::DecryptCFB(
+[[nodiscard]] std::vector<unsigned char> AES::DecryptCFB(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
   std::unique_ptr<unsigned char[]> out(
@@ -851,9 +857,9 @@ std::vector<unsigned char> AES::DecryptCFB(
   return v;
 }
 
-std::vector<unsigned char> AES::DecryptCFB(std::vector<unsigned char> &&in,
-                                           std::vector<unsigned char> &&key,
-                                           std::vector<unsigned char> &&iv) {
+[[nodiscard]] std::vector<unsigned char> AES::DecryptCFB(
+    std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
+    std::vector<unsigned char> &&iv) {
   std::unique_ptr<unsigned char[]> out(
       DecryptCFB(in.data(), in.size(), key.data(), iv.data()));
   std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
@@ -861,7 +867,7 @@ std::vector<unsigned char> AES::DecryptCFB(std::vector<unsigned char> &&in,
   return v;
 }
 
-std::vector<unsigned char> AES::EncryptCTR(
+[[nodiscard]] std::vector<unsigned char> AES::EncryptCTR(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
   std::unique_ptr<unsigned char[]> out(
@@ -871,9 +877,9 @@ std::vector<unsigned char> AES::EncryptCTR(
   return v;
 }
 
-std::vector<unsigned char> AES::EncryptCTR(std::vector<unsigned char> &&in,
-                                           std::vector<unsigned char> &&key,
-                                           std::vector<unsigned char> &&iv) {
+[[nodiscard]] std::vector<unsigned char> AES::EncryptCTR(
+    std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
+    std::vector<unsigned char> &&iv) {
   std::unique_ptr<unsigned char[]> out(
       EncryptCTR(in.data(), in.size(), key.data(), iv.data()));
   std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
@@ -881,7 +887,7 @@ std::vector<unsigned char> AES::EncryptCTR(std::vector<unsigned char> &&in,
   return v;
 }
 
-std::vector<unsigned char> AES::DecryptCTR(
+[[nodiscard]] std::vector<unsigned char> AES::DecryptCTR(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
   std::unique_ptr<unsigned char[]> out(
@@ -891,9 +897,9 @@ std::vector<unsigned char> AES::DecryptCTR(
   return v;
 }
 
-std::vector<unsigned char> AES::DecryptCTR(std::vector<unsigned char> &&in,
-                                           std::vector<unsigned char> &&key,
-                                           std::vector<unsigned char> &&iv) {
+[[nodiscard]] std::vector<unsigned char> AES::DecryptCTR(
+    std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
+    std::vector<unsigned char> &&iv) {
   std::unique_ptr<unsigned char[]> out(
       DecryptCTR(in.data(), in.size(), key.data(), iv.data()));
   std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
@@ -901,7 +907,7 @@ std::vector<unsigned char> AES::DecryptCTR(std::vector<unsigned char> &&in,
   return v;
 }
 
-std::vector<unsigned char> AES::EncryptGCM(
+[[nodiscard]] std::vector<unsigned char> AES::EncryptGCM(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv, const std::vector<unsigned char> &aad,
     std::vector<unsigned char> &tag) {
@@ -915,11 +921,10 @@ std::vector<unsigned char> AES::EncryptGCM(
   return v;
 }
 
-std::vector<unsigned char> AES::EncryptGCM(std::vector<unsigned char> &&in,
-                                           std::vector<unsigned char> &&key,
-                                           std::vector<unsigned char> &&iv,
-                                           std::vector<unsigned char> &&aad,
-                                           std::vector<unsigned char> &tag) {
+[[nodiscard]] std::vector<unsigned char> AES::EncryptGCM(
+    std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
+    std::vector<unsigned char> &&iv, std::vector<unsigned char> &&aad,
+    std::vector<unsigned char> &tag) {
   if (iv.size() != 12) throw std::invalid_argument("IV size must be 12 bytes");
   if (tag.size() > 16)
     throw std::invalid_argument("Tag size must be at most 16 bytes");
@@ -932,7 +937,7 @@ std::vector<unsigned char> AES::EncryptGCM(std::vector<unsigned char> &&in,
   return v;
 }
 
-std::vector<unsigned char> AES::DecryptGCM(
+[[nodiscard]] std::vector<unsigned char> AES::DecryptGCM(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv, const std::vector<unsigned char> &aad,
     const std::vector<unsigned char> &tag) {
@@ -949,11 +954,10 @@ std::vector<unsigned char> AES::DecryptGCM(
   return v;
 }
 
-std::vector<unsigned char> AES::DecryptGCM(std::vector<unsigned char> &&in,
-                                           std::vector<unsigned char> &&key,
-                                           std::vector<unsigned char> &&iv,
-                                           std::vector<unsigned char> &&aad,
-                                           std::vector<unsigned char> &&tag) {
+[[nodiscard]] std::vector<unsigned char> AES::DecryptGCM(
+    std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
+    std::vector<unsigned char> &&iv, std::vector<unsigned char> &&aad,
+    std::vector<unsigned char> &&tag) {
   if (iv.size() != 12) throw std::invalid_argument("IV size must be 12 bytes");
   if (tag.size() > 16)
     throw std::invalid_argument("Tag size must be at most 16 bytes");
