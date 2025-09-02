@@ -201,6 +201,9 @@ std::vector<uint8_t> remove_padding(const std::vector<uint8_t> &data) {
   if (data.empty()) {
     throw std::invalid_argument("Data is empty, cannot remove padding.");
   }
+  if (data.size() % BLOCK_SIZE != 0) {
+    throw std::invalid_argument("Data size is not a multiple of block size.");
+  }
   uint8_t padding = data.back();
   bool invalid = padding == 0 || padding > BLOCK_SIZE || padding > data.size();
   uint8_t diff = 0;
