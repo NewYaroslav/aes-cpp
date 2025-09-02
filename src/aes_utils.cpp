@@ -190,7 +190,7 @@ std::vector<uint8_t> generate_iv(std::size_t len) {
 std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data) {
   std::vector<uint8_t> padded = data;
   std::size_t padding = BLOCK_SIZE - (data.size() % BLOCK_SIZE);
-  padded.insert(padded.end(), padding, static_cast<uint8_t>(padding));
+  padded.resize(data.size() + padding, static_cast<uint8_t>(padding));
   return padded;
 }
 
