@@ -164,8 +164,15 @@ AES::~AES() {
 
 std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
     const unsigned char *key) {
-  std::lock_guard<std::mutex> lock(cacheMutex);
   const size_t keyLen = 4 * Nk;
+  {
+    AESCPP_SHARED_LOCK<AESCPP_SHARED_MUTEX> lock(cacheMutex);
+    if (cachedKey.size() == keyLen &&
+        constant_time_eq(cachedKey.data(), key, keyLen)) {
+      return cachedRoundKeys;
+    }
+  }
+  std::unique_lock<AESCPP_SHARED_MUTEX> lock(cacheMutex);
   if (cachedKey.size() != keyLen ||
       !constant_time_eq(cachedKey.data(), key, keyLen)) {
     secure_zero(cachedKey.data(), cachedKey.size());
