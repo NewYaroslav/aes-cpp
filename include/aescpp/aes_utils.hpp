@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __AESCPP_AES_UTILS_HPP_
+#define __AESCPP_AES_UTILS_HPP_
 
 #include <aescpp/aes.hpp>
 #include <array>
@@ -168,3 +169,5 @@ std::string decrypt_gcm_to_string(const GcmEncryptedData &data, const T &key,
 }  // namespace utils
 
 }  // namespace aescpp
+
+#endif  // __AESCPP_AES_UTILS_HPP_
