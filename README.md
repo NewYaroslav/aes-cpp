@@ -11,6 +11,12 @@ C++ AES(Advanced Encryption Standard) implementation
 ## Supported Modes
 ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an authentication tag for message integrity.
 
+## IV Generation
+`aescpp::utils` provides helpers for creating random IVs. `generate_iv()`
+returns a 16-byte IV suitable for block modes, while
+`generate_iv(len)` lets you request a specific length. Use 16 bytes for CBC,
+CFB and CTR; GCM recommends a 12-byte IV.
+
 ## Vector Overloads
 All encryption and decryption methods have overloads that accept `std::vector<unsigned char>` in addition to raw pointer APIs:
 ```c++
@@ -39,18 +45,35 @@ auto cipher   = aes.EncryptCBC(plain, sizeof(plain), key, iv);
 auto restored = aes.DecryptCBC(cipher.get(), sizeof(plain), key, iv);
 ```
 
-### GCM Tagging
-GCM mode requires a 12-byte (96-bit) IV.
+### encrypt/decrypt with `AesMode::CTR`
 ```c++
-#include <aescpp/aes.hpp>
+#include <aescpp/aes_utils.hpp>
 
-unsigned char gcm_iv[12] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
-                             0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b };
-unsigned char tag[16];
-AES aesGcm(AESKeyLength::AES_128);
-auto cipherGcm =
-    aesGcm.EncryptGCM(plain, sizeof(plain), key, gcm_iv, tag);
-// 'tag' now contains the authentication tag for the ciphertext
+using namespace aescpp;
+
+std::string text = "CTR mode example";
+std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+auto encrypted = utils::encrypt(text, key, utils::AesMode::CTR);
+auto restored =
+    utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR);
+```
+
+### GCM Helpers
+`encrypt_gcm` and `decrypt_gcm` manage the 12-byte IV, optional additional
+authenticated data (AAD), and the authentication tag produced by GCM:
+```c++
+#include <aescpp/aes_utils.hpp>
+
+using namespace aescpp;
+
+std::string text = "GCM example";
+std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+std::vector<uint8_t> aad = { 'h', 'e', 'a', 'd', 'e', 'r' };
+auto data = utils::encrypt_gcm(text, key, aad);
+// data.tag holds the 16-byte authentication tag
+auto plain = utils::decrypt_gcm_to_string(data, key, aad);
 ```
 
 
