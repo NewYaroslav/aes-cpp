@@ -131,7 +131,7 @@ std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
   std::lock_guard<std::mutex> lock(cacheMutex);
   const size_t keyLen = 4 * Nk;
   if (cachedKey.size() != keyLen ||
-      !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+      !constant_time_eq(cachedKey.data(), key, keyLen)) {
     secure_zero(cachedKey.data(), cachedKey.size());
     cachedKey.assign(key, key + keyLen);
     auto newRoundKeys =
