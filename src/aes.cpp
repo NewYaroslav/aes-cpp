@@ -56,8 +56,8 @@ static bool constant_time_eq(const unsigned char *a, const unsigned char *b,
   return diff == 0;
 }
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || \
-    defined(_M_IX86)
+#if defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
+                         defined(__i386) || defined(_M_IX86))
 static bool has_aesni() {
 #if defined(_MSC_VER)
   int info[4];
@@ -81,8 +81,6 @@ static bool has_aesni() {
   return false;
 #endif
 }
-#else
-static bool has_aesni() { return false; }
 #endif
 
 static constexpr unsigned char R[16] = {

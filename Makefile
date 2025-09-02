@@ -51,8 +51,8 @@ clean:
 	docker-compose exec aes rm -rf bin/*
 
 
-workflow_build_test: ; g++ $(FLAGS) $(CXXFLAGS) -c ./src/aes.cpp -o bin/aes.o; g++ $(FLAGS) $(CXXFLAGS) -c ./src/aes_utils.cpp -o bin/aes_utils.o; g++ $(TEST_FLAGS) $(CXXFLAGS) -g bin/aes.o bin/aes_utils.o ./tests/tests.cpp $(GTEST_LIBS) -o bin/test
+workflow_build_test: ; g++ $(FLAGS) $(CXXFLAGS) -c ./src/aes.cpp -o bin/aes.o; g++ $(FLAGS) $(CXXFLAGS) -c ./src/aes_utils.cpp -o bin/aes_utils.o; g++ $(FLAGS) $(CXXFLAGS) $(TEST_FLAGS) -g bin/aes.o bin/aes_utils.o ./tests/tests.cpp $(GTEST_LIBS) -o bin/test
 
 workflow_build_speed_test:
-	g++ $(FLAGS) -O2 ./src/aes.cpp ./src/aes_utils.cpp ./speedtest/main.cpp $(PLATFORM_LIBS) -o bin/speedtest
+	g++ $(FLAGS) $(CXXFLAGS) -O2 ./src/aes.cpp ./src/aes_utils.cpp ./speedtest/main.cpp $(PLATFORM_LIBS) -o bin/speedtest
 
