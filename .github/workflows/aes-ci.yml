@@ -4,7 +4,15 @@ name: CI-Linux
 
 on:
   push:
+    branches:
+      - main
+      - release/**
+      - stable
   pull_request:
+    branches:
+      - main
+      - release/**
+      - codex/**
   workflow_dispatch:
 
 jobs:
