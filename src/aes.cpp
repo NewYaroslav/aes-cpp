@@ -47,7 +47,7 @@ static bool constant_time_eq(const unsigned char *a, const unsigned char *b,
 
 static constexpr unsigned char R[16] = {
     0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0x87};  // Полином: x^128 + x^7 + x^2 + x + 1
+    0, 0, 0, 0, 0, 0, 0, 0x87};  // Polynomial: x^128 + x^7 + x^2 + x + 1
 
 static constexpr uint8_t RCON_TABLE[] = {0x01, 0x02, 0x04, 0x08, 0x10,
                                          0x20, 0x40, 0x80, 0x1B, 0x36,
@@ -255,19 +255,19 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
 
-  // Генерация H
+  // Compute hash subkey H
   unsigned char H[16] = {0};
   unsigned char zeroBlock[16] = {0};
   auto rk = const_cast<unsigned char *>(roundKeys->data());
   EncryptBlock(zeroBlock, H, rk);
 
-  // Шифрование данных в режиме CTR
+  // Encrypt data in CTR mode
   unsigned char ctr[16] = {0};
-  memcpy(ctr, iv, 12);  // IV занимает 12 байт
-  ctr[15] = 1;  // Установить начальное значение счетчика
+  memcpy(ctr, iv, 12);  // IV is 12 bytes
+  ctr[15] = 1;          // Set initial counter value
   unsigned char encryptedCtr[16] = {0};
 
-  // GHASH для AAD без промежуточных буферов
+  // GHASH for AAD without intermediate buffers
   memset(tag, 0, 16);
   for (size_t i = 0; i < aadLen; i += 16) {
     GHASH(H, aad + i, std::min<size_t>(16, aadLen - i), tag);
@@ -280,7 +280,7 @@ unsigned char *AES::EncryptGCM(const unsigned char in[], size_t inLen,
     XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
     GHASH(H, out.get() + i, blockLen, tag);
 
-    // Увеличиваем счетчик
+    // Increment counter
     for (int j = 15; j >= 0; --j) {
       if (++ctr[j]) break;
     }
@@ -324,20 +324,20 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
   auto roundKeys = prepare_round_keys(key);
   auto out = std::make_unique<unsigned char[]>(inLen);
 
-  // Генерация H
+  // Compute hash subkey H
   unsigned char H[16] = {0};
   unsigned char zeroBlock[16] = {0};
   auto rk = const_cast<unsigned char *>(roundKeys->data());
   EncryptBlock(zeroBlock, H, rk);
 
-  // Расшифровка данных в режиме CTR
+  // Decrypt data in CTR mode
   unsigned char ctr[16] = {0};
   memcpy(ctr, iv, 12);
-  ctr[15] = 1;  // Установить начальное значение счетчика
+  ctr[15] = 1;  // Set initial counter value
   unsigned char encryptedCtr[16] = {0};
 
   unsigned char calculatedTag[16] = {0};
-  // GHASH для AAD без формирования объединённого буфера
+  // GHASH for AAD without forming a concatenated buffer
   for (size_t i = 0; i < aadLen; i += 16) {
     GHASH(H, aad + i, std::min<size_t>(16, aadLen - i), calculatedTag);
   }
@@ -349,7 +349,7 @@ unsigned char *AES::DecryptGCM(const unsigned char in[], size_t inLen,
     XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
     GHASH(H, in + i, blockLen, calculatedTag);
 
-    // Увеличиваем счетчик
+    // Increment counter
     for (int j = 15; j >= 0; --j) {
       if (++ctr[j]) break;
     }
@@ -478,8 +478,8 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
       }
     }
 
-    // Сдвиг V влево
-    unsigned char carry = V[0] & 0x80;  // Сохранить старший бит
+    // Shift V left
+    unsigned char carry = V[0] & 0x80;  // Preserve most significant bit
 
     for (int j = 0; j < 15; j++) {
       V[j] = (V[j] << 1) | (V[j + 1] >> 7);
@@ -487,7 +487,7 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
 
     V[15] <<= 1;
 
-    // Если старший бит был установлен, применяем редукцию
+    // If the most significant bit was set, apply reduction
     if (carry) {
       for (int j = 0; j < 16; j++) {
         V[j] ^= R[j];
