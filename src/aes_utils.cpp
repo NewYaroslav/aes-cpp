@@ -138,7 +138,14 @@ std::vector<uint8_t> generate_iv(std::size_t len) {
 #if defined(AESUTILS_TRUST_STD_RANDOM_DEVICE)
   {
     std::random_device rd;
-    for (auto &b : iv) b = static_cast<uint8_t>(rd());
+    std::size_t produced = 0;
+    while (produced < iv.size()) {
+      uint32_t r = rd();
+      std::size_t to_copy = std::min(iv.size() - produced, sizeof(r));
+      std::copy_n(reinterpret_cast<const uint8_t *>(&r), to_copy,
+                  iv.begin() + static_cast<std::ptrdiff_t>(produced));
+      produced += to_copy;
+    }
     return iv;
   }
 #endif
