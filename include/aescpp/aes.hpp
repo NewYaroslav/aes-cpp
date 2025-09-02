@@ -376,6 +376,37 @@ class AES {
   std::shared_ptr<const std::vector<unsigned char>> prepare_round_keys(
       const unsigned char *key);
 
+  void EncryptECB(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], unsigned char out[]);
+  void DecryptECB(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], unsigned char out[]);
+  void EncryptCBC(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char *iv,
+                  unsigned char out[]);
+  void DecryptCBC(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char *iv,
+                  unsigned char out[]);
+  void EncryptCFB(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char *iv,
+                  unsigned char out[]);
+  void DecryptCFB(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char *iv,
+                  unsigned char out[]);
+  void EncryptCTR(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char iv[],
+                  unsigned char out[]);
+  void DecryptCTR(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char iv[],
+                  unsigned char out[]);
+  void EncryptGCM(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char iv[],
+                  const unsigned char aad[], size_t aadLen, unsigned char tag[],
+                  unsigned char out[]);
+  void DecryptGCM(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char iv[],
+                  const unsigned char aad[], size_t aadLen,
+                  const unsigned char tag[], unsigned char out[]);
+
   void EncryptBlock(const unsigned char in[], unsigned char out[],
                     const unsigned char *roundKeys);
 

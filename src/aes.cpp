@@ -142,86 +142,134 @@ std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
   return cachedRoundKeys;
 }
 
-AESCPP_NODISCARD unsigned char *AES::EncryptECB(const unsigned char in[],
-                                                size_t inLen,
-                                                const unsigned char key[]) {
+void AES::EncryptECB(const unsigned char in[], size_t inLen,
+                     const unsigned char key[], unsigned char out[]) {
   if (!key) throw std::invalid_argument("Null key");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
-  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(in + i, out.get() + i, roundKeys->data());
+    EncryptBlock(in + i, out + i, roundKeys->data());
   }
+}
 
+AESCPP_NODISCARD unsigned char *AES::EncryptECB(const unsigned char in[],
+                                                size_t inLen,
+                                                const unsigned char key[]) {
+  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
+  EncryptECB(in, inLen, key, out.get());
   return out.release();
+}
+
+void AES::DecryptECB(const unsigned char in[], size_t inLen,
+                     const unsigned char key[], unsigned char out[]) {
+  if (!key) throw std::invalid_argument("Null key");
+  CheckLength(inLen);
+  auto roundKeys = prepare_round_keys(key);
+  for (size_t i = 0; i < inLen; i += blockBytesLen) {
+    DecryptBlock(in + i, out + i, roundKeys->data());
+  }
 }
 
 AESCPP_NODISCARD unsigned char *AES::DecryptECB(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[]) {
+  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
+  DecryptECB(in, inLen, key, out.get());
+  return out.release();
+}
+
+void AES::EncryptCBC(const unsigned char in[], size_t inLen,
+                     const unsigned char key[], const unsigned char *iv,
+                     unsigned char out[]) {
   if (!key) throw std::invalid_argument("Null key");
+  if (!iv) throw std::invalid_argument("Null IV");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
-  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
+  unsigned char block[blockBytesLen];
+  memcpy(block, iv, blockBytesLen);
+
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    DecryptBlock(in + i, out.get() + i, roundKeys->data());
+    XorBlocks(block, in + i, block, blockBytesLen);
+    EncryptBlock(block, out + i, roundKeys->data());
+    memcpy(block, out + i, blockBytesLen);
   }
 
-  return out.release();
+  secure_zero(block, sizeof(block));
 }
 
 AESCPP_NODISCARD unsigned char *AES::EncryptCBC(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char *iv) {
+  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
+  EncryptCBC(in, inLen, key, iv, out.get());
+  return out.release();
+}
+
+void AES::DecryptCBC(const unsigned char in[], size_t inLen,
+                     const unsigned char key[], const unsigned char *iv,
+                     unsigned char out[]) {
   if (!key) throw std::invalid_argument("Null key");
   if (!iv) throw std::invalid_argument("Null IV");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
-  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
   unsigned char block[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    XorBlocks(block, in + i, block, blockBytesLen);
-    EncryptBlock(block, out.get() + i, roundKeys->data());
-    memcpy(block, out.get() + i, blockBytesLen);
+    DecryptBlock(in + i, out + i, roundKeys->data());
+    XorBlocks(block, out + i, out + i, blockBytesLen);
+    memcpy(block, in + i, blockBytesLen);
   }
 
   secure_zero(block, sizeof(block));
-  return out.release();
 }
 
 AESCPP_NODISCARD unsigned char *AES::DecryptCBC(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char *iv) {
+  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
+  DecryptCBC(in, inLen, key, iv, out.get());
+  return out.release();
+}
+
+void AES::EncryptCFB(const unsigned char in[], size_t inLen,
+                     const unsigned char key[], const unsigned char *iv,
+                     unsigned char out[]) {
   if (!key) throw std::invalid_argument("Null key");
   if (!iv) throw std::invalid_argument("Null IV");
-  CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
-  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
   unsigned char block[blockBytesLen];
+  unsigned char encryptedBlock[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    DecryptBlock(in + i, out.get() + i, roundKeys->data());
-    XorBlocks(block, out.get() + i, out.get() + i, blockBytesLen);
-    memcpy(block, in + i, blockBytesLen);
+    EncryptBlock(block, encryptedBlock, roundKeys->data());
+    size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
+    XorBlocks(in + i, encryptedBlock, out + i, blockLen);
+    memcpy(block, out + i, blockLen);
   }
 
   secure_zero(block, sizeof(block));
-  return out.release();
+  secure_zero(encryptedBlock, sizeof(encryptedBlock));
 }
 
 AESCPP_NODISCARD unsigned char *AES::EncryptCFB(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char *iv) {
+  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
+  EncryptCFB(in, inLen, key, iv, out.get());
+  return out.release();
+}
+
+void AES::DecryptCFB(const unsigned char in[], size_t inLen,
+                     const unsigned char key[], const unsigned char *iv,
+                     unsigned char out[]) {
   if (!key) throw std::invalid_argument("Null key");
   if (!iv) throw std::invalid_argument("Null IV");
   auto roundKeys = prepare_round_keys(key);
-  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
   unsigned char block[blockBytesLen];
   unsigned char encryptedBlock[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
@@ -229,47 +277,29 @@ AESCPP_NODISCARD unsigned char *AES::EncryptCFB(const unsigned char in[],
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     EncryptBlock(block, encryptedBlock, roundKeys->data());
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
-    XorBlocks(in + i, encryptedBlock, out.get() + i, blockLen);
-    memcpy(block, out.get() + i, blockLen);
+    XorBlocks(in + i, encryptedBlock, out + i, blockLen);
+    memcpy(block, in + i, blockLen);
   }
 
   secure_zero(block, sizeof(block));
   secure_zero(encryptedBlock, sizeof(encryptedBlock));
-  return out.release();
 }
 
 AESCPP_NODISCARD unsigned char *AES::DecryptCFB(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char *iv) {
-  if (!key) throw std::invalid_argument("Null key");
-  if (!iv) throw std::invalid_argument("Null IV");
-  auto roundKeys = prepare_round_keys(key);
   auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
-  unsigned char block[blockBytesLen];
-  unsigned char encryptedBlock[blockBytesLen];
-  memcpy(block, iv, blockBytesLen);
-
-  for (size_t i = 0; i < inLen; i += blockBytesLen) {
-    EncryptBlock(block, encryptedBlock, roundKeys->data());
-    size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
-    XorBlocks(in + i, encryptedBlock, out.get() + i, blockLen);
-    memcpy(block, in + i, blockLen);
-  }
-
-  secure_zero(block, sizeof(block));
-  secure_zero(encryptedBlock, sizeof(encryptedBlock));
+  DecryptCFB(in, inLen, key, iv, out.get());
   return out.release();
 }
 
-AESCPP_NODISCARD unsigned char *AES::EncryptCTR(const unsigned char in[],
-                                                size_t inLen,
-                                                const unsigned char key[],
-                                                const unsigned char iv[]) {
+void AES::EncryptCTR(const unsigned char in[], size_t inLen,
+                     const unsigned char key[], const unsigned char iv[],
+                     unsigned char out[]) {
   if (!key) throw std::invalid_argument("Null key");
   if (!iv) throw std::invalid_argument("Null IV");
   auto roundKeys = prepare_round_keys(key);
-  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
   unsigned char counter[blockBytesLen];
   unsigned char encryptedCounter[blockBytesLen];
   memcpy(counter, iv, blockBytesLen);
@@ -278,7 +308,7 @@ AESCPP_NODISCARD unsigned char *AES::EncryptCTR(const unsigned char in[],
     EncryptBlock(counter, encryptedCounter, roundKeys->data());
 
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
-    XorBlocks(in + i, encryptedCounter, out.get() + i, blockLen);
+    XorBlocks(in + i, encryptedCounter, out + i, blockLen);
 
     for (int j = blockBytesLen - 1; j >= 0; --j) {
       if (++counter[j] != 0) {
@@ -289,27 +319,40 @@ AESCPP_NODISCARD unsigned char *AES::EncryptCTR(const unsigned char in[],
 
   secure_zero(counter, sizeof(counter));
   secure_zero(encryptedCounter, sizeof(encryptedCounter));
+}
+
+AESCPP_NODISCARD unsigned char *AES::EncryptCTR(const unsigned char in[],
+                                                size_t inLen,
+                                                const unsigned char key[],
+                                                const unsigned char iv[]) {
+  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
+  EncryptCTR(in, inLen, key, iv, out.get());
   return out.release();
+}
+
+void AES::DecryptCTR(const unsigned char in[], size_t inLen,
+                     const unsigned char key[], const unsigned char iv[],
+                     unsigned char out[]) {
+  EncryptCTR(in, inLen, key, iv, out);
 }
 
 AESCPP_NODISCARD unsigned char *AES::DecryptCTR(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char iv[]) {
-  if (!key) throw std::invalid_argument("Null key");
-  if (!iv) throw std::invalid_argument("Null IV");
-  return EncryptCTR(in, inLen, key, iv);
+  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
+  DecryptCTR(in, inLen, key, iv, out.get());
+  return out.release();
 }
 
-AESCPP_NODISCARD unsigned char *AES::EncryptGCM(
-    const unsigned char in[], size_t inLen, const unsigned char key[],
-    const unsigned char iv[], const unsigned char aad[], size_t aadLen,
-    unsigned char tag[]) {
+void AES::EncryptGCM(const unsigned char in[], size_t inLen,
+                     const unsigned char key[], const unsigned char iv[],
+                     const unsigned char aad[], size_t aadLen,
+                     unsigned char tag[], unsigned char out[]) {
   if (!key) throw std::invalid_argument("Null key");
   if (!iv || (!aad && aadLen > 0) || !tag)
     throw std::invalid_argument("Null IV, AAD or tag");
   auto roundKeys = prepare_round_keys(key);
-  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
 
   // Compute hash subkey H
   unsigned char H[16] = {0};
@@ -332,8 +375,8 @@ AESCPP_NODISCARD unsigned char *AES::EncryptGCM(
     EncryptBlock(ctr, encryptedCtr, roundKeys->data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
-    XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
-    GHASH(H, out.get() + i, blockLen, tag);
+    XorBlocks(in + i, encryptedCtr, out + i, blockLen);
+    GHASH(H, out + i, blockLen, tag);
 
     // Increment counter
     for (int j = 15; j >= 0; --j) {
@@ -366,18 +409,25 @@ AESCPP_NODISCARD unsigned char *AES::EncryptGCM(
   secure_zero(encryptedCtr, sizeof(encryptedCtr));
   secure_zero(J0, sizeof(J0));
   secure_zero(S, sizeof(S));
+}
+
+AESCPP_NODISCARD unsigned char *AES::EncryptGCM(
+    const unsigned char in[], size_t inLen, const unsigned char key[],
+    const unsigned char iv[], const unsigned char aad[], size_t aadLen,
+    unsigned char tag[]) {
+  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
+  EncryptGCM(in, inLen, key, iv, aad, aadLen, tag, out.get());
   return out.release();
 }
 
-AESCPP_NODISCARD unsigned char *AES::DecryptGCM(
-    const unsigned char in[], size_t inLen, const unsigned char key[],
-    const unsigned char iv[], const unsigned char aad[], size_t aadLen,
-    const unsigned char tag[]) {
+void AES::DecryptGCM(const unsigned char in[], size_t inLen,
+                     const unsigned char key[], const unsigned char iv[],
+                     const unsigned char aad[], size_t aadLen,
+                     const unsigned char tag[], unsigned char out[]) {
   if (!key) throw std::invalid_argument("Null key");
   if (!iv || (!aad && aadLen > 0) || !tag)
     throw std::invalid_argument("Null IV, AAD or tag");
   auto roundKeys = prepare_round_keys(key);
-  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
 
   // Compute hash subkey H
   unsigned char H[16] = {0};
@@ -400,7 +450,7 @@ AESCPP_NODISCARD unsigned char *AES::DecryptGCM(
     EncryptBlock(ctr, encryptedCtr, roundKeys->data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
-    XorBlocks(in + i, encryptedCtr, out.get() + i, blockLen);
+    XorBlocks(in + i, encryptedCtr, out + i, blockLen);
     GHASH(H, in + i, blockLen, calculatedTag);
 
     // Increment counter
@@ -438,10 +488,17 @@ AESCPP_NODISCARD unsigned char *AES::DecryptGCM(
   secure_zero(S, sizeof(S));
 
   if (!tagMatch) {
-    secure_zero(out.get(), inLen);
+    secure_zero(out, inLen);
     throw std::runtime_error("Authentication failed");
   }
+}
 
+AESCPP_NODISCARD unsigned char *AES::DecryptGCM(
+    const unsigned char in[], size_t inLen, const unsigned char key[],
+    const unsigned char iv[], const unsigned char aad[], size_t aadLen,
+    const unsigned char tag[]) {
+  auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
+  DecryptGCM(in, inLen, key, iv, aad, aadLen, tag, out.get());
   return out.release();
 }
 
@@ -907,159 +964,127 @@ unsigned char *AES::VectorToArray(std::vector<unsigned char> &a) {
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptECB(
     const std::vector<unsigned char> &in,
     const std::vector<unsigned char> &key) {
-  std::unique_ptr<unsigned char[]> out(
-      EncryptECB(in.data(), in.size(), key.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  EncryptECB(in.data(), in.size(), key.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptECB(
     std::vector<unsigned char> &&in, std::vector<unsigned char> &&key) {
-  std::unique_ptr<unsigned char[]> out(
-      EncryptECB(in.data(), in.size(), key.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  EncryptECB(in.data(), in.size(), key.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptECB(
     const std::vector<unsigned char> &in,
     const std::vector<unsigned char> &key) {
-  std::unique_ptr<unsigned char[]> out(
-      DecryptECB(in.data(), in.size(), key.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  DecryptECB(in.data(), in.size(), key.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptECB(
     std::vector<unsigned char> &&in, std::vector<unsigned char> &&key) {
-  std::unique_ptr<unsigned char[]> out(
-      DecryptECB(in.data(), in.size(), key.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  DecryptECB(in.data(), in.size(), key.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptCBC(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  std::unique_ptr<unsigned char[]> out(
-      EncryptCBC(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  EncryptCBC(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptCBC(
     std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
     std::vector<unsigned char> &&iv) {
-  std::unique_ptr<unsigned char[]> out(
-      EncryptCBC(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  EncryptCBC(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptCBC(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  std::unique_ptr<unsigned char[]> out(
-      DecryptCBC(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  DecryptCBC(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptCBC(
     std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
     std::vector<unsigned char> &&iv) {
-  std::unique_ptr<unsigned char[]> out(
-      DecryptCBC(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  DecryptCBC(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptCFB(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  std::unique_ptr<unsigned char[]> out(
-      EncryptCFB(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  EncryptCFB(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptCFB(
     std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
     std::vector<unsigned char> &&iv) {
-  std::unique_ptr<unsigned char[]> out(
-      EncryptCFB(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  EncryptCFB(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptCFB(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  std::unique_ptr<unsigned char[]> out(
-      DecryptCFB(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  DecryptCFB(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptCFB(
     std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
     std::vector<unsigned char> &&iv) {
-  std::unique_ptr<unsigned char[]> out(
-      DecryptCFB(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  DecryptCFB(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptCTR(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  std::unique_ptr<unsigned char[]> out(
-      EncryptCTR(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  EncryptCTR(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptCTR(
     std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
     std::vector<unsigned char> &&iv) {
-  std::unique_ptr<unsigned char[]> out(
-      EncryptCTR(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  EncryptCTR(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptCTR(
     const std::vector<unsigned char> &in, const std::vector<unsigned char> &key,
     const std::vector<unsigned char> &iv) {
-  std::unique_ptr<unsigned char[]> out(
-      DecryptCTR(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  DecryptCTR(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptCTR(
     std::vector<unsigned char> &&in, std::vector<unsigned char> &&key,
     std::vector<unsigned char> &&iv) {
-  std::unique_ptr<unsigned char[]> out(
-      DecryptCTR(in.data(), in.size(), key.data(), iv.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  DecryptCTR(in.data(), in.size(), key.data(), iv.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptGCM(
@@ -1068,12 +1093,10 @@ AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptGCM(
     std::vector<unsigned char> &tag) {
   if (iv.size() != 12) throw std::invalid_argument("IV size must be 12 bytes");
   if (tag.size() < 16) tag.resize(16);
-  std::unique_ptr<unsigned char[]> out(
-      EncryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
-                 aad.size(), tag.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  EncryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
+             aad.size(), tag.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptGCM(
@@ -1084,12 +1107,10 @@ AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptGCM(
   if (tag.size() > 16)
     throw std::invalid_argument("Tag size must be at most 16 bytes");
   if (tag.size() < 16) tag.resize(16);
-  std::unique_ptr<unsigned char[]> out(
-      EncryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
-                 aad.size(), tag.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  EncryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
+             aad.size(), tag.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptGCM(
@@ -1101,12 +1122,10 @@ AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptGCM(
     throw std::invalid_argument("Tag size must be at most 16 bytes");
   std::vector<unsigned char> tagCopy = tag;
   if (tagCopy.size() < 16) tagCopy.resize(16);
-  std::unique_ptr<unsigned char[]> out(
-      DecryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
-                 aad.size(), tagCopy.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  DecryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
+             aad.size(), tagCopy.data(), out.data());
+  return out;
 }
 
 AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptGCM(
@@ -1117,12 +1136,10 @@ AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptGCM(
   if (tag.size() > 16)
     throw std::invalid_argument("Tag size must be at most 16 bytes");
   if (tag.size() < 16) tag.resize(16);
-  std::unique_ptr<unsigned char[]> out(
-      DecryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
-                 aad.size(), tag.data()));
-  std::vector<unsigned char> v = ArrayToVector(out.get(), in.size());
-  secure_zero(out.get(), in.size());
-  return v;
+  std::vector<unsigned char> out(in.size());
+  DecryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
+             aad.size(), tag.data(), out.data());
+  return out;
 }
 
 }  // namespace aescpp
