@@ -24,10 +24,13 @@ bool fill_os_random(void *data, size_t len) noexcept;
 
 }  // namespace detail
 
-/// \brief Generate a random IV of specified length.
-/// \param len Required IV length in bytes.
-/// \return Vector containing the IV.
-std::vector<uint8_t> generate_iv(std::size_t len);
+/// \brief Generate a random 12-byte IV.
+/// \return Array containing the IV.
+std::array<uint8_t, 12> generate_iv_12();
+
+/// \brief Generate a random 16-byte IV.
+/// \return Array containing the IV.
+std::array<uint8_t, 16> generate_iv_16();
 
 /// \brief Add PKCS#7 padding to data.
 /// \param data Input data.
