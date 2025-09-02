@@ -144,6 +144,7 @@ std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
 AESCPP_NODISCARD unsigned char *AES::EncryptECB(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[]) {
+  if (!key) throw std::invalid_argument("Null key");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
@@ -157,6 +158,7 @@ AESCPP_NODISCARD unsigned char *AES::EncryptECB(const unsigned char in[],
 AESCPP_NODISCARD unsigned char *AES::DecryptECB(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[]) {
+  if (!key) throw std::invalid_argument("Null key");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
@@ -171,7 +173,8 @@ AESCPP_NODISCARD unsigned char *AES::EncryptCBC(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char *iv) {
-  if (!key || !iv) throw std::invalid_argument("Null key or IV");
+  if (!key) throw std::invalid_argument("Null key");
+  if (!iv) throw std::invalid_argument("Null IV");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
@@ -192,7 +195,8 @@ AESCPP_NODISCARD unsigned char *AES::DecryptCBC(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char *iv) {
-  if (!key || !iv) throw std::invalid_argument("Null key or IV");
+  if (!key) throw std::invalid_argument("Null key");
+  if (!iv) throw std::invalid_argument("Null IV");
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
@@ -213,7 +217,8 @@ AESCPP_NODISCARD unsigned char *AES::EncryptCFB(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char *iv) {
-  if (!key || !iv) throw std::invalid_argument("Null key or IV");
+  if (!key) throw std::invalid_argument("Null key");
+  if (!iv) throw std::invalid_argument("Null IV");
   auto roundKeys = prepare_round_keys(key);
   auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
   unsigned char block[blockBytesLen];
@@ -236,7 +241,8 @@ AESCPP_NODISCARD unsigned char *AES::DecryptCFB(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char *iv) {
-  if (!key || !iv) throw std::invalid_argument("Null key or IV");
+  if (!key) throw std::invalid_argument("Null key");
+  if (!iv) throw std::invalid_argument("Null IV");
   auto roundKeys = prepare_round_keys(key);
   auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
   unsigned char block[blockBytesLen];
@@ -259,7 +265,8 @@ AESCPP_NODISCARD unsigned char *AES::EncryptCTR(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char iv[]) {
-  if (!key || !iv) throw std::invalid_argument("Null key or IV");
+  if (!key) throw std::invalid_argument("Null key");
+  if (!iv) throw std::invalid_argument("Null IV");
   auto roundKeys = prepare_round_keys(key);
   auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
   unsigned char counter[blockBytesLen];
@@ -288,7 +295,8 @@ AESCPP_NODISCARD unsigned char *AES::DecryptCTR(const unsigned char in[],
                                                 size_t inLen,
                                                 const unsigned char key[],
                                                 const unsigned char iv[]) {
-  if (!key || !iv) throw std::invalid_argument("Null key or IV");
+  if (!key) throw std::invalid_argument("Null key");
+  if (!iv) throw std::invalid_argument("Null IV");
   return EncryptCTR(in, inLen, key, iv);
 }
 
@@ -296,8 +304,9 @@ AESCPP_NODISCARD unsigned char *AES::EncryptGCM(
     const unsigned char in[], size_t inLen, const unsigned char key[],
     const unsigned char iv[], const unsigned char aad[], size_t aadLen,
     unsigned char tag[]) {
-  if (!key || !iv || (!aad && aadLen > 0) || !tag)
-    throw std::invalid_argument("Null key, IV, AAD or tag");
+  if (!key) throw std::invalid_argument("Null key");
+  if (!iv || (!aad && aadLen > 0) || !tag)
+    throw std::invalid_argument("Null IV, AAD or tag");
   auto roundKeys = prepare_round_keys(key);
   auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
 
@@ -363,8 +372,9 @@ AESCPP_NODISCARD unsigned char *AES::DecryptGCM(
     const unsigned char in[], size_t inLen, const unsigned char key[],
     const unsigned char iv[], const unsigned char aad[], size_t aadLen,
     const unsigned char tag[]) {
-  if (!key || !iv || (!aad && aadLen > 0) || !tag)
-    throw std::invalid_argument("Null key, IV, AAD or tag");
+  if (!key) throw std::invalid_argument("Null key");
+  if (!iv || (!aad && aadLen > 0) || !tag)
+    throw std::invalid_argument("Null IV, AAD or tag");
   auto roundKeys = prepare_round_keys(key);
   auto out = AESCPP_MAKE_UNIQUE(unsigned char, inLen);
 
