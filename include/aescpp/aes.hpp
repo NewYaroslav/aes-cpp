@@ -142,6 +142,25 @@ class AES {
                                              const unsigned char key[],
                                              const unsigned char iv[]);
 
+  void EncryptCBC(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char *iv,
+                  unsigned char out[]);
+  void DecryptCBC(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char *iv,
+                  unsigned char out[]);
+  void EncryptCFB(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char *iv,
+                  unsigned char out[]);
+  void DecryptCFB(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char *iv,
+                  unsigned char out[]);
+  void EncryptCTR(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char iv[],
+                  unsigned char out[]);
+  void DecryptCTR(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char iv[],
+                  unsigned char out[]);
+
   /// \brief Encrypt data using GCM mode.
   /// \param in Input buffer.
   /// \param inLen Length of input in bytes.
@@ -397,24 +416,6 @@ class AES {
                   const unsigned char key[], unsigned char out[]);
   void DecryptECB(const unsigned char in[], size_t inLen,
                   const unsigned char key[], unsigned char out[]);
-  void EncryptCBC(const unsigned char in[], size_t inLen,
-                  const unsigned char key[], const unsigned char *iv,
-                  unsigned char out[]);
-  void DecryptCBC(const unsigned char in[], size_t inLen,
-                  const unsigned char key[], const unsigned char *iv,
-                  unsigned char out[]);
-  void EncryptCFB(const unsigned char in[], size_t inLen,
-                  const unsigned char key[], const unsigned char *iv,
-                  unsigned char out[]);
-  void DecryptCFB(const unsigned char in[], size_t inLen,
-                  const unsigned char key[], const unsigned char *iv,
-                  unsigned char out[]);
-  void EncryptCTR(const unsigned char in[], size_t inLen,
-                  const unsigned char key[], const unsigned char iv[],
-                  unsigned char out[]);
-  void DecryptCTR(const unsigned char in[], size_t inLen,
-                  const unsigned char key[], const unsigned char iv[],
-                  unsigned char out[]);
 
   void EncryptBlock(const unsigned char in[], unsigned char out[],
                     const unsigned char *roundKeys);
