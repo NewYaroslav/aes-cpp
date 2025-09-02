@@ -34,7 +34,7 @@ struct EncryptedData {
   std::vector<uint8_t> ciphertext;
 };
 
-enum class AesMode { CBC, CFB };
+enum class AesMode { CBC, CFB, CTR };
 
 template <class T>
 AESKeyLength key_length_from_key(const T &key);

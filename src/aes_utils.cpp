@@ -260,8 +260,13 @@ EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
       encrypted.reset(
           aes.EncryptCFB(src->data(), src->size(), key.data(), iv.data()));
       break;
+    case AesMode::CTR:
+      encrypted.reset(
+          aes.EncryptCTR(src->data(), src->size(), key.data(), iv.data()));
+      break;
     default:
-      throw std::invalid_argument("Invalid AES mode");
+      throw std::invalid_argument(
+          "Invalid AES mode; expected CBC, CFB, or CTR");
   }
 
   std::vector<uint8_t> ciphertext(encrypted.get(),
@@ -296,8 +301,14 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
                                      data.ciphertext.size(), key.data(),
                                      data.iv.data()));
       break;
+    case AesMode::CTR:
+      decrypted.reset(aes.DecryptCTR(data.ciphertext.data(),
+                                     data.ciphertext.size(), key.data(),
+                                     data.iv.data()));
+      break;
     default:
-      throw std::invalid_argument("Invalid AES mode");
+      throw std::invalid_argument(
+          "Invalid AES mode; expected CBC, CFB, or CTR");
   }
 
   std::vector<uint8_t> plain(decrypted.get(),
