@@ -424,9 +424,8 @@ class AES {
   void GHASH(const unsigned char *H, const unsigned char *X, size_t len,
              unsigned char *tag);
 
+  // Convert raw array to a std::vector.
   std::vector<unsigned char> ArrayToVector(unsigned char *a, size_t len);
-
-  unsigned char *VectorToArray(std::vector<unsigned char> &a);
 
   std::vector<unsigned char> cachedKey;
   std::shared_ptr<std::vector<unsigned char>> cachedRoundKeys;

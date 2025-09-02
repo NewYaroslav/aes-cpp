@@ -956,11 +956,6 @@ std::vector<unsigned char> AES::ArrayToVector(unsigned char *a, size_t len) {
   std::vector<unsigned char> v(a, a + len);
   return v;
 }
-
-unsigned char *AES::VectorToArray(std::vector<unsigned char> &a) {
-  return a.data();
-}
-
 AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptECB(
     const std::vector<unsigned char> &in,
     const std::vector<unsigned char> &key) {
