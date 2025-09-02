@@ -348,6 +348,53 @@ std::string decrypt_to_string(const EncryptedData &data, const T &key,
   return result;
 }
 
+template <class T>
+GcmEncryptedData encrypt_gcm(const std::vector<uint8_t> &plain, const T &key,
+                             const std::vector<uint8_t> &aad) {
+  AES aes(key_length_from_key(key));
+  auto iv_vec = generate_iv(12);
+  std::array<uint8_t, 12> iv{};
+  std::copy_n(iv_vec.begin(), 12, iv.begin());
+  std::array<uint8_t, 16> tag{};
+  std::unique_ptr<unsigned char[]> encrypted(aes.EncryptGCM(
+      plain.data(), plain.size(), key.data(), iv.data(),
+      aad.empty() ? nullptr : aad.data(), aad.size(), tag.data()));
+  std::vector<uint8_t> ciphertext(encrypted.get(),
+                                  encrypted.get() + plain.size());
+  secure_zero(encrypted.get(), plain.size());
+  return {std::chrono::system_clock::now(), iv, std::move(ciphertext), tag};
+}
+
+template <class T>
+GcmEncryptedData encrypt_gcm(const std::string &plain_text, const T &key,
+                             const std::vector<uint8_t> &aad) {
+  return encrypt_gcm(std::vector<uint8_t>(plain_text.begin(), plain_text.end()),
+                     key, aad);
+}
+
+template <class T>
+std::vector<uint8_t> decrypt_gcm(const GcmEncryptedData &data, const T &key,
+                                 const std::vector<uint8_t> &aad) {
+  AES aes(key_length_from_key(key));
+  std::unique_ptr<unsigned char[]> decrypted(
+      aes.DecryptGCM(data.ciphertext.data(), data.ciphertext.size(), key.data(),
+                     data.iv.data(), aad.empty() ? nullptr : aad.data(),
+                     aad.size(), data.tag.data()));
+  std::vector<uint8_t> plain(decrypted.get(),
+                             decrypted.get() + data.ciphertext.size());
+  secure_zero(decrypted.get(), data.ciphertext.size());
+  return plain;
+}
+
+template <class T>
+std::string decrypt_gcm_to_string(const GcmEncryptedData &data, const T &key,
+                                  const std::vector<uint8_t> &aad) {
+  std::vector<uint8_t> plain = decrypt_gcm(data, key, aad);
+  std::string result(plain.begin(), plain.end());
+  secure_zero(plain.data(), plain.size());
+  return result;
+}
+
 template AESKeyLength key_length_from_key<std::vector<uint8_t>>(
     const std::vector<uint8_t> &);
 template AESKeyLength key_length_from_key<std::array<uint8_t, 16>>(
@@ -392,6 +439,58 @@ template std::string decrypt_to_string<std::array<uint8_t, 24>>(
     const EncryptedData &, const std::array<uint8_t, 24> &, AesMode);
 template std::string decrypt_to_string<std::array<uint8_t, 32>>(
     const EncryptedData &, const std::array<uint8_t, 32> &, AesMode);
+
+template GcmEncryptedData encrypt_gcm<std::vector<uint8_t>>(
+    const std::vector<uint8_t> &, const std::vector<uint8_t> &,
+    const std::vector<uint8_t> &);
+template GcmEncryptedData encrypt_gcm<std::array<uint8_t, 16>>(
+    const std::vector<uint8_t> &, const std::array<uint8_t, 16> &,
+    const std::vector<uint8_t> &);
+template GcmEncryptedData encrypt_gcm<std::array<uint8_t, 24>>(
+    const std::vector<uint8_t> &, const std::array<uint8_t, 24> &,
+    const std::vector<uint8_t> &);
+template GcmEncryptedData encrypt_gcm<std::array<uint8_t, 32>>(
+    const std::vector<uint8_t> &, const std::array<uint8_t, 32> &,
+    const std::vector<uint8_t> &);
+
+template GcmEncryptedData encrypt_gcm<std::vector<uint8_t>>(
+    const std::string &, const std::vector<uint8_t> &,
+    const std::vector<uint8_t> &);
+template GcmEncryptedData encrypt_gcm<std::array<uint8_t, 16>>(
+    const std::string &, const std::array<uint8_t, 16> &,
+    const std::vector<uint8_t> &);
+template GcmEncryptedData encrypt_gcm<std::array<uint8_t, 24>>(
+    const std::string &, const std::array<uint8_t, 24> &,
+    const std::vector<uint8_t> &);
+template GcmEncryptedData encrypt_gcm<std::array<uint8_t, 32>>(
+    const std::string &, const std::array<uint8_t, 32> &,
+    const std::vector<uint8_t> &);
+
+template std::vector<uint8_t> decrypt_gcm<std::vector<uint8_t>>(
+    const GcmEncryptedData &, const std::vector<uint8_t> &,
+    const std::vector<uint8_t> &);
+template std::vector<uint8_t> decrypt_gcm<std::array<uint8_t, 16>>(
+    const GcmEncryptedData &, const std::array<uint8_t, 16> &,
+    const std::vector<uint8_t> &);
+template std::vector<uint8_t> decrypt_gcm<std::array<uint8_t, 24>>(
+    const GcmEncryptedData &, const std::array<uint8_t, 24> &,
+    const std::vector<uint8_t> &);
+template std::vector<uint8_t> decrypt_gcm<std::array<uint8_t, 32>>(
+    const GcmEncryptedData &, const std::array<uint8_t, 32> &,
+    const std::vector<uint8_t> &);
+
+template std::string decrypt_gcm_to_string<std::vector<uint8_t>>(
+    const GcmEncryptedData &, const std::vector<uint8_t> &,
+    const std::vector<uint8_t> &);
+template std::string decrypt_gcm_to_string<std::array<uint8_t, 16>>(
+    const GcmEncryptedData &, const std::array<uint8_t, 16> &,
+    const std::vector<uint8_t> &);
+template std::string decrypt_gcm_to_string<std::array<uint8_t, 24>>(
+    const GcmEncryptedData &, const std::array<uint8_t, 24> &,
+    const std::vector<uint8_t> &);
+template std::string decrypt_gcm_to_string<std::array<uint8_t, 32>>(
+    const GcmEncryptedData &, const std::array<uint8_t, 32> &,
+    const std::vector<uint8_t> &);
 
 }  // namespace utils
 
