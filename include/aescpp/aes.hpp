@@ -142,21 +142,57 @@ class AES {
                                              const unsigned char key[],
                                              const unsigned char iv[]);
 
+  /// \brief Encrypt data using CBC mode.
+  /// \param in Input buffer.
+  /// \param inLen Length of input in bytes; must be divisible by 16.
+  /// \param key Encryption key.
+  /// \param iv Initialization vector (16 bytes).
+  /// \param out Output buffer with space for \p inLen bytes of ciphertext.
   void EncryptCBC(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char *iv,
                   unsigned char out[]);
+  /// \brief Decrypt data encrypted with CBC mode.
+  /// \param in Ciphertext buffer.
+  /// \param inLen Length of ciphertext in bytes; must be divisible by 16.
+  /// \param key Decryption key.
+  /// \param iv Initialization vector used during encryption (16 bytes).
+  /// \param out Output buffer with space for \p inLen bytes of plaintext.
   void DecryptCBC(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char *iv,
                   unsigned char out[]);
+  /// \brief Encrypt data using CFB mode.
+  /// \param in Input buffer.
+  /// \param inLen Length of input in bytes; may be any value.
+  /// \param key Encryption key.
+  /// \param iv Initialization vector (16 bytes).
+  /// \param out Output buffer with space for \p inLen bytes of ciphertext.
   void EncryptCFB(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char *iv,
                   unsigned char out[]);
+  /// \brief Decrypt data encrypted with CFB mode.
+  /// \param in Ciphertext buffer.
+  /// \param inLen Length of ciphertext in bytes; may be any value.
+  /// \param key Decryption key.
+  /// \param iv Initialization vector used during encryption (16 bytes).
+  /// \param out Output buffer with space for \p inLen bytes of plaintext.
   void DecryptCFB(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char *iv,
                   unsigned char out[]);
+  /// \brief Encrypt data using CTR mode.
+  /// \param in Input buffer.
+  /// \param inLen Length of input in bytes; may be any value.
+  /// \param key Encryption key.
+  /// \param iv Initialization vector (16 bytes).
+  /// \param out Output buffer with space for \p inLen bytes of ciphertext.
   void EncryptCTR(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char iv[],
                   unsigned char out[]);
+  /// \brief Decrypt data encrypted with CTR mode.
+  /// \param in Ciphertext buffer.
+  /// \param inLen Length of ciphertext in bytes; may be any value.
+  /// \param key Decryption key.
+  /// \param iv Initialization vector used during encryption (16 bytes).
+  /// \param out Output buffer with space for \p inLen bytes of plaintext.
   void DecryptCTR(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char iv[],
                   unsigned char out[]);
@@ -350,10 +386,33 @@ class AES {
       std::vector<unsigned char> &&iv, std::vector<unsigned char> &&aad,
       std::vector<unsigned char> &&tag);
 
+  /// \brief Encrypt data using GCM mode into a caller-provided buffer.
+  /// \param in Input buffer.
+  /// \param inLen Length of input in bytes.
+  /// \param key Encryption key.
+  /// \param iv 12-byte initialization vector.
+  /// \param aad Additional authenticated data; may be nullptr when \p aadLen is
+  /// 0.
+  /// \param aadLen Length of \p aad in bytes.
+  /// \param tag Output buffer for the 16-byte authentication tag.
+  /// \param out Output buffer with space for \p inLen bytes of ciphertext.
+  /// \note IV length must be exactly 12 bytes.
   void EncryptGCM(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char iv[],
                   const unsigned char aad[], size_t aadLen, unsigned char tag[],
                   unsigned char out[]);
+  /// \brief Decrypt data encrypted with GCM mode into a caller-provided buffer.
+  /// \param in Ciphertext buffer.
+  /// \param inLen Length of ciphertext in bytes.
+  /// \param key Decryption key.
+  /// \param iv 12-byte initialization vector used during encryption.
+  /// \param aad Additional authenticated data; may be nullptr when \p aadLen is
+  /// 0.
+  /// \param aadLen Length of \p aad in bytes.
+  /// \param tag Expected 16-byte authentication tag.
+  /// \param out Output buffer with space for \p inLen bytes of plaintext.
+  /// \throws std::runtime_error If authentication fails.
+  /// \note IV length must be exactly 12 bytes.
   void DecryptGCM(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char iv[],
                   const unsigned char aad[], size_t aadLen,
@@ -380,12 +439,18 @@ class AES {
 
   void SubBytes(unsigned char state[4][Nb]);
 
-  void ShiftRow(unsigned char state[4][Nb], unsigned int i,
-                unsigned int n);  // shift row i on n positions
+  /// \brief Shift row \p i by \p n positions.
+  /// \param state State matrix to modify.
+  /// \param i Row index.
+  /// \param n Number of positions to shift.
+  void ShiftRow(unsigned char state[4][Nb], unsigned int i, unsigned int n);
 
   void ShiftRows(unsigned char state[4][Nb]);
 
-  unsigned char xtime(unsigned char b);  // multiply on x
+  /// \brief Multiply a byte by x in GF(2^8).
+  /// \param b Input byte.
+  /// \return Result of the multiplication.
+  unsigned char xtime(unsigned char b);
 
   void MixColumns(unsigned char state[4][Nb]);
 
@@ -490,7 +555,7 @@ constexpr std::array<uint8_t, 256> inv_sbox = {
     0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63,
     0x55, 0x21, 0x0c, 0x7d};
 
-/// Galois Multiplication lookup tables
+/// \brief Galois multiplication lookup tables.
 static const unsigned char GF_MUL_TABLE[15][256] = {
     {},
     {},
@@ -649,11 +714,11 @@ static const unsigned char GF_MUL_TABLE[15][256] = {
      0xd7, 0xd9, 0xcb, 0xc5, 0xef, 0xe1, 0xf3, 0xfd, 0xa7, 0xa9, 0xbb, 0xb5,
      0x9f, 0x91, 0x83, 0x8d}};
 
-/// circulant MDS matrix
+/// \brief Circulant MDS matrix.
 static const unsigned char CMDS[4][4] = {
     {2, 3, 1, 1}, {1, 2, 3, 1}, {1, 1, 2, 3}, {3, 1, 1, 2}};
 
-/// Inverse circulant MDS matrix
+/// \brief Inverse circulant MDS matrix.
 static const unsigned char INV_CMDS[4][4] = {
     {14, 11, 13, 9}, {9, 14, 11, 13}, {13, 9, 14, 11}, {11, 13, 9, 14}};
 
