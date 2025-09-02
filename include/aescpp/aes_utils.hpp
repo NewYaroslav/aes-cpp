@@ -24,10 +24,6 @@ bool fill_os_random(void *data, size_t len) noexcept;
 
 }  // namespace detail
 
-/// \brief Generate a random 16-byte IV.
-/// \return Array containing the IV.
-std::array<uint8_t, BLOCK_SIZE> generate_iv();
-
 /// \brief Generate a random IV of specified length.
 /// \param len Required IV length in bytes.
 /// \return Vector containing the IV.
