@@ -1,5 +1,5 @@
-#ifndef _AES_H_
-#define _AES_H_
+#ifndef __AESCPP_AES_HPP_
+#define __AESCPP_AES_HPP_
 
 #include <array>
 #include <cstdint>
@@ -619,4 +619,4 @@ static const unsigned char INV_CMDS[4][4] = {
 
 }  // namespace aescpp
 
-#endif
+#endif  // __AESCPP_AES_HPP_
