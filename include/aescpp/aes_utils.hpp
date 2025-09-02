@@ -3,6 +3,7 @@
 #include <aescpp/aes.hpp>
 #include <array>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -19,6 +20,7 @@ bool fill_os_random(void *data, size_t len) noexcept;
 }  // namespace detail
 
 std::array<uint8_t, BLOCK_SIZE> generate_iv();
+std::vector<uint8_t> generate_iv(std::size_t len);
 std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data);
 std::vector<uint8_t> remove_padding(const std::vector<uint8_t> &data);
 std::vector<uint8_t> add_iv_to_ciphertext(

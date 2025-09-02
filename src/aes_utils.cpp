@@ -125,8 +125,13 @@ bool fill_os_random(void *data, size_t len) noexcept {
 
 }  // namespace detail
 
-std::array<uint8_t, BLOCK_SIZE> generate_iv() {
-  std::array<uint8_t, BLOCK_SIZE> iv{};
+std::vector<uint8_t> generate_iv(std::size_t len) {
+  if (len != 12 && len != BLOCK_SIZE) {
+    throw std::invalid_argument(
+        "Unsupported IV length; expected 12 or 16 bytes");
+  }
+
+  std::vector<uint8_t> iv(len);
 
   if (detail::fill_os_random(iv.data(), iv.size())) return iv;
 
@@ -171,6 +176,13 @@ std::array<uint8_t, BLOCK_SIZE> generate_iv() {
 
   throw std::runtime_error(
       "No secure random source available on this platform");
+}
+
+std::array<uint8_t, BLOCK_SIZE> generate_iv() {
+  auto iv_vec = generate_iv(BLOCK_SIZE);
+  std::array<uint8_t, BLOCK_SIZE> iv{};
+  std::copy_n(iv_vec.begin(), BLOCK_SIZE, iv.begin());
+  return iv;
 }
 
 std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data) {
