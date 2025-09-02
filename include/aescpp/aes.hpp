@@ -322,7 +322,7 @@ class AES {
 
   void MixColumns(unsigned char state[4][Nb]);
 
-  void AddRoundKey(unsigned char state[4][Nb], unsigned char *key);
+  void AddRoundKey(unsigned char state[4][Nb], const unsigned char *key);
 
   void SubWord(unsigned char *a);
 
@@ -346,10 +346,10 @@ class AES {
       const unsigned char *key);
 
   void EncryptBlock(const unsigned char in[], unsigned char out[],
-                    unsigned char *roundKeys);
+                    const unsigned char *roundKeys);
 
   void DecryptBlock(const unsigned char in[], unsigned char out[],
-                    unsigned char *roundKeys);
+                    const unsigned char *roundKeys);
 
   void XorBlocks(const unsigned char *a, const unsigned char *b,
                  unsigned char *c, size_t len);
@@ -367,7 +367,7 @@ class AES {
   unsigned char *VectorToArray(std::vector<unsigned char> &a);
 
   std::vector<unsigned char> cachedKey;
-  std::shared_ptr<const std::vector<unsigned char>> cachedRoundKeys;
+  std::shared_ptr<std::vector<unsigned char>> cachedRoundKeys;
   std::mutex cacheMutex;
 };
 
