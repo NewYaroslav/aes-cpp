@@ -19,6 +19,9 @@
                             defined(__i386) || defined(_M_IX86))
 #include <wmmintrin.h>
 #endif
+#if defined(__SSE2__)
+#include <emmintrin.h>
+#endif
 
 namespace aescpp {
 
@@ -717,9 +720,35 @@ void AES::InvShiftRows(unsigned char state[4][Nb]) {
 
 void AES::XorBlocks(const unsigned char *a, const unsigned char *b,
                     unsigned char *c, size_t len) {
-  for (size_t i = 0; i < len; i++) {
+#if defined(__SSE2__)
+  size_t i = 0;
+  for (; i + 16 <= len; i += 16) {
+    __m128i va = _mm_loadu_si128(reinterpret_cast<const __m128i *>(a + i));
+    __m128i vb = _mm_loadu_si128(reinterpret_cast<const __m128i *>(b + i));
+    __m128i vc = _mm_xor_si128(va, vb);
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(c + i), vc);
+  }
+  for (; i + 8 <= len; i += 8) {
+    uint64_t va = *reinterpret_cast<const uint64_t *>(a + i);
+    uint64_t vb = *reinterpret_cast<const uint64_t *>(b + i);
+    *reinterpret_cast<uint64_t *>(c + i) = va ^ vb;
+  }
+  // Remaining bytes
+  for (; i < len; ++i) {
     c[i] = a[i] ^ b[i];
   }
+#else
+  size_t i = 0;
+  for (; i + 8 <= len; i += 8) {
+    uint64_t va = *reinterpret_cast<const uint64_t *>(a + i);
+    uint64_t vb = *reinterpret_cast<const uint64_t *>(b + i);
+    *reinterpret_cast<uint64_t *>(c + i) = va ^ vb;
+  }
+  // Remaining bytes
+  for (; i < len; ++i) {
+    c[i] = a[i] ^ b[i];
+  }
+#endif
 }
 
 void AES::printHexArray(unsigned char a[], size_t n) {
