@@ -31,6 +31,15 @@
 #endif
 #endif
 
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) ||     \
+    defined(_M_IX86) || defined(__aarch64__) || defined(_M_ARM64) || \
+    defined(__ARM_FEATURE_UNALIGNED)
+// Allow direct uint64_t loads on platforms with relaxed alignment
+#define AESCPP_HAS_UNALIGNED_UINT64 1
+#else
+#define AESCPP_HAS_UNALIGNED_UINT64 0
+#endif
+
 namespace aescpp {
 
 void secure_zero(void *p, size_t n) {
@@ -805,7 +814,7 @@ void AES::InvShiftRows(unsigned char state[4][Nb]) {
 }
 
 void AES::XorBlocks(const unsigned char *a, const unsigned char *b,
-                    unsigned char *c, size_t len) {
+                    unsigned char *c, size_t len) noexcept {
 #if defined(__SSE2__)
   size_t i = 0;
   for (; i + 16 <= len; i += 16) {
@@ -814,22 +823,46 @@ void AES::XorBlocks(const unsigned char *a, const unsigned char *b,
     __m128i vc = _mm_xor_si128(va, vb);
     _mm_storeu_si128(reinterpret_cast<__m128i *>(c + i), vc);
   }
+#if AESCPP_HAS_UNALIGNED_UINT64
+  // Use direct uint64_t loads when alignment isn't required
   for (; i + 8 <= len; i += 8) {
     uint64_t va = *reinterpret_cast<const uint64_t *>(a + i);
     uint64_t vb = *reinterpret_cast<const uint64_t *>(b + i);
     *reinterpret_cast<uint64_t *>(c + i) = va ^ vb;
   }
+#else
+  for (; i + 8 <= len; i += 8) {
+    uint64_t va;
+    uint64_t vb;
+    std::memcpy(&va, a + i, sizeof(va));
+    std::memcpy(&vb, b + i, sizeof(vb));
+    uint64_t vc = va ^ vb;
+    std::memcpy(c + i, &vc, sizeof(vc));
+  }
+#endif
   // Remaining bytes
   for (; i < len; ++i) {
     c[i] = a[i] ^ b[i];
   }
 #else
   size_t i = 0;
+#if AESCPP_HAS_UNALIGNED_UINT64
+  // Use direct uint64_t loads when alignment isn't required
   for (; i + 8 <= len; i += 8) {
     uint64_t va = *reinterpret_cast<const uint64_t *>(a + i);
     uint64_t vb = *reinterpret_cast<const uint64_t *>(b + i);
     *reinterpret_cast<uint64_t *>(c + i) = va ^ vb;
   }
+#else
+  for (; i + 8 <= len; i += 8) {
+    uint64_t va;
+    uint64_t vb;
+    std::memcpy(&va, a + i, sizeof(va));
+    std::memcpy(&vb, b + i, sizeof(vb));
+    uint64_t vc = va ^ vb;
+    std::memcpy(c + i, &vc, sizeof(vc));
+  }
+#endif
   // Remaining bytes
   for (; i < len; ++i) {
     c[i] = a[i] ^ b[i];

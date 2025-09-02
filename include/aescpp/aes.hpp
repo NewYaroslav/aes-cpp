@@ -383,7 +383,7 @@ class AES {
                     const unsigned char *roundKeys);
 
   void XorBlocks(const unsigned char *a, const unsigned char *b,
-                 unsigned char *c, size_t len);
+                 unsigned char *c, size_t len) noexcept;
 
   void GF_Multiply(const unsigned char *X, const unsigned char *Y,
                    unsigned char *Z);
