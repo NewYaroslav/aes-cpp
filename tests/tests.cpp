@@ -527,6 +527,31 @@ TEST(Utils, EncryptDecryptStringCBC) {
   ASSERT_EQ(text, dec);
 }
 
+TEST(Utils, EncryptDecryptStringGCM) {
+  std::string text = "hello gcm";
+  std::array<uint8_t, 16> key = {0};
+  auto enc = aescpp::utils::encrypt_gcm(text, key);
+  std::string dec = aescpp::utils::decrypt_gcm_to_string(enc, key);
+  ASSERT_EQ(text, dec);
+}
+
+TEST(Utils, EncryptDecryptStringGCMWithAad) {
+  std::string text = "hello gcm";
+  std::array<uint8_t, 16> key = {0};
+  std::vector<uint8_t> aad = {1, 2, 3};
+  auto enc = aescpp::utils::encrypt_gcm(text, key, aad);
+  std::string dec = aescpp::utils::decrypt_gcm_to_string(enc, key, aad);
+  ASSERT_EQ(text, dec);
+}
+
+TEST(Utils, DecryptStringGcmTagMismatch) {
+  std::string text = "hello gcm";
+  std::array<uint8_t, 16> key = {0};
+  auto enc = aescpp::utils::encrypt_gcm(text, key);
+  enc.tag[0] ^= 0x01;
+  EXPECT_THROW(aescpp::utils::decrypt_gcm(enc, key), std::runtime_error);
+}
+
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

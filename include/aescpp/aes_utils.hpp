@@ -36,6 +36,14 @@ struct EncryptedData {
   std::vector<uint8_t> ciphertext;
 };
 
+struct GcmEncryptedData {
+  std::chrono::system_clock::time_point timestamp;
+  std::array<uint8_t, 12> iv;
+  std::vector<uint8_t> ciphertext;
+  std::array<uint8_t, 16> tag;
+};
+
+// Modes supported by the legacy encrypt/decrypt helpers
 enum class AesMode { CBC, CFB, CTR };
 
 template <class T>
@@ -56,6 +64,22 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
 template <class T>
 std::string decrypt_to_string(const EncryptedData &data, const T &key,
                               AesMode mode);
+
+template <class T>
+GcmEncryptedData encrypt_gcm(const std::vector<uint8_t> &plain, const T &key,
+                             const std::vector<uint8_t> &aad = {});
+
+template <class T>
+GcmEncryptedData encrypt_gcm(const std::string &plain_text, const T &key,
+                             const std::vector<uint8_t> &aad = {});
+
+template <class T>
+std::vector<uint8_t> decrypt_gcm(const GcmEncryptedData &data, const T &key,
+                                 const std::vector<uint8_t> &aad = {});
+
+template <class T>
+std::string decrypt_gcm_to_string(const GcmEncryptedData &data, const T &key,
+                                  const std::vector<uint8_t> &aad = {});
 
 }  // namespace utils
 
