@@ -132,6 +132,7 @@ std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
   const size_t keyLen = 4 * Nk;
   if (cachedKey.size() != keyLen ||
       !std::equal(cachedKey.begin(), cachedKey.end(), key)) {
+    secure_zero(cachedKey.data(), cachedKey.size());
     cachedKey.assign(key, key + keyLen);
     auto newRoundKeys =
         std::make_shared<std::vector<unsigned char>>(4 * Nb * (Nr + 1));
