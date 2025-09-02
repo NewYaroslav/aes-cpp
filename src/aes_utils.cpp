@@ -127,14 +127,11 @@ bool fill_os_random(void *data, size_t len) noexcept {
 
 }  // namespace detail
 
-std::vector<uint8_t> generate_iv(std::size_t len) {
-  if (len != 12 && len != BLOCK_SIZE) {
-    throw std::invalid_argument(
-        "Unsupported IV length; expected 12 or 16 bytes");
-  }
+namespace {
 
-  std::vector<uint8_t> iv(len);
-
+template <std::size_t N>
+std::array<uint8_t, N> generate_iv_impl() {
+  std::array<uint8_t, N> iv{};
   if (detail::fill_os_random(iv.data(), iv.size())) return iv;
 
 #if defined(AESUTILS_TRUST_STD_RANDOM_DEVICE)
@@ -186,6 +183,12 @@ std::vector<uint8_t> generate_iv(std::size_t len) {
   throw std::runtime_error(
       "No secure random source available on this platform");
 }
+
+}  // namespace
+
+std::array<uint8_t, 12> generate_iv_12() { return generate_iv_impl<12>(); }
+
+std::array<uint8_t, 16> generate_iv_16() { return generate_iv_impl<16>(); }
 
 std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data) {
   std::vector<uint8_t> padded = data;
@@ -256,9 +259,7 @@ template <class T>
 EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
                       AesMode mode) {
   AES aes(key_length_from_key(key));
-  auto iv_vec = generate_iv(BLOCK_SIZE);
-  std::array<uint8_t, BLOCK_SIZE> iv{};
-  std::copy_n(iv_vec.begin(), BLOCK_SIZE, iv.begin());
+  auto iv = generate_iv_16();
   const std::vector<uint8_t> *src = &plain;
   std::vector<uint8_t> padded;
   if (mode == AesMode::CBC) {
@@ -356,9 +357,7 @@ template <class T>
 GcmEncryptedData encrypt_gcm(const std::vector<uint8_t> &plain, const T &key,
                              const std::vector<uint8_t> &aad) {
   AES aes(key_length_from_key(key));
-  auto iv_vec = generate_iv(12);
-  std::array<uint8_t, 12> iv{};
-  std::copy_n(iv_vec.begin(), 12, iv.begin());
+  auto iv = generate_iv_12();
   std::array<uint8_t, 16> tag{};
   std::unique_ptr<unsigned char[]> encrypted(aes.EncryptGCM(
       plain.data(), plain.size(), key.data(), iv.data(),

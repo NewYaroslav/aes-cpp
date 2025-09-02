@@ -19,9 +19,9 @@ portable software implementation is used instead.
 ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an authentication tag for message integrity.
 
 ## IV Generation
-`aescpp::utils` provides helpers for creating random IVs. `generate_iv(len)`
-lets you request a specific length. Use 16 bytes for CBC, CFB and CTR; GCM
-recommends a 12-byte IV.
+`aescpp::utils` provides helpers for creating random IVs. `generate_iv_16()`
+produces a 16-byte IV for CBC, CFB and CTR modes, while `generate_iv_12()`
+returns a 12-byte IV recommended for GCM.
 
 ## Vector Overloads
 All encryption and decryption methods have overloads that accept `std::vector<unsigned char>` in addition to raw pointer APIs:
