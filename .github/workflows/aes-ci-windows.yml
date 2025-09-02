@@ -2,12 +2,23 @@ name: CI-Win
 
 on:
   push:
+    branches:
+      - main
+      - release/**
+      - stable
   pull_request:
+    branches:
+      - main
+      - release/**
+      - codex/**
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        std: [11, 17]
     defaults:
       run:
         shell: msys2 {0}
@@ -49,11 +60,13 @@ jobs:
 
       - name: Tests
         run: |
-          mingw32-make workflow_build_test
+          TEST_STD=${{ matrix.std }}
+          if [ "$TEST_STD" -lt 17 ]; then TEST_STD=17; fi
+          mingw32-make workflow_build_test CXXFLAGS="-std=c++${{ matrix.std }}" TEST_FLAGS="-std=c++$TEST_STD"
           ./bin/test.exe
 
       - name: Speed test
         run: |
-          mingw32-make workflow_build_speed_test
+          mingw32-make workflow_build_speed_test CXXFLAGS="-std=c++${{ matrix.std }}"
           ./bin/speedtest.exe
 

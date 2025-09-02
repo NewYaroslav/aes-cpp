@@ -4,12 +4,23 @@ name: CI-Linux
 
 on:
   push:
+    branches:
+      - main
+      - release/**
+      - stable
   pull_request:
+    branches:
+      - main
+      - release/**
+      - codex/**
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        std: [11, 17]
     steps:
       - uses: actions/checkout@v2
 
@@ -31,13 +42,15 @@ jobs:
       
       - name: Tests
         run: |
-          make workflow_build_test
+          STD=${{ matrix.std }}
+          TEST_STD=$([ "$STD" -lt 14 ] && echo 14 || echo $STD)
+          make workflow_build_test FLAGS="-Wall -Wextra -I./include -std=c++$STD" TEST_FLAGS="-Wall -Wextra -I./include -std=c++$TEST_STD"
           ./bin/test
 
       
       - name: Speed test
         run: |
-          make workflow_build_speed_test
+          make workflow_build_speed_test FLAGS="-Wall -Wextra -I./include -std=c++${{ matrix.std }}"
           ./bin/speedtest
       
       
