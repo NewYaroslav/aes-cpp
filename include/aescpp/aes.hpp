@@ -8,6 +8,14 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#if __cplusplus >= 201703L
+#include <shared_mutex>
+#define AESCPP_SHARED_MUTEX std::shared_mutex
+#define AESCPP_SHARED_LOCK std::shared_lock
+#else
+#define AESCPP_SHARED_MUTEX std::mutex
+#define AESCPP_SHARED_LOCK std::unique_lock
+#endif
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -429,7 +437,7 @@ class AES {
 
   std::vector<unsigned char> cachedKey;
   std::shared_ptr<std::vector<unsigned char>> cachedRoundKeys;
-  std::mutex cacheMutex;
+  AESCPP_SHARED_MUTEX cacheMutex;
 };
 
 constexpr std::array<uint8_t, 256> sbox = {
