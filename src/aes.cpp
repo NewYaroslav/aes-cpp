@@ -751,11 +751,7 @@ void AES::KeyExpansion(const unsigned char key[], unsigned char w[]) {
 
   unsigned int i = 0;
 
-  while (i < 4 * Nk) {
-    w[i] = key[i];
-    i++;
-  }
-
+  std::memcpy(w, key, 4 * Nk);
   i = 4 * Nk;
 
   while (i < 4 * Nb * (Nr + 1)) {
