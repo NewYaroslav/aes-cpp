@@ -323,6 +323,15 @@ class AES {
       std::vector<unsigned char> &&iv, std::vector<unsigned char> &&aad,
       std::vector<unsigned char> &&tag);
 
+  void EncryptGCM(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char iv[],
+                  const unsigned char aad[], size_t aadLen, unsigned char tag[],
+                  unsigned char out[]);
+  void DecryptGCM(const unsigned char in[], size_t inLen,
+                  const unsigned char key[], const unsigned char iv[],
+                  const unsigned char aad[], size_t aadLen,
+                  const unsigned char tag[], unsigned char out[]);
+
   /// \brief Print byte array as hexadecimal values.
   /// \param a Array to print.
   /// \param n Number of bytes in \p a.
@@ -398,14 +407,6 @@ class AES {
   void DecryptCTR(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char iv[],
                   unsigned char out[]);
-  void EncryptGCM(const unsigned char in[], size_t inLen,
-                  const unsigned char key[], const unsigned char iv[],
-                  const unsigned char aad[], size_t aadLen, unsigned char tag[],
-                  unsigned char out[]);
-  void DecryptGCM(const unsigned char in[], size_t inLen,
-                  const unsigned char key[], const unsigned char iv[],
-                  const unsigned char aad[], size_t aadLen,
-                  const unsigned char tag[], unsigned char out[]);
 
   void EncryptBlock(const unsigned char in[], unsigned char out[],
                     const unsigned char *roundKeys);
