@@ -64,6 +64,11 @@ class AES {
   /// \brief Destroy the AES object and securely clear cached keys.
   ~AES();
 
+  /// \brief Securely erase cached key material.
+  /// \note Call after sensitive operations to remove residual keys. The
+  ///       destructor invokes this automatically.
+  void clear_cache();
+
   /// \brief Encrypt data using ECB mode.
   /// \warning ECB mode leaks plaintext patterns and should not be used for new
   ///          code. Prefer an authenticated mode like GCM.
