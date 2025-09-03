@@ -182,6 +182,7 @@ std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
     KeyExpansion(key, newRoundKeys->data());
     if (cachedRoundKeys) {
       secure_zero(cachedRoundKeys->data(), cachedRoundKeys->size());
+      cachedRoundKeys.reset();
     }
     cachedRoundKeys = newRoundKeys;
   }
