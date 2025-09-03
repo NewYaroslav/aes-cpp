@@ -568,6 +568,23 @@ TEST(Utils, DecryptStringGcmTagMismatch) {
   EXPECT_THROW(aescpp::utils::decrypt_gcm(enc, key), std::runtime_error);
 }
 
+TEST(Utils, DecryptStringGcmCiphertextMismatch) {
+  std::string text = "hello gcm";
+  std::array<uint8_t, 16> key = {0};
+  auto enc = aescpp::utils::encrypt_gcm(text, key);
+  enc.ciphertext[0] ^= 0x01;
+  EXPECT_THROW(aescpp::utils::decrypt_gcm(enc, key), std::runtime_error);
+}
+
+TEST(Utils, DecryptStringGcmAadMismatch) {
+  std::string text = "hello gcm";
+  std::array<uint8_t, 16> key = {0};
+  std::vector<uint8_t> aad = {1, 2, 3};
+  auto enc = aescpp::utils::encrypt_gcm(text, key, aad);
+  aad[0] ^= 0x01;
+  EXPECT_THROW(aescpp::utils::decrypt_gcm(enc, key, aad), std::runtime_error);
+}
+
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
