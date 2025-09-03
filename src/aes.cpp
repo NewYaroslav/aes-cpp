@@ -672,10 +672,10 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
   memcpy(V, Y, 16);
 
   for (int i = 0; i < 128; i++) {
-    if ((X_copy[i / 8] >> (7 - (i % 8))) & 1) {
-      for (int j = 0; j < 16; j++) {
-        Z[j] ^= V[j];
-      }
+    unsigned char bit = (X_copy[i / 8] >> (7 - (i % 8))) & 1;
+    unsigned char mask = static_cast<unsigned char>(-bit);
+    for (int j = 0; j < 16; j++) {
+      Z[j] ^= V[j] & mask;
     }
 
     // Shift V left
@@ -687,11 +687,10 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
 
     V[15] <<= 1;
 
-    // If the most significant bit was set, apply reduction
-    if (carry) {
-      for (int j = 0; j < 16; j++) {
-        V[j] ^= R[j];
-      }
+    unsigned char rmask =
+        static_cast<unsigned char>(-(static_cast<unsigned char>(carry >> 7)));
+    for (int j = 0; j < 16; j++) {
+      V[j] ^= R[j] & rmask;
     }
   }
   secure_zero(X_copy, sizeof(X_copy));
