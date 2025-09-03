@@ -37,6 +37,10 @@ AES aesVec(AESKeyLength::AES_128);
 auto cipherVec = aesVec.EncryptCBC(plainVec, keyVec, iv);
 ```
 
+## Debug Helpers
+
+Defining the `AESCPP_DEBUG` macro enables helper functions such as `printHexArray` and `printHexVector` for inspecting data. These helpers are for debugging only and must not be used with sensitive data in production builds. The `make build_debug` target defines this macro automatically, or you can compile with `-DAESCPP_DEBUG`.
+
 ## Usage
 
 ### Encryption/Decryption
@@ -107,7 +111,7 @@ CBC doesn't satisfy this condition an exception will be thrown
 
 There are four executables in `bin` folder:  
 * `test` - run tests  
-* `debug` - version for debugging (main code will be taken from dev/main.cpp)  
+* `debug` - version for debugging built with `AESCPP_DEBUG` (main code will be taken from dev/main.cpp)
 * `profile` - version for profiling with gprof (main code will be taken from dev/main.cpp)  
 * `speedtest` - performance speed test (main code will be taken from speedtest/main.cpp)
 * `release` - version with optimization (main code will be taken from dev/main.cpp)  
@@ -116,7 +120,7 @@ There are four executables in `bin` folder:
 Build commands:  
 * `make build_all` - build all targets
 * `make build_test` - build `test` target
-* `make build_debug` - build `debug` target
+* `make build_debug` - build `debug` target (defines `AESCPP_DEBUG`)
 * `make build_profile` - build `profile` target
 * `make build_speed_test` - build `speedtest` target
 * `make build_release` - build `release` target

@@ -15,7 +15,7 @@ build_test:
 	docker-compose exec aes g++ $(FLAGS) -g -pthread ./src/aes.cpp ./src/aes_utils.cpp ./tests/tests.cpp /usr/lib/libgtest.a -o bin/test
 
 build_debug:
-	docker-compose exec aes g++ $(FLAGS) -g ./src/aes.cpp ./src/aes_utils.cpp ./dev/main.cpp -o bin/debug
+	docker-compose exec aes g++ $(FLAGS) -g -DAESCPP_DEBUG ./src/aes.cpp ./src/aes_utils.cpp ./dev/main.cpp -o bin/debug
 
 build_profile:
 	docker-compose exec aes g++ $(FLAGS) -pg ./src/aes.cpp ./src/aes_utils.cpp ./dev/main.cpp -o bin/profile
