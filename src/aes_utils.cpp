@@ -228,10 +228,11 @@ bool remove_padding(const std::vector<uint8_t> &data,
     uint8_t mask = static_cast<uint8_t>(0 - static_cast<uint8_t>(i < padding));
     diff |= (byte ^ padding) & mask;
   }
-  out = data;
   size_t mask = -static_cast<size_t>((invalid | diff) == 0);
   size_t final_len = ((len - padding) & mask) | (len & ~mask);
-  out.resize(final_len);
+  std::vector<uint8_t> tmp = data;
+  tmp.resize(final_len);
+  out.swap(tmp);
   return mask != 0;
 }
 
