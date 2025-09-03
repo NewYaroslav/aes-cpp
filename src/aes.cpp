@@ -180,6 +180,9 @@ std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
     auto newRoundKeys =
         std::make_shared<std::vector<unsigned char>>(4 * Nb * (Nr + 1));
     KeyExpansion(key, newRoundKeys->data());
+    if (cachedRoundKeys) {
+      secure_zero(cachedRoundKeys->data(), cachedRoundKeys->size());
+    }
     cachedRoundKeys = newRoundKeys;
   }
   return cachedRoundKeys;
