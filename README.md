@@ -97,6 +97,11 @@ auto restored =
     utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR, mac_fn);
 ```
 
+### Constant-Time Comparison
+`utils::constant_time_equal` compares byte vectors without leaking
+information through timing, but it assumes the lengths of both inputs are
+public because it checks them and derives a loop bound from the larger size.
+
 ### GCM Helpers
 `encrypt_gcm` and `decrypt_gcm` manage the 12-byte IV, optional additional
 authenticated data (AAD), and the authentication tag produced by GCM.
