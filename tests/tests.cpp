@@ -550,6 +550,22 @@ TEST(GCM, DecryptInPlace) {
   ASSERT_FALSE(memcmp(buffer, plain, sizeof(plain)));
 }
 
+TEST(GCM, InputTooLong) {
+  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  unsigned char in[16] = {0};
+  unsigned char out[16];
+  unsigned char key[16] = {0};
+  unsigned char iv[12] = {0};
+  unsigned char tag[16] = {0};
+  size_t tooLong = ((1ULL << 32) * 16) + 1;
+
+  EXPECT_THROW(aes.EncryptGCM(in, tooLong, key, iv, nullptr, 0, tag, out),
+               std::length_error);
+
+  EXPECT_THROW(aes.DecryptGCM(in, tooLong, key, iv, nullptr, 0, tag, out),
+               std::length_error);
+}
+
 TEST(Utils, EncryptDecryptStringCBC) {
   std::string text = "hello world";
   std::array<uint8_t, 16> key = {0};
