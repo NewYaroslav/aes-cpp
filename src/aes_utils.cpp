@@ -186,10 +186,12 @@ std::array<uint8_t, N> generate_iv_impl() {
 
 bool constant_time_equal(const std::vector<uint8_t> &a,
                          const std::vector<uint8_t> &b) {
-  if (a.size() != b.size()) return false;
-  uint8_t diff = 0;
-  for (std::size_t i = 0; i < a.size(); ++i) {
-    diff |= static_cast<uint8_t>(a[i] ^ b[i]);
+  const std::size_t max_len = std::max(a.size(), b.size());
+  std::size_t diff = a.size() ^ b.size();
+  for (std::size_t i = 0; i < max_len; ++i) {
+    const uint8_t av = i < a.size() ? a[i] : 0;
+    const uint8_t bv = i < b.size() ? b[i] : 0;
+    diff |= static_cast<std::size_t>(av ^ bv);
   }
   return diff == 0;
 }
