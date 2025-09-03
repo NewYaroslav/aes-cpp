@@ -229,11 +229,10 @@ bool remove_padding(const std::vector<uint8_t> &data,
     diff |= (byte ^ padding) & mask;
   }
   out = data;
-  if ((invalid | diff) == 0) {
-    out.resize(len - padding);
-    return true;
-  }
-  return false;
+  size_t mask = -static_cast<size_t>((invalid | diff) == 0);
+  size_t final_len = ((len - padding) & mask) | (len & ~mask);
+  out.resize(final_len);
+  return mask != 0;
 }
 
 std::vector<uint8_t> add_iv_to_ciphertext(
