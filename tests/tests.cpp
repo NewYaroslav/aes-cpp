@@ -533,6 +533,23 @@ TEST(GCM, DecryptInvalidTag) {
   delete[] cipher;
 }
 
+TEST(GCM, DecryptInPlace) {
+  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  unsigned char plain[32];
+  for (size_t i = 0; i < sizeof(plain); ++i) {
+    plain[i] = static_cast<unsigned char>(i);
+  }
+  unsigned char key[16] = {0};
+  unsigned char iv[12] = {0};
+  unsigned char tag[16];
+  unsigned char buffer[sizeof(plain)];
+
+  aes.EncryptGCM(plain, sizeof(plain), key, iv, nullptr, 0, tag, buffer);
+  aes.DecryptGCM(buffer, sizeof(buffer), key, iv, nullptr, 0, tag, buffer);
+
+  ASSERT_FALSE(memcmp(buffer, plain, sizeof(plain)));
+}
+
 TEST(Utils, EncryptDecryptStringCBC) {
   std::string text = "hello world";
   std::array<uint8_t, 16> key = {0};

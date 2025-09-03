@@ -496,8 +496,10 @@ void AES::DecryptGCM(const unsigned char in[], size_t inLen,
     EncryptBlock(ctr, encryptedCtr, roundKeys->data());
 
     size_t blockLen = std::min<size_t>(16, inLen - i);
-    XorBlocks(in + i, encryptedCtr, out + i, blockLen);
+    // GHASH must run on the ciphertext before it may be overwritten by
+    // XorBlocks when operating in-place.
     GHASH(H, in + i, blockLen, calculatedTag);
+    XorBlocks(in + i, encryptedCtr, out + i, blockLen);
   }
 
   unsigned char lenBlock[16] = {0};
