@@ -225,7 +225,7 @@ bool remove_padding(const std::vector<uint8_t> &data,
     if (i < len) {
       byte = data[len - 1 - i];
     }
-    uint8_t mask = static_cast<uint8_t>(i < padding ? 0xFF : 0x00);
+    uint8_t mask = static_cast<uint8_t>(0 - static_cast<uint8_t>(i < padding));
     diff |= (byte ^ padding) & mask;
   }
   out = data;
