@@ -362,10 +362,15 @@ void AES::EncryptCTR(const unsigned char in[], size_t inLen,
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
     XorBlocks(in + i, encryptedCounter, out + i, blockLen);
 
+    bool overflow = true;  // detect counter wrap-around
     for (int j = blockBytesLen - 1; j >= 0; --j) {
       if (++counter[j] != 0) {
+        overflow = false;
         break;
       }
+    }
+    if (overflow) {
+      throw std::length_error("CTR counter overflow");
     }
   }
 
