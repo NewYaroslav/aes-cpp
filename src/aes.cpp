@@ -666,11 +666,13 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
   }
 #endif
   unsigned char V[16];
+  unsigned char X_copy[16];
+  memcpy(X_copy, X, 16);
   memset(Z, 0, 16);
   memcpy(V, Y, 16);
 
   for (int i = 0; i < 128; i++) {
-    if ((X[i / 8] >> (7 - (i % 8))) & 1) {
+    if ((X_copy[i / 8] >> (7 - (i % 8))) & 1) {
       for (int j = 0; j < 16; j++) {
         Z[j] ^= V[j];
       }
@@ -692,6 +694,7 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
       }
     }
   }
+  secure_zero(X_copy, sizeof(X_copy));
   secure_zero(V, sizeof(V));
 }
 
