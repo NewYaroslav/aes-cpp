@@ -1,7 +1,7 @@
 #include <sys/time.h>
 
 #include <aescpp/aes.hpp>
-#include <ctime>
+#include <aescpp/aes_utils.hpp>
 #include <iostream>
 
 const unsigned int MICROSECONDS = 1000000;
@@ -11,12 +11,10 @@ unsigned long getMicroseconds() {
   return MICROSECONDS * tv.tv_sec + tv.tv_usec;
 }
 
+// Generate plaintext filled with cryptographically secure random bytes.
 unsigned char *getRandomPlain(unsigned int length) {
   unsigned char *plain = new unsigned char[length];
-  for (unsigned int i = 0; i < length; i++) {
-    plain[i] = rand() % 256;
-  }
-
+  aescpp::utils::detail::fill_os_random(plain, length);
   return plain;
 }
 
@@ -29,8 +27,8 @@ int main() {
                          0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
 
   std::cout << "Start speedtest" << std::endl;
-  srand(std::time(nullptr));
 
+  // Plaintext is filled using secure OS randomness.
   unsigned char *plain = getRandomPlain(plainLength);
 
   aescpp::AES aes(aescpp::AESKeyLength::AES_256);
