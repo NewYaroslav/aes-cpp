@@ -232,9 +232,7 @@ AES::AES(const AESKeyLength keyLength) {
 }
 
 AES::~AES() {
-  if (cachedRoundKeys) {
-    secure_zero(cachedRoundKeys->data(), cachedRoundKeys->size());
-  }
+  cachedRoundKeys.reset();
   secure_zero(cachedKey.data(), cachedKey.size());
 }
 
@@ -253,13 +251,13 @@ std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
       !constant_time_eq(cachedKey.data(), key, keyLen)) {
     secure_zero(cachedKey.data(), cachedKey.size());
     cachedKey.assign(key, key + keyLen);
-    auto newRoundKeys =
-        std::make_shared<std::vector<unsigned char>>(4 * Nb * (Nr + 1));
+    auto newRoundKeys = std::shared_ptr<std::vector<unsigned char>>(
+        new std::vector<unsigned char>(4 * Nb * (Nr + 1)),
+        [](std::vector<unsigned char> *p) {
+          secure_zero(p->data(), p->size());
+          delete p;
+        });  // zeroize on last reference
     KeyExpansion(key, newRoundKeys->data());
-    if (cachedRoundKeys) {
-      secure_zero(cachedRoundKeys->data(), cachedRoundKeys->size());
-      cachedRoundKeys.reset();
-    }
     cachedRoundKeys = newRoundKeys;
   }
   return cachedRoundKeys;
