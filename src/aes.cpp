@@ -56,13 +56,13 @@ void secure_zero(void *p, size_t n) {
 #endif
 }
 
-static bool constant_time_eq(const unsigned char *a, const unsigned char *b,
-                             size_t len) {
-  unsigned char diff = 0;
+bool constant_time_eq(const unsigned char *a, const unsigned char *b,
+                      size_t len) {
+  uint32_t diff = 0;
   for (size_t i = 0; i < len; ++i) {
-    diff |= a[i] ^ b[i];
+    diff |= static_cast<uint32_t>(a[i] ^ b[i]);
   }
-  return diff == 0;
+  return ((diff - 1) >> 8) & 1;
 }
 
 #if defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
