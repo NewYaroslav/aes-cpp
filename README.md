@@ -67,7 +67,11 @@ auto restored =
 
 ### GCM Helpers
 `encrypt_gcm` and `decrypt_gcm` manage the 12-byte IV, optional additional
-authenticated data (AAD), and the authentication tag produced by GCM:
+authenticated data (AAD), and the authentication tag produced by GCM.
+
+GCM limits AAD to `(1ULL << 39) - 256` bytes and the combined length of AAD and
+plaintext to the same bound. The library throws `std::length_error` if these
+limits are exceeded:
 ```c++
 #include <aescpp/aes_utils.hpp>
 
