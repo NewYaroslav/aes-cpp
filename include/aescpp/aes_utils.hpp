@@ -66,7 +66,7 @@ struct EncryptedData {
   std::chrono::system_clock::time_point timestamp;  ///< Creation time.
   std::array<uint8_t, BLOCK_SIZE> iv;               ///< Initialization vector.
   std::vector<uint8_t> ciphertext;                  ///< Ciphertext bytes.
-  std::vector<uint8_t> hmac;                        ///< Optional HMAC.
+  std::vector<uint8_t> tag;  ///< Message-authentication tag.
 };
 
 /// \brief Container for GCM encrypted data with authentication tag.
@@ -80,10 +80,12 @@ struct GcmEncryptedData {
 /// \brief Modes supported by legacy helpers.
 enum class AesMode { CBC, CFB, CTR };
 
-/// \brief Callback to compute an HMAC over IV and ciphertext.
-using HmacFn = std::function<std::vector<uint8_t>(
-    const std::array<uint8_t, BLOCK_SIZE> &iv,
-    const std::vector<uint8_t> &ciphertext)>;
+/// \brief Callback to compute a message authentication code over IV and
+/// ciphertext (e.g., HMAC).
+/// The input vector contains IV bytes followed by ciphertext.
+/// The MAC should use its own key separate from the AES key.
+using MacFn =
+    std::function<std::vector<uint8_t>(const std::vector<uint8_t> &data)>;
 
 /// \brief Determine AES key length from key container size.
 /// \tparam T Key type providing `size()`.
@@ -100,7 +102,7 @@ AESKeyLength key_length_from_key(const T &key);
 /// \return Encrypted data with IV and timestamp.
 template <class T>
 EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
-                      AesMode mode, const HmacFn &hmac_fn = {});
+                      AesMode mode, const MacFn &mac_fn = {});
 
 /// \brief Encrypt string data using the specified block mode.
 /// \tparam T Container type holding the key.
@@ -110,7 +112,7 @@ EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
 /// \return Encrypted data with IV and timestamp.
 template <class T>
 EncryptedData encrypt(const std::string &plain_text, const T &key, AesMode mode,
-                      const HmacFn &hmac_fn = {});
+                      const MacFn &mac_fn = {});
 
 /// \brief Decrypt previously encrypted data.
 /// \tparam T Container type holding the key.
@@ -120,7 +122,7 @@ EncryptedData encrypt(const std::string &plain_text, const T &key, AesMode mode,
 /// \return Decrypted bytes.
 template <class T>
 std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
-                             AesMode mode, const HmacFn &hmac_fn = {});
+                             AesMode mode, const MacFn &mac_fn = {});
 
 /// \brief Decrypt data and return as string.
 /// \tparam T Container type holding the key.
@@ -130,7 +132,7 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
 /// \return Decrypted text.
 template <class T>
 std::string decrypt_to_string(const EncryptedData &data, const T &key,
-                              AesMode mode, const HmacFn &hmac_fn = {});
+                              AesMode mode, const MacFn &mac_fn = {});
 
 /// \brief Encrypt data using AES-GCM.
 /// \tparam T Container type holding the key.

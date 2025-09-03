@@ -16,7 +16,7 @@ hardware-accelerated instructions when available. If AES-NI is missing, a
 portable software implementation is used instead.
 
 ## Supported Modes
-ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an authentication tag for message integrity.
+ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an authentication tag for message integrity. CBC, CFB and CTR can be paired with a MAC callback (e.g., HMAC) to authenticate `IV || ciphertext`; omitting the callback leaves them vulnerable to tampering.
 ECB mode is provided for completeness but leaks plaintext patterns and should be avoided. Prefer authenticated encryption modes such as GCM that provide both confidentiality and integrity.
 
 ## IV Generation
@@ -70,21 +70,23 @@ auto restored =
     utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR);
 ```
 
-### HMAC Callback
+### MAC Callback
 `utils::encrypt`, `utils::decrypt`, and `utils::decrypt_to_string` for CBC, CFB
 and CTR modes accept an optional callback for computing a message
-authentication code over the IV and ciphertext. Use the same callback for both
-operations to detect tampering before returning plaintext.
+authentication code. The library authenticates the concatenation of IV and
+ciphertext and passes this buffer to the callback. Use the same callback for
+both operations to detect tampering before returning plaintext. The MAC should
+use its own secret key rather than reusing the AES key. Omitting the callback
+disables authentication and is insecure.
 
 ```c++
-auto hmac_fn = [](const std::vector<uint8_t> &iv,
-                  const std::vector<uint8_t> &ct) {
-  return my_hmac(iv, ct); // user-provided implementation
+auto mac_fn = [](const std::vector<uint8_t> &data) {
+  return my_hmac(data); // data = IV || ciphertext
 };
 
-auto encrypted = utils::encrypt(text, key, utils::AesMode::CTR, hmac_fn);
+auto encrypted = utils::encrypt(text, key, utils::AesMode::CTR, mac_fn);
 auto restored =
-    utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR, hmac_fn);
+    utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR, mac_fn);
 ```
 
 ### GCM Helpers
