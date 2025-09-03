@@ -186,6 +186,8 @@ std::array<uint8_t, N> generate_iv_impl() {
 
 bool constant_time_equal(const std::vector<uint8_t> &a,
                          const std::vector<uint8_t> &b) {
+  // Length comparison and max_len computation are allowed only when the
+  // vector sizes are public and not secret.
   std::size_t max_len = a.size();
   max_len +=
       (b.size() - max_len) & static_cast<std::size_t>(-(b.size() > max_len));
