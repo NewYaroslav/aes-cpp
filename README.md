@@ -37,6 +37,11 @@ AES aesVec(AESKeyLength::AES_128);
 auto cipherVec = aesVec.EncryptCBC(plainVec, keyVec, iv);
 ```
 
+## Clearing Cached Keys
+The `AES` class caches the last key and its expanded round keys for reuse.
+Call `clear_cache()` when this material is no longer needed to securely erase
+it. The destructor invokes this automatically.
+
 ## Debug Helpers
 
 Defining the `AESCPP_DEBUG` macro enables helper functions such as `printHexArray` and `printHexVector` for inspecting data. These helpers are for debugging only and must not be used with sensitive data in production builds. The `make build_debug` target defines this macro automatically, or you can compile with `-DAESCPP_DEBUG`.

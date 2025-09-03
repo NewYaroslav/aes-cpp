@@ -231,9 +231,13 @@ AES::AES(const AESKeyLength keyLength) {
   }
 }
 
-AES::~AES() {
+AES::~AES() { clear_cache(); }
+
+void AES::clear_cache() {
+  std::unique_lock<AESCPP_SHARED_MUTEX> lock(cacheMutex);
   cachedRoundKeys.reset();
   secure_zero(cachedKey.data(), cachedKey.size());
+  cachedKey.clear();
 }
 
 std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
