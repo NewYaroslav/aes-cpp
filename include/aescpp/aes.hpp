@@ -207,7 +207,9 @@ class AES {
   /// \param aadLen Length of \p aad in bytes.
   /// \param tag Output buffer for 16-byte authentication tag.
   /// \return Newly allocated ciphertext; caller must delete[] using `delete[]`.
-  /// \throws std::length_error If \p inLen exceeds (1ULL << 32) * 16 bytes.
+  /// \throws std::length_error If \p inLen exceeds (1ULL << 32) * 16 bytes, if
+  /// \p aadLen exceeds (1ULL << 39) - 256 bytes, or if \p aadLen + \p inLen
+  /// exceeds (1ULL << 39) - 256 bytes.
   /// \note IV length must be exactly 12 bytes.
   AESCPP_NODISCARD unsigned char *EncryptGCM(
       const unsigned char in[], size_t inLen, const unsigned char key[],
@@ -225,7 +227,9 @@ class AES {
   /// \param tag Expected 16-byte authentication tag.
   /// \return Newly allocated plaintext; caller must delete[] using `delete[]`.
   /// \throws std::runtime_error If authentication fails.
-  /// \throws std::length_error If \p inLen exceeds (1ULL << 32) * 16 bytes.
+  /// \throws std::length_error If \p inLen exceeds (1ULL << 32) * 16 bytes, if
+  /// \p aadLen exceeds (1ULL << 39) - 256 bytes, or if \p aadLen + \p inLen
+  /// exceeds (1ULL << 39) - 256 bytes.
   /// \note IV length must be exactly 12 bytes.
   AESCPP_NODISCARD unsigned char *DecryptGCM(
       const unsigned char in[], size_t inLen, const unsigned char key[],
@@ -353,7 +357,9 @@ class AES {
   /// \param aad Additional authenticated data.
   /// \param tag Output tag resized to 16 bytes.
   /// \return Ciphertext of the same length as \p in.
-  /// \throws std::length_error If the input exceeds (1ULL << 32) * 16 bytes.
+  /// \throws std::length_error If the input exceeds (1ULL << 32) * 16 bytes, if
+  /// \p aad exceeds (1ULL << 39) - 256 bytes, or if the sum of \p aad and \p in
+  /// exceeds (1ULL << 39) - 256 bytes.
   /// \note IV must be 12 bytes.
   AESCPP_NODISCARD std::vector<unsigned char> EncryptGCM(
       const std::vector<unsigned char> &in,
@@ -375,7 +381,9 @@ class AES {
   /// \param tag Authentication tag to verify.
   /// \return Plaintext of the same length as \p in.
   /// \throws std::runtime_error If authentication fails.
-  /// \throws std::length_error If the input exceeds (1ULL << 32) * 16 bytes.
+  /// \throws std::length_error If the input exceeds (1ULL << 32) * 16 bytes, if
+  /// \p aad exceeds (1ULL << 39) - 256 bytes, or if the sum of \p aad and \p in
+  /// exceeds (1ULL << 39) - 256 bytes.
   /// \note IV must be 12 bytes.
   AESCPP_NODISCARD std::vector<unsigned char> DecryptGCM(
       const std::vector<unsigned char> &in,
@@ -400,7 +408,9 @@ class AES {
   /// \param aadLen Length of \p aad in bytes.
   /// \param tag Output buffer for the 16-byte authentication tag.
   /// \param out Output buffer with space for \p inLen bytes of ciphertext.
-  /// \throws std::length_error If \p inLen exceeds (1ULL << 32) * 16 bytes.
+  /// \throws std::length_error If \p inLen exceeds (1ULL << 32) * 16 bytes, if
+  /// \p aadLen exceeds (1ULL << 39) - 256 bytes, or if \p aadLen + \p inLen
+  /// exceeds (1ULL << 39) - 256 bytes.
   /// \note IV length must be exactly 12 bytes.
   void EncryptGCM(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char iv[],
@@ -417,7 +427,9 @@ class AES {
   /// \param tag Expected 16-byte authentication tag.
   /// \param out Output buffer with space for \p inLen bytes of plaintext.
   /// \throws std::runtime_error If authentication fails.
-  /// \throws std::length_error If \p inLen exceeds (1ULL << 32) * 16 bytes.
+  /// \throws std::length_error If \p inLen exceeds (1ULL << 32) * 16 bytes, if
+  /// \p aadLen exceeds (1ULL << 39) - 256 bytes, or if \p aadLen + \p inLen
+  /// exceeds (1ULL << 39) - 256 bytes.
   /// \note IV length must be exactly 12 bytes.
   void DecryptGCM(const unsigned char in[], size_t inLen,
                   const unsigned char key[], const unsigned char iv[],
