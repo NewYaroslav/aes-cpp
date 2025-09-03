@@ -209,14 +209,11 @@ std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data) {
 
 bool remove_padding(const std::vector<uint8_t> &data,
                     std::vector<uint8_t> &out) noexcept {
-  if (data.empty() || data.size() % BLOCK_SIZE != 0) {
-    out.clear();
-    return false;
-  }
-  uint8_t padding = data.back();
-  bool invalid = padding == 0 || padding > BLOCK_SIZE || padding > data.size();
-  uint8_t diff = 0;
   std::size_t len = data.size();
+  uint8_t padding = len ? data.back() : 0;
+  bool invalid = (len == 0) || (len % BLOCK_SIZE != 0) || padding == 0 ||
+                 padding > BLOCK_SIZE || padding > len;
+  uint8_t diff = 0;
   for (std::size_t i = 0; i < BLOCK_SIZE; ++i) {
     uint8_t byte = 0;
     if (i < len) {
@@ -328,32 +325,41 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
   }
   AES aes(key_length_from_key(key));
   std::vector<uint8_t> plain(data.ciphertext.size());
-  switch (mode) {
-    case AesMode::CBC:
-      aes.DecryptCBC(data.ciphertext.data(), data.ciphertext.size(), key.data(),
-                     data.iv.data(), plain.data());
-      break;
-    case AesMode::CFB:
-      aes.DecryptCFB(data.ciphertext.data(), data.ciphertext.size(), key.data(),
-                     data.iv.data(), plain.data());
-      break;
-    case AesMode::CTR:
-      aes.DecryptCTR(data.ciphertext.data(), data.ciphertext.size(), key.data(),
-                     data.iv.data(), plain.data());
-      break;
-    default:
-      throw std::invalid_argument(
-          "Invalid AES mode; expected CBC, CFB, or CTR");
+  bool decrypt_error = false;
+  try {
+    switch (mode) {
+      case AesMode::CBC:
+        aes.DecryptCBC(data.ciphertext.data(), data.ciphertext.size(),
+                       key.data(), data.iv.data(), plain.data());
+        break;
+      case AesMode::CFB:
+        aes.DecryptCFB(data.ciphertext.data(), data.ciphertext.size(),
+                       key.data(), data.iv.data(), plain.data());
+        break;
+      case AesMode::CTR:
+        aes.DecryptCTR(data.ciphertext.data(), data.ciphertext.size(),
+                       key.data(), data.iv.data(), plain.data());
+        break;
+      default:
+        throw std::invalid_argument(
+            "Invalid AES mode; expected CBC, CFB, or CTR");
+    }
+  } catch (const std::length_error &) {
+    decrypt_error = true;
   }
   if (mode == AesMode::CBC) {
     std::vector<uint8_t> result;
     bool ok = remove_padding(plain, result);
     secure_zero(plain.data(), plain.size());
-    if (!ok) {
+    if (decrypt_error || !ok) {
       secure_zero(result.data(), result.size());
-      throw std::runtime_error("Invalid padding detected");
+      throw std::runtime_error("Invalid ciphertext");
     }
     return result;
+  }
+  if (decrypt_error) {
+    secure_zero(plain.data(), plain.size());
+    throw std::runtime_error("Invalid ciphertext");
   }
   return plain;
 }

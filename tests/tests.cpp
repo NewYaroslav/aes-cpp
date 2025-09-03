@@ -643,6 +643,36 @@ TEST(Utils, DecryptStringCbcInvalidPadding) {
                std::runtime_error);
 }
 
+TEST(Utils, DecryptStringCbcMalformedCiphertextsSameError) {
+  std::string text = "hello world";
+  std::array<uint8_t, 16> key = {0};
+  auto enc = aescpp::utils::encrypt(text, key, aescpp::utils::AesMode::CBC);
+
+  auto bad_padding = enc;
+  bad_padding.ciphertext.back() ^= 0x01;
+
+  auto bad_length = enc;
+  bad_length.ciphertext.pop_back();
+
+  std::string pad_msg;
+  try {
+    aescpp::utils::decrypt(bad_padding, key, aescpp::utils::AesMode::CBC);
+    FAIL() << "Expected runtime_error";
+  } catch (const std::runtime_error &e) {
+    pad_msg = e.what();
+  }
+
+  std::string len_msg;
+  try {
+    aescpp::utils::decrypt(bad_length, key, aescpp::utils::AesMode::CBC);
+    FAIL() << "Expected runtime_error";
+  } catch (const std::runtime_error &e) {
+    len_msg = e.what();
+  }
+
+  EXPECT_EQ(pad_msg, len_msg);
+}
+
 TEST(Utils, EncryptDecryptCtrZeroLength) {
   std::vector<uint8_t> plain;
   std::array<uint8_t, 16> key = {0};
