@@ -401,6 +401,7 @@ void AES::EncryptGCM(const unsigned char in[], size_t inLen,
   if (!key) throw std::invalid_argument("Null key");
   if (!iv || (!aad && aadLen > 0) || !tag)
     throw std::invalid_argument("Null IV, AAD or tag");
+  if (inLen > (1ULL << 32) * 16) throw std::length_error("Input too long");
   auto roundKeys = prepare_round_keys(key);
 
   // Compute hash subkey H
@@ -475,6 +476,7 @@ void AES::DecryptGCM(const unsigned char in[], size_t inLen,
   if (!key) throw std::invalid_argument("Null key");
   if (!iv || (!aad && aadLen > 0) || !tag)
     throw std::invalid_argument("Null IV, AAD or tag");
+  if (inLen > (1ULL << 32) * 16) throw std::length_error("Input too long");
   auto roundKeys = prepare_round_keys(key);
 
   // Compute hash subkey H
