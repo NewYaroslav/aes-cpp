@@ -66,6 +66,23 @@ auto restored =
     utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR);
 ```
 
+### HMAC Callback
+`utils::encrypt`, `utils::decrypt`, and `utils::decrypt_to_string` for CBC, CFB
+and CTR modes accept an optional callback for computing a message
+authentication code over the IV and ciphertext. Use the same callback for both
+operations to detect tampering before returning plaintext.
+
+```c++
+auto hmac_fn = [](const std::vector<uint8_t> &iv,
+                  const std::vector<uint8_t> &ct) {
+  return my_hmac(iv, ct); // user-provided implementation
+};
+
+auto encrypted = utils::encrypt(text, key, utils::AesMode::CTR, hmac_fn);
+auto restored =
+    utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR, hmac_fn);
+```
+
 ### GCM Helpers
 `encrypt_gcm` and `decrypt_gcm` manage the 12-byte IV, optional additional
 authenticated data (AAD), and the authentication tag produced by GCM.
