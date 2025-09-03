@@ -1132,6 +1132,8 @@ AESCPP_NODISCARD std::vector<unsigned char> AES::EncryptGCM(
     const std::vector<unsigned char> &iv, const std::vector<unsigned char> &aad,
     std::vector<unsigned char> &tag) {
   if (iv.size() != 12) throw std::invalid_argument("IV size must be 12 bytes");
+  if (tag.size() > 16)
+    throw std::invalid_argument("Tag size must be at most 16 bytes");
   if (tag.size() < 16) tag.resize(16);
   std::vector<unsigned char> out(in.size());
   EncryptGCM(in.data(), in.size(), key.data(), iv.data(), aad.data(),
