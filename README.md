@@ -17,6 +17,7 @@ portable software implementation is used instead.
 
 ## Supported Modes
 ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an authentication tag for message integrity.
+ECB mode is provided for completeness but leaks plaintext patterns and should be avoided. Prefer authenticated encryption modes such as GCM that provide both confidentiality and integrity.
 
 ## IV Generation
 `aescpp::utils` provides helpers for creating random IVs. `generate_iv_16()`
