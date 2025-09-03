@@ -41,6 +41,7 @@
 
 #include <aescpp/aes_utils.hpp>
 #include <algorithm>
+#include <functional>
 #include <stdexcept>
 
 #ifdef AESUTILS_TRUST_STD_RANDOM_DEVICE
@@ -183,6 +184,16 @@ std::array<uint8_t, N> generate_iv_impl() {
       "No secure random source available on this platform");
 }
 
+bool constant_time_equal(const std::vector<uint8_t> &a,
+                         const std::vector<uint8_t> &b) {
+  if (a.size() != b.size()) return false;
+  uint8_t diff = 0;
+  for (std::size_t i = 0; i < a.size(); ++i) {
+    diff |= static_cast<uint8_t>(a[i] ^ b[i]);
+  }
+  return diff == 0;
+}
+
 }  // namespace
 
 std::array<uint8_t, 12> generate_iv_12() { return generate_iv_impl<12>(); }
@@ -260,7 +271,7 @@ AESKeyLength key_length_from_key(const T &key) {
 
 template <class T>
 EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
-                      AesMode mode) {
+                      AesMode mode, const HmacFn &hmac_fn) {
   AES aes(key_length_from_key(key));
   auto iv = generate_iv_16();
   const std::vector<uint8_t> *src = &plain;
@@ -291,19 +302,30 @@ EncryptedData encrypt(const std::vector<uint8_t> &plain, const T &key,
   if (mode == AesMode::CBC) {
     secure_zero(padded.data(), padded.size());
   }
-  return {std::chrono::system_clock::now(), iv, std::move(ciphertext)};
+  std::vector<uint8_t> hmac;
+  if (hmac_fn) {
+    hmac = hmac_fn(iv, ciphertext);
+  }
+  return {std::chrono::system_clock::now(), iv, std::move(ciphertext),
+          std::move(hmac)};
 }
 
 template <class T>
-EncryptedData encrypt(const std::string &plain_text, const T &key,
-                      AesMode mode) {
+EncryptedData encrypt(const std::string &plain_text, const T &key, AesMode mode,
+                      const HmacFn &hmac_fn) {
   return encrypt(std::vector<uint8_t>(plain_text.begin(), plain_text.end()),
-                 key, mode);
+                 key, mode, hmac_fn);
 }
 
 template <class T>
 std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
-                             AesMode mode) {
+                             AesMode mode, const HmacFn &hmac_fn) {
+  if (hmac_fn) {
+    auto expected = hmac_fn(data.iv, data.ciphertext);
+    if (data.hmac.empty() || !constant_time_equal(expected, data.hmac)) {
+      throw std::invalid_argument("HMAC verification failed");
+    }
+  }
   AES aes(key_length_from_key(key));
   std::vector<uint8_t> plain(data.ciphertext.size());
   switch (mode) {
@@ -338,8 +360,8 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
 
 template <class T>
 std::string decrypt_to_string(const EncryptedData &data, const T &key,
-                              AesMode mode) {
-  std::vector<uint8_t> plain = decrypt(data, key, mode);
+                              AesMode mode, const HmacFn &hmac_fn) {
+  std::vector<uint8_t> plain = decrypt(data, key, mode, hmac_fn);
   std::string result(plain.begin(), plain.end());
   secure_zero(plain.data(), plain.size());
   return result;
@@ -395,40 +417,55 @@ template AESKeyLength key_length_from_key<std::array<uint8_t, 32>>(
     const std::array<uint8_t, 32> &);
 
 template EncryptedData encrypt<std::vector<uint8_t>>(
-    const std::vector<uint8_t> &, const std::vector<uint8_t> &, AesMode);
+    const std::vector<uint8_t> &, const std::vector<uint8_t> &, AesMode,
+    const HmacFn &);
 template EncryptedData encrypt<std::array<uint8_t, 16>>(
-    const std::vector<uint8_t> &, const std::array<uint8_t, 16> &, AesMode);
+    const std::vector<uint8_t> &, const std::array<uint8_t, 16> &, AesMode,
+    const HmacFn &);
 template EncryptedData encrypt<std::array<uint8_t, 24>>(
-    const std::vector<uint8_t> &, const std::array<uint8_t, 24> &, AesMode);
+    const std::vector<uint8_t> &, const std::array<uint8_t, 24> &, AesMode,
+    const HmacFn &);
 template EncryptedData encrypt<std::array<uint8_t, 32>>(
-    const std::vector<uint8_t> &, const std::array<uint8_t, 32> &, AesMode);
+    const std::vector<uint8_t> &, const std::array<uint8_t, 32> &, AesMode,
+    const HmacFn &);
 
 template EncryptedData encrypt<std::vector<uint8_t>>(
-    const std::string &, const std::vector<uint8_t> &, AesMode);
+    const std::string &, const std::vector<uint8_t> &, AesMode, const HmacFn &);
 template EncryptedData encrypt<std::array<uint8_t, 16>>(
-    const std::string &, const std::array<uint8_t, 16> &, AesMode);
+    const std::string &, const std::array<uint8_t, 16> &, AesMode,
+    const HmacFn &);
 template EncryptedData encrypt<std::array<uint8_t, 24>>(
-    const std::string &, const std::array<uint8_t, 24> &, AesMode);
+    const std::string &, const std::array<uint8_t, 24> &, AesMode,
+    const HmacFn &);
 template EncryptedData encrypt<std::array<uint8_t, 32>>(
-    const std::string &, const std::array<uint8_t, 32> &, AesMode);
+    const std::string &, const std::array<uint8_t, 32> &, AesMode,
+    const HmacFn &);
 
 template std::vector<uint8_t> decrypt<std::vector<uint8_t>>(
-    const EncryptedData &, const std::vector<uint8_t> &, AesMode);
+    const EncryptedData &, const std::vector<uint8_t> &, AesMode,
+    const HmacFn &);
 template std::vector<uint8_t> decrypt<std::array<uint8_t, 16>>(
-    const EncryptedData &, const std::array<uint8_t, 16> &, AesMode);
+    const EncryptedData &, const std::array<uint8_t, 16> &, AesMode,
+    const HmacFn &);
 template std::vector<uint8_t> decrypt<std::array<uint8_t, 24>>(
-    const EncryptedData &, const std::array<uint8_t, 24> &, AesMode);
+    const EncryptedData &, const std::array<uint8_t, 24> &, AesMode,
+    const HmacFn &);
 template std::vector<uint8_t> decrypt<std::array<uint8_t, 32>>(
-    const EncryptedData &, const std::array<uint8_t, 32> &, AesMode);
+    const EncryptedData &, const std::array<uint8_t, 32> &, AesMode,
+    const HmacFn &);
 
 template std::string decrypt_to_string<std::vector<uint8_t>>(
-    const EncryptedData &, const std::vector<uint8_t> &, AesMode);
+    const EncryptedData &, const std::vector<uint8_t> &, AesMode,
+    const HmacFn &);
 template std::string decrypt_to_string<std::array<uint8_t, 16>>(
-    const EncryptedData &, const std::array<uint8_t, 16> &, AesMode);
+    const EncryptedData &, const std::array<uint8_t, 16> &, AesMode,
+    const HmacFn &);
 template std::string decrypt_to_string<std::array<uint8_t, 24>>(
-    const EncryptedData &, const std::array<uint8_t, 24> &, AesMode);
+    const EncryptedData &, const std::array<uint8_t, 24> &, AesMode,
+    const HmacFn &);
 template std::string decrypt_to_string<std::array<uint8_t, 32>>(
-    const EncryptedData &, const std::array<uint8_t, 32> &, AesMode);
+    const EncryptedData &, const std::array<uint8_t, 32> &, AesMode,
+    const HmacFn &);
 
 template GcmEncryptedData encrypt_gcm<std::vector<uint8_t>>(
     const std::vector<uint8_t> &, const std::vector<uint8_t> &,
