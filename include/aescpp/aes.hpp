@@ -32,6 +32,12 @@
 #define AESCPP_MAKE_UNIQUE(T, n) std::unique_ptr<T[]>(new T[n])
 #endif
 
+#if __cplusplus >= 201402L
+#define AESCPP_DEPRECATED(msg) [[deprecated(msg)]]
+#else
+#define AESCPP_DEPRECATED(msg)
+#endif
+
 namespace aescpp {
 
 /// \brief Overwrite a memory region with zeros.
@@ -59,22 +65,28 @@ class AES {
   ~AES();
 
   /// \brief Encrypt data using ECB mode.
+  /// \warning ECB mode leaks plaintext patterns and should not be used for new
+  ///          code. Prefer an authenticated mode like GCM.
   /// \param in Input buffer.
   /// \param inLen Length of input in bytes; must be divisible by 16.
   /// \param key Encryption key.
   /// \return Newly allocated ciphertext; caller must delete[] using `delete[]`.
-  AESCPP_NODISCARD unsigned char *EncryptECB(const unsigned char in[],
-                                             size_t inLen,
-                                             const unsigned char key[]);
+  AESCPP_NODISCARD AESCPP_DEPRECATED(
+      "ECB mode leaks plaintext patterns; use an authenticated mode like "
+      "GCM") unsigned char *EncryptECB(const unsigned char in[], size_t inLen,
+                                       const unsigned char key[]);
 
   /// \brief Decrypt data previously encrypted with ECB mode.
+  /// \warning ECB mode leaks plaintext patterns and should not be used for new
+  ///          code. Prefer an authenticated mode like GCM.
   /// \param in Ciphertext buffer.
   /// \param inLen Length of ciphertext in bytes; must be divisible by 16.
   /// \param key Decryption key.
   /// \return Newly allocated plaintext; caller must delete[] using `delete[]`.
-  AESCPP_NODISCARD unsigned char *DecryptECB(const unsigned char in[],
-                                             size_t inLen,
-                                             const unsigned char key[]);
+  AESCPP_NODISCARD AESCPP_DEPRECATED(
+      "ECB mode leaks plaintext patterns; use an authenticated mode like "
+      "GCM") unsigned char *DecryptECB(const unsigned char in[], size_t inLen,
+                                       const unsigned char key[]);
 
   /// \brief Encrypt data using CBC mode.
   /// \param in Input buffer.
