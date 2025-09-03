@@ -1,5 +1,8 @@
+#define private public
 #include <aescpp/aes.hpp>
+#undef private
 #include <aescpp/aes_utils.hpp>
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <string>
@@ -22,6 +25,24 @@ TEST(Internal, ConstantTimeEq) {
   EXPECT_TRUE(aescpp::constant_time_eq(a, b, sizeof(a)));
   // A differing byte must result in inequality.
   EXPECT_FALSE(aescpp::constant_time_eq(a, c, sizeof(a)));
+}
+
+TEST(Internal, ReplaceKeyZeroizesOldRoundKeys) {
+  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  unsigned char key1[16];
+  for (size_t i = 0; i < sizeof(key1); ++i) {
+    key1[i] = static_cast<unsigned char>(i);
+  }
+  auto oldRoundKeys = aes.prepare_round_keys(key1);
+  ASSERT_TRUE(std::any_of(oldRoundKeys->begin(), oldRoundKeys->end(),
+                          [](unsigned char b) { return b != 0; }));
+  unsigned char key2[16];
+  for (size_t i = 0; i < sizeof(key2); ++i) {
+    key2[i] = static_cast<unsigned char>(i + 1);
+  }
+  aes.prepare_round_keys(key2);
+  EXPECT_TRUE(std::all_of(oldRoundKeys->begin(), oldRoundKeys->end(),
+                          [](unsigned char b) { return b == 0; }));
 }
 
 TEST(KeyLengths, KeyLength128) {
