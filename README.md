@@ -131,7 +131,10 @@ CBC doesn't satisfy this condition an exception will be thrown
 
 #Links
 
+These projects can be used together with aescpp:
 
+* [hmac-cpp](https://github.com/NewYaroslav/hmac-cpp) - HMAC for authentication
+* [obfy](https://github.com/NewYaroslav/obfy) - generate license verification code
 * [Wiki](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
 * [NIST](https://www.nist.gov/publications/advanced-encryption-standard-aes)
 
