@@ -196,12 +196,11 @@ std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data) {
   return padded;
 }
 
-std::vector<uint8_t> remove_padding(const std::vector<uint8_t> &data) {
-  if (data.empty()) {
-    throw std::invalid_argument("Data is empty, cannot remove padding.");
-  }
-  if (data.size() % BLOCK_SIZE != 0) {
-    throw std::invalid_argument("Data size is not a multiple of block size.");
+bool remove_padding(const std::vector<uint8_t> &data,
+                    std::vector<uint8_t> &out) noexcept {
+  if (data.empty() || data.size() % BLOCK_SIZE != 0) {
+    out.clear();
+    return false;
   }
   uint8_t padding = data.back();
   bool invalid = padding == 0 || padding > BLOCK_SIZE || padding > data.size();
@@ -215,10 +214,12 @@ std::vector<uint8_t> remove_padding(const std::vector<uint8_t> &data) {
     uint8_t mask = static_cast<uint8_t>(i < padding ? 0xFF : 0x00);
     diff |= (byte ^ padding) & mask;
   }
-  if (invalid || diff) {
-    throw std::invalid_argument("Invalid padding detected.");
+  out = data;
+  if (!(invalid || diff)) {
+    out.resize(len - padding);
+    return true;
   }
-  return std::vector<uint8_t>(data.begin(), data.end() - padding);
+  return false;
 }
 
 std::vector<uint8_t> add_iv_to_ciphertext(
@@ -323,14 +324,14 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
           "Invalid AES mode; expected CBC, CFB, or CTR");
   }
   if (mode == AesMode::CBC) {
-    try {
-      auto result = remove_padding(plain);
-      secure_zero(plain.data(), plain.size());
-      return result;
-    } catch (...) {
-      secure_zero(plain.data(), plain.size());
-      throw;
+    std::vector<uint8_t> result;
+    bool ok = remove_padding(plain, result);
+    secure_zero(plain.data(), plain.size());
+    if (!ok) {
+      secure_zero(result.data(), result.size());
+      throw std::runtime_error("Invalid padding detected");
     }
+    return result;
   }
   return plain;
 }
