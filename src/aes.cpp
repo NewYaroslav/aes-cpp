@@ -136,6 +136,82 @@ static constexpr uint8_t RCON_TABLE[] = {0x01, 0x02, 0x04, 0x08, 0x10,
                                          0x20, 0x40, 0x80, 0x1B, 0x36,
                                          0x6C, 0xD8, 0xAB, 0x4D, 0x9A};
 
+namespace {
+inline unsigned char gf_xtime(unsigned char b) {
+  return static_cast<unsigned char>((b << 1) ^ ((b >> 7) * 0x1b));
+}
+
+inline unsigned char gf_mul(unsigned char a, unsigned char b) {
+  unsigned char r = 0;
+  for (int i = 0; i < 8; ++i) {
+    unsigned char mask = static_cast<unsigned char>(-(b & 1));
+    r ^= a & mask;
+    a = gf_xtime(a);
+    b >>= 1;
+  }
+  return r;
+}
+
+inline unsigned char gf_inv(unsigned char a) {
+  unsigned char x2 = gf_mul(a, a);
+  unsigned char x4 = gf_mul(x2, x2);
+  unsigned char x8 = gf_mul(x4, x4);
+  unsigned char x16 = gf_mul(x8, x8);
+  unsigned char x32 = gf_mul(x16, x16);
+  unsigned char x64 = gf_mul(x32, x32);
+  unsigned char x128 = gf_mul(x64, x64);
+  unsigned char t = gf_mul(x128, x64);
+  t = gf_mul(t, x32);
+  t = gf_mul(t, x16);
+  t = gf_mul(t, x8);
+  t = gf_mul(t, x4);
+  t = gf_mul(t, x2);
+  return t;
+}
+
+inline unsigned char rotl8(unsigned char x, unsigned n) {
+  return static_cast<unsigned char>((x << n) | (x >> (8 - n)));
+}
+
+inline unsigned char aes_sbox_ct(unsigned char a) {
+  unsigned char t = gf_inv(a);
+  return t ^ rotl8(t, 1) ^ rotl8(t, 2) ^ rotl8(t, 3) ^ rotl8(t, 4) ^ 0x63;
+}
+
+inline unsigned char aes_inv_sbox_ct(unsigned char a) {
+  unsigned char x = rotl8(a, 1) ^ rotl8(a, 3) ^ rotl8(a, 6) ^ 0x05;
+  return gf_inv(x);
+}
+
+inline unsigned char mul9(unsigned char x) {
+  unsigned char x2 = gf_xtime(x);
+  unsigned char x4 = gf_xtime(x2);
+  unsigned char x8 = gf_xtime(x4);
+  return x8 ^ x;
+}
+
+inline unsigned char mul11(unsigned char x) {
+  unsigned char x2 = gf_xtime(x);
+  unsigned char x4 = gf_xtime(x2);
+  unsigned char x8 = gf_xtime(x4);
+  return x8 ^ x2 ^ x;
+}
+
+inline unsigned char mul13(unsigned char x) {
+  unsigned char x2 = gf_xtime(x);
+  unsigned char x4 = gf_xtime(x2);
+  unsigned char x8 = gf_xtime(x4);
+  return x8 ^ x4 ^ x;
+}
+
+inline unsigned char mul14(unsigned char x) {
+  unsigned char x2 = gf_xtime(x);
+  unsigned char x4 = gf_xtime(x2);
+  unsigned char x8 = gf_xtime(x4);
+  return x8 ^ x4 ^ x2;
+}
+}  // namespace
+
 AES::AES(const AESKeyLength keyLength) {
   switch (keyLength) {
     case AESKeyLength::AES_128:
@@ -779,12 +855,9 @@ void AES::DecryptBlock(const unsigned char in[], unsigned char out[],
 
 void AES::SubBytes(unsigned char state[4][Nb]) {
   unsigned int i, j;
-  unsigned char t;
-
   for (i = 0; i < 4; i++) {
     for (j = 0; j < Nb; j++) {
-      t = state[i][j];
-      state[i][j] = sbox[t];
+      state[i][j] = aes_sbox_ct(state[i][j]);
     }
   }
 }
@@ -808,20 +881,21 @@ void AES::ShiftRows(unsigned char state[4][Nb]) {
 }
 
 unsigned char AES::xtime(unsigned char b) {  // multiply on x
-  return (b << 1) ^ (((b >> 7) & 1) * 0x1b);
+  return gf_xtime(b);
 }
 
 void AES::MixColumns(unsigned char state[4][Nb]) {
   for (size_t j = 0; j < Nb; ++j) {
-    const unsigned char s0 = state[0][j];
-    const unsigned char s1 = state[1][j];
-    const unsigned char s2 = state[2][j];
-    const unsigned char s3 = state[3][j];
-
-    state[0][j] = GF_MUL_TABLE[2][s0] ^ GF_MUL_TABLE[3][s1] ^ s2 ^ s3;
-    state[1][j] = s0 ^ GF_MUL_TABLE[2][s1] ^ GF_MUL_TABLE[3][s2] ^ s3;
-    state[2][j] = s0 ^ s1 ^ GF_MUL_TABLE[2][s2] ^ GF_MUL_TABLE[3][s3];
-    state[3][j] = GF_MUL_TABLE[3][s0] ^ s1 ^ s2 ^ GF_MUL_TABLE[2][s3];
+    unsigned char s0 = state[0][j];
+    unsigned char s1 = state[1][j];
+    unsigned char s2 = state[2][j];
+    unsigned char s3 = state[3][j];
+    unsigned char t = s0 ^ s1 ^ s2 ^ s3;
+    unsigned char u = s0;
+    state[0][j] = s0 ^ t ^ gf_xtime(s0 ^ s1);
+    state[1][j] = s1 ^ t ^ gf_xtime(s1 ^ s2);
+    state[2][j] = s2 ^ t ^ gf_xtime(s2 ^ s3);
+    state[3][j] = s3 ^ t ^ gf_xtime(s3 ^ u);
   }
 }
 
@@ -837,9 +911,8 @@ void AES::AddRoundKey(unsigned char state[4][Nb], const unsigned char *key) {
 
 void AES::SubWord(unsigned char *a) {
   int i;
-
   for (i = 0; i < 4; i++) {
-    a[i] = sbox[a[i]];
+    a[i] = aes_sbox_ct(a[i]);
   }
 }
 
@@ -902,31 +975,23 @@ void AES::KeyExpansion(const unsigned char key[], unsigned char w[]) {
 
 void AES::InvSubBytes(unsigned char state[4][Nb]) {
   unsigned int i, j;
-  unsigned char t;
-
   for (i = 0; i < 4; i++) {
     for (j = 0; j < Nb; j++) {
-      t = state[i][j];
-      state[i][j] = inv_sbox[t];
+      state[i][j] = aes_inv_sbox_ct(state[i][j]);
     }
   }
 }
 
 void AES::InvMixColumns(unsigned char state[4][Nb]) {
   for (size_t j = 0; j < Nb; ++j) {
-    const unsigned char s0 = state[0][j];
-    const unsigned char s1 = state[1][j];
-    const unsigned char s2 = state[2][j];
-    const unsigned char s3 = state[3][j];
-
-    state[0][j] = GF_MUL_TABLE[14][s0] ^ GF_MUL_TABLE[11][s1] ^
-                  GF_MUL_TABLE[13][s2] ^ GF_MUL_TABLE[9][s3];
-    state[1][j] = GF_MUL_TABLE[9][s0] ^ GF_MUL_TABLE[14][s1] ^
-                  GF_MUL_TABLE[11][s2] ^ GF_MUL_TABLE[13][s3];
-    state[2][j] = GF_MUL_TABLE[13][s0] ^ GF_MUL_TABLE[9][s1] ^
-                  GF_MUL_TABLE[14][s2] ^ GF_MUL_TABLE[11][s3];
-    state[3][j] = GF_MUL_TABLE[11][s0] ^ GF_MUL_TABLE[13][s1] ^
-                  GF_MUL_TABLE[9][s2] ^ GF_MUL_TABLE[14][s3];
+    unsigned char s0 = state[0][j];
+    unsigned char s1 = state[1][j];
+    unsigned char s2 = state[2][j];
+    unsigned char s3 = state[3][j];
+    state[0][j] = mul14(s0) ^ mul11(s1) ^ mul13(s2) ^ mul9(s3);
+    state[1][j] = mul9(s0) ^ mul14(s1) ^ mul11(s2) ^ mul13(s3);
+    state[2][j] = mul13(s0) ^ mul9(s1) ^ mul14(s2) ^ mul11(s3);
+    state[3][j] = mul11(s0) ^ mul13(s1) ^ mul9(s2) ^ mul14(s3);
   }
 }
 
