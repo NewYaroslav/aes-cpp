@@ -9,6 +9,21 @@
 
 const unsigned int BLOCK_BYTES_LENGTH = 16 * sizeof(unsigned char);
 
+namespace aescpp {
+bool constant_time_eq(const unsigned char *a, const unsigned char *b,
+                      size_t len);
+}
+
+TEST(Internal, ConstantTimeEq) {
+  unsigned char a[] = {0x00, 0x01, 0x02, 0x03};
+  unsigned char b[] = {0x00, 0x01, 0x02, 0x03};
+  unsigned char c[] = {0x00, 0x01, 0x02, 0x04};
+  // Equal buffers must compare as equal.
+  EXPECT_TRUE(aescpp::constant_time_eq(a, b, sizeof(a)));
+  // A differing byte must result in inequality.
+  EXPECT_FALSE(aescpp::constant_time_eq(a, c, sizeof(a)));
+}
+
 TEST(KeyLengths, KeyLength128) {
   aescpp::AES aes(aescpp::AESKeyLength::AES_128);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
