@@ -39,8 +39,10 @@ std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data);
 
 /// \brief Remove PKCS#7 padding from data.
 /// \param data Padded data.
-/// \return Data with padding removed.
-std::vector<uint8_t> remove_padding(const std::vector<uint8_t> &data);
+/// \param out Receives data with padding removed.
+/// \return True if padding is valid.
+bool remove_padding(const std::vector<uint8_t> &data,
+                    std::vector<uint8_t> &out) noexcept;
 
 /// \brief Prepend IV to ciphertext.
 /// \param ciphertext Ciphertext without IV.

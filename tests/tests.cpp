@@ -634,6 +634,15 @@ TEST(Utils, EncryptDecryptStringCBC) {
   ASSERT_EQ(text, dec);
 }
 
+TEST(Utils, DecryptStringCbcInvalidPadding) {
+  std::string text = "hello world";
+  std::array<uint8_t, 16> key = {0};
+  auto enc = aescpp::utils::encrypt(text, key, aescpp::utils::AesMode::CBC);
+  enc.ciphertext.back() ^= 0x01;
+  EXPECT_THROW(aescpp::utils::decrypt(enc, key, aescpp::utils::AesMode::CBC),
+               std::runtime_error);
+}
+
 TEST(Utils, EncryptDecryptCtrZeroLength) {
   std::vector<uint8_t> plain;
   std::array<uint8_t, 16> key = {0};
