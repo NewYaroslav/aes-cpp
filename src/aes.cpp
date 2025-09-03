@@ -257,15 +257,18 @@ void AES::DecryptCBC(const unsigned char in[], size_t inLen,
   CheckLength(inLen);
   auto roundKeys = prepare_round_keys(key);
   unsigned char block[blockBytesLen];
+  unsigned char temp[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
+    memcpy(temp, in + i, blockBytesLen);
     DecryptBlock(in + i, out + i, roundKeys->data());
     XorBlocks(block, out + i, out + i, blockBytesLen);
-    memcpy(block, in + i, blockBytesLen);
+    memcpy(block, temp, blockBytesLen);
   }
 
   secure_zero(block, sizeof(block));
+  secure_zero(temp, sizeof(temp));
 }
 
 AESCPP_NODISCARD unsigned char *AES::DecryptCBC(const unsigned char in[],
@@ -315,17 +318,20 @@ void AES::DecryptCFB(const unsigned char in[], size_t inLen,
   auto roundKeys = prepare_round_keys(key);
   unsigned char block[blockBytesLen];
   unsigned char encryptedBlock[blockBytesLen];
+  unsigned char temp[blockBytesLen];
   memcpy(block, iv, blockBytesLen);
 
   for (size_t i = 0; i < inLen; i += blockBytesLen) {
     EncryptBlock(block, encryptedBlock, roundKeys->data());
     size_t blockLen = std::min<size_t>(blockBytesLen, inLen - i);
-    XorBlocks(in + i, encryptedBlock, out + i, blockLen);
-    memcpy(block, in + i, blockLen);
+    memcpy(temp, in + i, blockLen);
+    XorBlocks(temp, encryptedBlock, out + i, blockLen);
+    memcpy(block, temp, blockLen);
   }
 
   secure_zero(block, sizeof(block));
   secure_zero(encryptedBlock, sizeof(encryptedBlock));
+  secure_zero(temp, sizeof(temp));
 }
 
 AESCPP_NODISCARD unsigned char *AES::DecryptCFB(const unsigned char in[],
