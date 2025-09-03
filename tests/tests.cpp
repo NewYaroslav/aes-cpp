@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <future>
 #include <iostream>
 #include <string>
@@ -687,6 +688,29 @@ TEST(Utils, DecryptStringCbcMalformedCiphertextsSameError) {
   }
 
   EXPECT_EQ(pad_msg, len_msg);
+}
+
+TEST(Utils, RemovePaddingConstantTime) {
+  std::vector<uint8_t> valid(aescpp::utils::BLOCK_SIZE,
+                             static_cast<uint8_t>(aescpp::utils::BLOCK_SIZE));
+  auto invalid = valid;
+  invalid.back() = 0;
+
+  auto measure = [](const std::vector<uint8_t> &buf) {
+    std::vector<uint8_t> out;
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 100000; ++i) {
+      aescpp::utils::remove_padding(buf, out);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    return end - start;
+  };
+
+  auto t_valid = measure(valid);
+  auto t_invalid = measure(invalid);
+  auto diff = t_valid > t_invalid ? t_valid - t_invalid : t_invalid - t_valid;
+  auto max_t = t_valid > t_invalid ? t_valid : t_invalid;
+  EXPECT_LT(diff.count(), max_t.count() / 8);
 }
 
 TEST(Utils, EncryptDecryptCtrZeroLength) {

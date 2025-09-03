@@ -213,8 +213,12 @@ bool remove_padding(const std::vector<uint8_t> &data,
                     std::vector<uint8_t> &out) noexcept {
   std::size_t len = data.size();
   uint8_t padding = len ? data.back() : 0;
-  bool invalid = (len == 0) || (len % BLOCK_SIZE != 0) || padding == 0 ||
-                 padding > BLOCK_SIZE || padding > len;
+  uint8_t invalid = 0;
+  invalid |= static_cast<uint8_t>(len == 0);
+  invalid |= static_cast<uint8_t>((len % BLOCK_SIZE) != 0);
+  invalid |= static_cast<uint8_t>(padding == 0);
+  invalid |= static_cast<uint8_t>(padding > BLOCK_SIZE);
+  invalid |= static_cast<uint8_t>(padding > len);
   uint8_t diff = 0;
   for (std::size_t i = 0; i < BLOCK_SIZE; ++i) {
     uint8_t byte = 0;
@@ -225,7 +229,7 @@ bool remove_padding(const std::vector<uint8_t> &data,
     diff |= (byte ^ padding) & mask;
   }
   out = data;
-  if (!(invalid || diff)) {
+  if ((invalid | diff) == 0) {
     out.resize(len - padding);
     return true;
   }
