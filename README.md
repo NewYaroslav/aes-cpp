@@ -7,6 +7,8 @@ Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 [![Ubuntu](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci.yml)
 [![Windows](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci-windows.yml)
 
+Stable releases are maintained on the `stable` branch and in tagged versions.
+
 ## Prerequisites
 * C++ compiler
 * CMake 2.8 or newer
