@@ -39,7 +39,7 @@
 // clang-format on
 #endif
 
-#include <aescpp/aes_utils.hpp>
+#include <aes_cpp/aes_utils.hpp>
 #include <algorithm>
 #include <functional>
 #include <stdexcept>
@@ -58,7 +58,7 @@
 
 // Implementation for AES utility helpers.
 
-namespace aescpp {
+namespace aes_cpp {
 
 namespace utils {
 
@@ -539,4 +539,4 @@ template std::string decrypt_gcm_to_string<std::array<uint8_t, 32>>(
 
 }  // namespace utils
 
-}  // namespace aescpp
+}  // namespace aes_cpp

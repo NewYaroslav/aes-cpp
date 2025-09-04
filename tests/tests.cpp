@@ -1,7 +1,7 @@
 #define private public
-#include <aescpp/aes.hpp>
+#include <aes_cpp/aes.hpp>
 #undef private
-#include <aescpp/aes_utils.hpp>
+#include <aes_cpp/aes_utils.hpp>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -24,7 +24,7 @@
 
 const unsigned int BLOCK_BYTES_LENGTH = 16 * sizeof(unsigned char);
 
-namespace aescpp {
+namespace aes_cpp {
 bool constant_time_eq(const unsigned char *a, const unsigned char *b,
                       size_t len);
 }
@@ -34,13 +34,13 @@ TEST(Internal, ConstantTimeEq) {
   unsigned char b[] = {0x00, 0x01, 0x02, 0x03};
   unsigned char c[] = {0x00, 0x01, 0x02, 0x04};
   // Equal buffers must compare as equal.
-  EXPECT_TRUE(aescpp::constant_time_eq(a, b, sizeof(a)));
+  EXPECT_TRUE(aes_cpp::constant_time_eq(a, b, sizeof(a)));
   // A differing byte must result in inequality.
-  EXPECT_FALSE(aescpp::constant_time_eq(a, c, sizeof(a)));
+  EXPECT_FALSE(aes_cpp::constant_time_eq(a, c, sizeof(a)));
 }
 
 TEST(Internal, ConcurrentKeyPreparationDoesNotAffectEncryption) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   unsigned char key1[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -71,7 +71,7 @@ TEST(Internal, ConcurrentKeyPreparationDoesNotAffectEncryption) {
 }
 
 TEST(KeyLengths, KeyLength128) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -85,7 +85,7 @@ TEST(KeyLengths, KeyLength128) {
 }
 
 TEST(KeyLengths, KeyLength192) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_192);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_192);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -100,7 +100,7 @@ TEST(KeyLengths, KeyLength192) {
 }
 
 TEST(KeyLengths, KeyLength256) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -116,7 +116,7 @@ TEST(KeyLengths, KeyLength256) {
 }
 
 TEST(ECB, EncryptDecryptOneBlock) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
@@ -133,7 +133,7 @@ TEST(ECB, EncryptDecryptOneBlock) {
 }
 
 TEST(ECB, EncryptDecryptVectorOneBlock) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   std::vector<unsigned char> plain = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
                                       0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
                                       0xcc, 0xdd, 0xee, 0xff};
@@ -149,7 +149,7 @@ TEST(ECB, EncryptDecryptVectorOneBlock) {
 }
 
 TEST(ECB, OneBlockEncrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -164,7 +164,7 @@ TEST(ECB, OneBlockEncrypt) {
 }
 
 TEST(ECB, OneBlockEncryptVector) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   std::vector<unsigned char> plain = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
                                       0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
                                       0xcc, 0xdd, 0xee, 0xff};
@@ -180,7 +180,7 @@ TEST(ECB, OneBlockEncryptVector) {
 }
 
 TEST(ECB, OneBlockWithoutByteEncrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee};
   unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -192,7 +192,7 @@ TEST(ECB, OneBlockWithoutByteEncrypt) {
 }
 
 TEST(ECB, OneBlockPlusOneByteEncrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
                            0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0xaa};
   unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -205,7 +205,7 @@ TEST(ECB, OneBlockPlusOneByteEncrypt) {
 }
 
 TEST(ECB, TwoBlocksEncrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
                            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -225,7 +225,7 @@ TEST(ECB, TwoBlocksEncrypt) {
 }
 
 TEST(ECB, OneBlockDecrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char encrypted[] = {0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30,
                                0xd8, 0xcd, 0xb7, 0x80, 0x70, 0xb4, 0xc5, 0x5a};
   unsigned char key[] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -240,7 +240,7 @@ TEST(ECB, OneBlockDecrypt) {
 }
 
 TEST(ECB, OneBlockDecryptVector) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   std::vector<unsigned char> encrypted = {0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b,
                                           0x04, 0x30, 0xd8, 0xcd, 0xb7, 0x80,
                                           0x70, 0xb4, 0xc5, 0x5a};
@@ -256,7 +256,7 @@ TEST(ECB, OneBlockDecryptVector) {
 }
 
 TEST(ECB, TwoBlocksDecrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char encrypted[] = {
       0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30, 0xd8, 0xcd, 0xb7,
       0x80, 0x70, 0xb4, 0xc5, 0x5a, 0x07, 0xfe, 0xef, 0x74, 0xe1, 0xd5,
@@ -276,7 +276,7 @@ TEST(ECB, TwoBlocksDecrypt) {
 }
 
 TEST(CBC, EncryptDecrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   unsigned char iv[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -294,7 +294,7 @@ TEST(CBC, EncryptDecrypt) {
 }
 
 TEST(CBC, EncryptDecryptVector) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   std::vector<unsigned char> plain = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
                                       0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
                                       0xcc, 0xdd, 0xee, 0xff};
@@ -312,7 +312,7 @@ TEST(CBC, EncryptDecryptVector) {
 }
 
 TEST(CBC, TwoBlocksEncrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
@@ -332,7 +332,7 @@ TEST(CBC, TwoBlocksEncrypt) {
 }
 
 TEST(CBC, TwoBlocksEncryptVector) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   std::vector<unsigned char> plain = {
       0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa,
       0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
@@ -354,7 +354,7 @@ TEST(CBC, TwoBlocksEncryptVector) {
 }
 
 TEST(CBC, TwoBlocksDecrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char encrypted[] = {0x1b, 0x87, 0x23, 0x78, 0x79, 0x5f, 0x4f, 0xfd,
                                0x77, 0x28, 0x55, 0xfc, 0x87, 0xca, 0x96, 0x4d,
                                0x4c, 0x5b, 0xca, 0x1c, 0x48, 0xcd, 0x88, 0x00,
@@ -377,7 +377,7 @@ TEST(CBC, TwoBlocksDecrypt) {
 }
 
 TEST(CBC, TwoBlocksDecryptVector) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   std::vector<unsigned char> encrypted = {
       0x1b, 0x87, 0x23, 0x78, 0x79, 0x5f, 0x4f, 0xfd, 0x77, 0x28, 0x55,
       0xfc, 0x87, 0xca, 0x96, 0x4d, 0x4c, 0x5b, 0xca, 0x1c, 0x48, 0xcd,
@@ -400,7 +400,7 @@ TEST(CBC, TwoBlocksDecryptVector) {
 }
 
 TEST(CBC, InPlaceDecrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   unsigned char iv[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -419,7 +419,7 @@ TEST(CBC, InPlaceDecrypt) {
 }
 
 TEST(CFB, EncryptDecrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   unsigned char iv[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -437,7 +437,7 @@ TEST(CFB, EncryptDecrypt) {
 }
 
 TEST(CFB, EncryptDecryptVector) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   std::vector<unsigned char> plain = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
                                       0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
                                       0xcc, 0xdd, 0xee, 0xff};
@@ -455,7 +455,7 @@ TEST(CFB, EncryptDecryptVector) {
 }
 
 TEST(CFB, EncryptTwoBlocks) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
@@ -475,7 +475,7 @@ TEST(CFB, EncryptTwoBlocks) {
 }
 
 TEST(CFB, EncryptTwoBlocksVector) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   std::vector<unsigned char> plain = {
       0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa,
       0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
@@ -496,7 +496,7 @@ TEST(CFB, EncryptTwoBlocksVector) {
 }
 
 TEST(CFB, DecryptTwoBlocks) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   std::vector<unsigned char> encrypted = {
       0x3c, 0x55, 0x3d, 0x01, 0x8a, 0x52, 0xe4, 0x54, 0xec, 0x4e, 0x08,
       0x22, 0xc2, 0x8d, 0x55, 0xec, 0xe3, 0x5a, 0x40, 0xab, 0x30, 0x29,
@@ -517,7 +517,7 @@ TEST(CFB, DecryptTwoBlocks) {
 }
 
 TEST(CFB, DecryptTwoBlocksVector) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char encrypted[] = {0x3c, 0x55, 0x3d, 0x01, 0x8a, 0x52, 0xe4, 0x54,
                                0xec, 0x4e, 0x08, 0x22, 0xc2, 0x8d, 0x55, 0xec,
                                0xe3, 0x5a, 0x40, 0xab, 0x30, 0x29, 0xf3, 0x0c,
@@ -538,7 +538,7 @@ TEST(CFB, DecryptTwoBlocksVector) {
 }
 
 TEST(CFB, InPlaceDecrypt) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                            0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
   unsigned char iv[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -557,7 +557,7 @@ TEST(CFB, InPlaceDecrypt) {
 }
 
 TEST(LongData, EncryptDecryptOneKb) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   unsigned int kbSize = 1024 * sizeof(unsigned char);
   unsigned char *plain = new unsigned char[kbSize];
   for (unsigned int i = 0; i < kbSize; i++) {
@@ -578,7 +578,7 @@ TEST(LongData, EncryptDecryptOneKb) {
 }
 
 TEST(LongData, EncryptDecryptVectorOneKb) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   unsigned int kbSize = 1024 * sizeof(unsigned char);
   std::vector<unsigned char> plain(kbSize);
   for (unsigned int i = 0; i < kbSize; i++) {
@@ -596,7 +596,7 @@ TEST(LongData, EncryptDecryptVectorOneKb) {
 }
 
 TEST(GCM, DecryptInvalidTag) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[16] = {0};
   unsigned char key[16] = {0};
   unsigned char iv[12] = {0};
@@ -618,7 +618,7 @@ TEST(GCM, DecryptInvalidTag) {
 }
 
 TEST(GCM, DecryptInPlace) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[32];
   for (size_t i = 0; i < sizeof(plain); ++i) {
     plain[i] = static_cast<unsigned char>(i);
@@ -635,7 +635,7 @@ TEST(GCM, DecryptInPlace) {
 }
 
 TEST(GCM, InputTooLong) {
-  aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char in[16] = {0};
   unsigned char out[16];
   unsigned char key[16] = {0};
@@ -653,25 +653,25 @@ TEST(GCM, InputTooLong) {
 TEST(Utils, EncryptDecryptStringCBC) {
   std::string text = "hello world";
   std::array<uint8_t, 16> key = {0};
-  auto enc = aescpp::utils::encrypt(text, key, aescpp::utils::AesMode::CBC);
+  auto enc = aes_cpp::utils::encrypt(text, key, aes_cpp::utils::AesMode::CBC);
   std::string dec =
-      aescpp::utils::decrypt_to_string(enc, key, aescpp::utils::AesMode::CBC);
+      aes_cpp::utils::decrypt_to_string(enc, key, aes_cpp::utils::AesMode::CBC);
   ASSERT_EQ(text, dec);
 }
 
 TEST(Utils, DecryptStringCbcInvalidPadding) {
   std::string text = "hello world";
   std::array<uint8_t, 16> key = {0};
-  auto enc = aescpp::utils::encrypt(text, key, aescpp::utils::AesMode::CBC);
+  auto enc = aes_cpp::utils::encrypt(text, key, aes_cpp::utils::AesMode::CBC);
   enc.ciphertext.back() ^= 0x01;
-  EXPECT_THROW(aescpp::utils::decrypt(enc, key, aescpp::utils::AesMode::CBC),
+  EXPECT_THROW(aes_cpp::utils::decrypt(enc, key, aes_cpp::utils::AesMode::CBC),
                std::runtime_error);
 }
 
 TEST(Utils, DecryptStringCbcMalformedCiphertextsSameError) {
   std::string text = "hello world";
   std::array<uint8_t, 16> key = {0};
-  auto enc = aescpp::utils::encrypt(text, key, aescpp::utils::AesMode::CBC);
+  auto enc = aes_cpp::utils::encrypt(text, key, aes_cpp::utils::AesMode::CBC);
 
   auto bad_padding = enc;
   bad_padding.ciphertext.back() ^= 0x01;
@@ -681,7 +681,7 @@ TEST(Utils, DecryptStringCbcMalformedCiphertextsSameError) {
 
   std::string pad_msg;
   try {
-    aescpp::utils::decrypt(bad_padding, key, aescpp::utils::AesMode::CBC);
+    aes_cpp::utils::decrypt(bad_padding, key, aes_cpp::utils::AesMode::CBC);
     FAIL() << "Expected runtime_error";
   } catch (const std::runtime_error &e) {
     pad_msg = e.what();
@@ -689,7 +689,7 @@ TEST(Utils, DecryptStringCbcMalformedCiphertextsSameError) {
 
   std::string len_msg;
   try {
-    aescpp::utils::decrypt(bad_length, key, aescpp::utils::AesMode::CBC);
+    aes_cpp::utils::decrypt(bad_length, key, aes_cpp::utils::AesMode::CBC);
     FAIL() << "Expected runtime_error";
   } catch (const std::runtime_error &e) {
     len_msg = e.what();
@@ -699,8 +699,8 @@ TEST(Utils, DecryptStringCbcMalformedCiphertextsSameError) {
 }
 
 TEST(Utils, RemovePaddingConstantTime) {
-  std::vector<uint8_t> valid(aescpp::utils::BLOCK_SIZE,
-                             static_cast<uint8_t>(aescpp::utils::BLOCK_SIZE));
+  std::vector<uint8_t> valid(aes_cpp::utils::BLOCK_SIZE,
+                             static_cast<uint8_t>(aes_cpp::utils::BLOCK_SIZE));
   auto invalid = valid;
   invalid.back() = 0;
 
@@ -708,7 +708,7 @@ TEST(Utils, RemovePaddingConstantTime) {
     std::vector<uint8_t> out;
     auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 100000; ++i) {
-      aescpp::utils::remove_padding(buf, out);
+      aes_cpp::utils::remove_padding(buf, out);
     }
     auto end = std::chrono::high_resolution_clock::now();
     return end - start;
@@ -724,24 +724,24 @@ TEST(Utils, RemovePaddingConstantTime) {
 TEST(Utils, EncryptDecryptCtrZeroLength) {
   std::vector<uint8_t> plain;
   std::array<uint8_t, 16> key = {0};
-  auto enc = aescpp::utils::encrypt(plain, key, aescpp::utils::AesMode::CTR);
-  auto dec = aescpp::utils::decrypt(enc, key, aescpp::utils::AesMode::CTR);
+  auto enc = aes_cpp::utils::encrypt(plain, key, aes_cpp::utils::AesMode::CTR);
+  auto dec = aes_cpp::utils::decrypt(enc, key, aes_cpp::utils::AesMode::CTR);
   ASSERT_EQ(dec, plain);
 }
 
 TEST(Utils, EncryptDecryptCtrNonBlockSize) {
   std::vector<uint8_t> plain = {'n', 'o', 'n', 'b', 'l', 'o', 'c', 'k'};
   std::array<uint8_t, 16> key = {0};
-  auto enc = aescpp::utils::encrypt(plain, key, aescpp::utils::AesMode::CTR);
-  auto dec = aescpp::utils::decrypt(enc, key, aescpp::utils::AesMode::CTR);
+  auto enc = aes_cpp::utils::encrypt(plain, key, aes_cpp::utils::AesMode::CTR);
+  auto dec = aes_cpp::utils::decrypt(enc, key, aes_cpp::utils::AesMode::CTR);
   ASSERT_EQ(dec, plain);
 }
 
 TEST(Utils, EncryptDecryptStringGCM) {
   std::string text = "hello gcm";
   std::array<uint8_t, 16> key = {0};
-  auto enc = aescpp::utils::encrypt_gcm(text, key);
-  std::string dec = aescpp::utils::decrypt_gcm_to_string(enc, key);
+  auto enc = aes_cpp::utils::encrypt_gcm(text, key);
+  std::string dec = aes_cpp::utils::decrypt_gcm_to_string(enc, key);
   ASSERT_EQ(text, dec);
 }
 
@@ -749,34 +749,34 @@ TEST(Utils, EncryptDecryptStringGCMWithAad) {
   std::string text = "hello gcm";
   std::array<uint8_t, 16> key = {0};
   std::vector<uint8_t> aad = {1, 2, 3};
-  auto enc = aescpp::utils::encrypt_gcm(text, key, aad);
-  std::string dec = aescpp::utils::decrypt_gcm_to_string(enc, key, aad);
+  auto enc = aes_cpp::utils::encrypt_gcm(text, key, aad);
+  std::string dec = aes_cpp::utils::decrypt_gcm_to_string(enc, key, aad);
   ASSERT_EQ(text, dec);
 }
 
 TEST(Utils, DecryptStringGcmTagMismatch) {
   std::string text = "hello gcm";
   std::array<uint8_t, 16> key = {0};
-  auto enc = aescpp::utils::encrypt_gcm(text, key);
+  auto enc = aes_cpp::utils::encrypt_gcm(text, key);
   enc.tag[0] ^= 0x01;
-  EXPECT_THROW(aescpp::utils::decrypt_gcm(enc, key), std::runtime_error);
+  EXPECT_THROW(aes_cpp::utils::decrypt_gcm(enc, key), std::runtime_error);
 }
 
 TEST(Utils, DecryptStringGcmCiphertextMismatch) {
   std::string text = "hello gcm";
   std::array<uint8_t, 16> key = {0};
-  auto enc = aescpp::utils::encrypt_gcm(text, key);
+  auto enc = aes_cpp::utils::encrypt_gcm(text, key);
   enc.ciphertext[0] ^= 0x01;
-  EXPECT_THROW(aescpp::utils::decrypt_gcm(enc, key), std::runtime_error);
+  EXPECT_THROW(aes_cpp::utils::decrypt_gcm(enc, key), std::runtime_error);
 }
 
 TEST(Utils, DecryptStringGcmAadMismatch) {
   std::string text = "hello gcm";
   std::array<uint8_t, 16> key = {0};
   std::vector<uint8_t> aad = {1, 2, 3};
-  auto enc = aescpp::utils::encrypt_gcm(text, key, aad);
+  auto enc = aes_cpp::utils::encrypt_gcm(text, key, aad);
   aad[0] ^= 0x01;
-  EXPECT_THROW(aescpp::utils::decrypt_gcm(enc, key, aad), std::runtime_error);
+  EXPECT_THROW(aes_cpp::utils::decrypt_gcm(enc, key, aad), std::runtime_error);
 }
 
 int main(int argc, char *argv[]) {
