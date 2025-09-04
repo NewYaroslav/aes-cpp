@@ -4,8 +4,8 @@ C++ AES(Advanced Encryption Standard) implementation
 
 Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 
-[![Ubuntu](https://github.com/NewYaroslav/aes_cpp/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml)
-[![Windows](https://github.com/NewYaroslav/aes_cpp/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml)
+[![Ubuntu](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml)
+[![Windows](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml)
 
 Stable releases are maintained on the `stable` branch and in tagged versions.
 
