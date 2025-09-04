@@ -1,11 +1,8 @@
-# AESCPP
+# AES CPP
 
 C++ AES(Advanced Encryption Standard) implementation
 
 Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
-
-The library uses the `aes_cpp` namespace. For backward compatibility, the
-previous name `asecpp` remains available as an alias.
 
 [![Ubuntu](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci.yml)
 [![Windows](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci-windows.yml)
