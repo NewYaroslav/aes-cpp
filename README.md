@@ -1,11 +1,11 @@
-# AES CPP
+# aes-cpp
 
 C++ AES(Advanced Encryption Standard) implementation
 
 Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 
-[![Ubuntu](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci.yml)
-[![Windows](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci-windows.yml)
+[![Ubuntu](https://github.com/NewYaroslav/aes_cpp/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml)
+[![Windows](https://github.com/NewYaroslav/aes_cpp/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml)
 
 Stable releases are maintained on the `stable` branch and in tagged versions.
 
@@ -141,7 +141,7 @@ These projects can be used together with aes_cpp:
 
 #Development:
 
-1. `git clone https://github.com/SergeyBel/AES.git`
+1. `git clone https://github.com/NewYaroslav/aes-cpp.git`
 1. `docker-compose up -d`
 1. use make commands
 
