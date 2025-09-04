@@ -22,6 +22,18 @@ add_subdirectory(path/to/aes-cpp)
 target_link_libraries(your_app PRIVATE aes_cpp::aes_cpp)
 ```
 
+Alternatively, install the library and use `find_package`:
+
+```bash
+cmake -S . -B build
+cmake --install build --prefix /your/install/prefix
+```
+
+```cmake
+find_package(aes_cpp CONFIG REQUIRED)
+target_link_libraries(your_app PRIVATE aes_cpp::aes_cpp)
+```
+
 ## Hardware Acceleration
 On x86 CPUs this library checks for AES-NI support at runtime and uses
 hardware-accelerated instructions when available. If AES-NI is missing, a
