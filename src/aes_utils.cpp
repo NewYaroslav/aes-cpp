@@ -213,8 +213,8 @@ std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data) {
   return padded;
 }
 
-bool remove_padding(const std::vector<uint8_t> &data,
-                    std::vector<uint8_t> &out) noexcept {
+bool remove_padding(const std::vector<uint8_t> &data, std::vector<uint8_t> &out,
+                    std::size_t &out_len) noexcept {
   std::size_t len = data.size();
   uint8_t padding = len ? data.back() : 0;
   uint8_t invalid = 0;
@@ -233,10 +233,9 @@ bool remove_padding(const std::vector<uint8_t> &data,
     diff |= (byte ^ padding) & mask;
   }
   size_t mask = -static_cast<size_t>((invalid | diff) == 0);
-  size_t final_len = ((len - padding) & mask) | (len & ~mask);
-  std::vector<uint8_t> tmp = data;
-  tmp.resize(final_len);
-  out.swap(tmp);
+  out_len = ((len - padding) & mask) | (len & ~mask);
+  out.resize(len);
+  std::copy(data.begin(), data.end(), out.begin());
   return mask != 0;
 }
 
@@ -361,12 +360,14 @@ std::vector<uint8_t> decrypt(const EncryptedData &data, const T &key,
   }
   if (mode == AesMode::CBC) {
     std::vector<uint8_t> result;
-    bool ok = remove_padding(plain, result);
+    std::size_t out_len = 0;
+    bool ok = remove_padding(plain, result, out_len);
     secure_zero(plain.data(), plain.size());
     if (decrypt_error || !ok) {
       secure_zero(result.data(), result.size());
       throw std::runtime_error("Invalid ciphertext");
     }
+    result.resize(out_len);
     return result;
   }
   if (decrypt_error) {
