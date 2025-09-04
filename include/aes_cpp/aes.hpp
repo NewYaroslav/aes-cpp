@@ -38,7 +38,7 @@
 #define AESCPP_DEPRECATED(msg)
 #endif
 
-namespace aescpp {
+namespace aes_cpp {
 
 /// \brief Overwrite a memory region with zeros.
 /// \param p Pointer to the memory block to clear.
@@ -52,7 +52,7 @@ enum class AESKeyLength { AES_128, AES_192, AES_256 };
 ///
 /// Example usage:
 /// \code
-/// aescpp::AES aes(aescpp::AESKeyLength::AES_128);
+/// aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
 /// auto cipher = aes.EncryptECB(plain, sizeof(plain), key);
 /// \endcode
 class AES {
@@ -603,6 +603,8 @@ static const unsigned char CMDS[4][4] = {
 static const unsigned char INV_CMDS[4][4] = {
     {14, 11, 13, 9}, {9, 14, 11, 13}, {13, 9, 14, 11}, {11, 13, 9, 14}};
 
-}  // namespace aescpp
+}  // namespace aes_cpp
+
+namespace asecpp = aes_cpp;
 
 #endif  // __AESCPP_AES_HPP_

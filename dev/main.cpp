@@ -1,9 +1,9 @@
-#include <aescpp/aes.hpp>
+#include <aes_cpp/aes.hpp>
 #include <iostream>
 
 int main() {
   std::cout << "Aes dev" << std::endl;
-  aescpp::AES aes;
+  aes_cpp::AES aes;
   (void)aes;
   return 0;
 }

@@ -1,7 +1,7 @@
 #include <sys/time.h>
 
-#include <aescpp/aes.hpp>
-#include <aescpp/aes_utils.hpp>
+#include <aes_cpp/aes.hpp>
+#include <aes_cpp/aes_utils.hpp>
 #include <iostream>
 
 const unsigned int MICROSECONDS = 1000000;
@@ -14,7 +14,7 @@ unsigned long getMicroseconds() {
 // Generate plaintext filled with cryptographically secure random bytes.
 unsigned char *getRandomPlain(unsigned int length) {
   unsigned char *plain = new unsigned char[length];
-  aescpp::utils::detail::fill_os_random(plain, length);
+  aes_cpp::utils::detail::fill_os_random(plain, length);
   return plain;
 }
 
@@ -31,7 +31,7 @@ int main() {
   // Plaintext is filled using secure OS randomness.
   unsigned char *plain = getRandomPlain(plainLength);
 
-  aescpp::AES aes(aescpp::AESKeyLength::AES_256);
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_256);
   unsigned long start = getMicroseconds();
   unsigned char *out = aes.EncryptECB(plain, plainLength, key);
   unsigned long delta = getMicroseconds() - start;

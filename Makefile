@@ -44,7 +44,7 @@ speed_test:
 	docker-compose exec aes bin/speedtest
 
 style_fix:
-	docker-compose exec aes bash -c "clang-format -i src/*.cpp include/aescpp/*.hpp tests/*.cpp"
+	docker-compose exec aes bash -c "clang-format -i src/*.cpp include/aes_cpp/*.hpp tests/*.cpp"
 
 
 clean:

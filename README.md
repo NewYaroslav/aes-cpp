@@ -4,6 +4,9 @@ C++ AES(Advanced Encryption Standard) implementation
 
 Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 
+The library uses the `aes_cpp` namespace. For backward compatibility, the
+previous name `asecpp` remains available as an alias.
+
 [![Ubuntu](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci.yml)
 [![Windows](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/AES/actions/workflows/aes-ci-windows.yml)
 
@@ -23,14 +26,14 @@ ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an a
 ECB mode is provided for completeness but leaks plaintext patterns and should be avoided. Prefer authenticated encryption modes such as GCM that provide both confidentiality and integrity.
 
 ## IV Generation
-`aescpp::utils` provides helpers for creating random IVs. `generate_iv_16()`
+`aes_cpp::utils` provides helpers for creating random IVs. `generate_iv_16()`
 produces a 16-byte IV for CBC, CFB and CTR modes, while `generate_iv_12()`
 returns a 12-byte IV recommended for GCM.
 
 ## Vector Overloads
 All encryption and decryption methods have overloads that accept `std::vector<unsigned char>` in addition to raw pointer APIs:
 ```c++
-#include <aescpp/aes.hpp>
+#include <aes_cpp/aes.hpp>
 
 std::vector<unsigned char> plainVec = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff };
 std::vector<unsigned char> keyVec   = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
@@ -53,7 +56,7 @@ Defining the `AESCPP_DEBUG` macro enables helper functions such as `printHexArra
 
 ### Encryption/Decryption
 ```c++
-#include <aescpp/aes.hpp>
+#include <aes_cpp/aes.hpp>
 
 unsigned char plain[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff };
 unsigned char key[]   = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
@@ -66,9 +69,9 @@ auto restored = aes.DecryptCBC(cipher.get(), sizeof(plain), key, iv);
 
 ### encrypt/decrypt with `AesMode::CTR`
 ```c++
-#include <aescpp/aes_utils.hpp>
+#include <aes_cpp/aes_utils.hpp>
 
-using namespace aescpp;
+using namespace aes_cpp;
 
 std::string text = "CTR mode example";
 std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -110,9 +113,9 @@ GCM limits AAD to `(1ULL << 39) - 256` bytes and the combined length of AAD and
 plaintext to the same bound. The library throws `std::length_error` if these
 limits are exceeded:
 ```c++
-#include <aescpp/aes_utils.hpp>
+#include <aes_cpp/aes_utils.hpp>
 
-using namespace aescpp;
+using namespace aes_cpp;
 
 std::string text = "GCM example";
 std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -131,7 +134,7 @@ CBC doesn't satisfy this condition an exception will be thrown
 
 #Links
 
-These projects can be used together with aescpp:
+These projects can be used together with aes_cpp:
 
 * [hmac-cpp](https://github.com/NewYaroslav/hmac-cpp) - HMAC for authentication
 * [siphash-hpp](https://github.com/NewYaroslav/siphash-hpp) - header-only SipHash library

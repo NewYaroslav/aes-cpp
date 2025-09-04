@@ -1,4 +1,4 @@
-#include <aescpp/aes.hpp>
+#include <aes_cpp/aes.hpp>
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -40,7 +40,7 @@
 #define AESCPP_HAS_UNALIGNED_UINT64 0
 #endif
 
-namespace aescpp {
+namespace aes_cpp {
 
 void secure_zero(void *p, size_t n) {
 #if defined(_WIN32)
@@ -1268,4 +1268,4 @@ AESCPP_NODISCARD std::vector<unsigned char> AES::DecryptGCM(
   return out;
 }
 
-}  // namespace aescpp
+}  // namespace aes_cpp

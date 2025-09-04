@@ -1,7 +1,7 @@
 #ifndef __AESCPP_AES_UTILS_HPP_
 #define __AESCPP_AES_UTILS_HPP_
 
-#include <aescpp/aes.hpp>
+#include <aes_cpp/aes.hpp>
 #include <array>
 #include <chrono>
 #include <cstddef>
@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-namespace aescpp {
+namespace aes_cpp {
 
 namespace utils {
 /// \brief AES block size in bytes.
@@ -178,6 +178,6 @@ std::string decrypt_gcm_to_string(const GcmEncryptedData &data, const T &key,
 
 }  // namespace utils
 
-}  // namespace aescpp
+}  // namespace aes_cpp
 
 #endif  // __AESCPP_AES_UTILS_HPP_
