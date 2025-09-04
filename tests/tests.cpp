@@ -663,7 +663,7 @@ TEST(Utils, DecryptStringCbcInvalidPadding) {
   std::string text = "hello world";
   std::array<uint8_t, 16> key = {0};
   auto enc = aes_cpp::utils::encrypt(text, key, aes_cpp::utils::AesMode::CBC);
-  enc.ciphertext.back() ^= 0x01;
+  enc.iv.back() ^= 0x01;
   EXPECT_THROW(aes_cpp::utils::decrypt(enc, key, aes_cpp::utils::AesMode::CBC),
                std::runtime_error);
 }
@@ -674,7 +674,7 @@ TEST(Utils, DecryptStringCbcMalformedCiphertextsSameError) {
   auto enc = aes_cpp::utils::encrypt(text, key, aes_cpp::utils::AesMode::CBC);
 
   auto bad_padding = enc;
-  bad_padding.ciphertext.back() ^= 0x01;
+  bad_padding.iv.back() ^= 0x01;
 
   auto bad_length = enc;
   bad_length.ciphertext.pop_back();
@@ -706,9 +706,10 @@ TEST(Utils, RemovePaddingConstantTime) {
 
   auto measure = [](const std::vector<uint8_t> &buf) {
     std::vector<uint8_t> out;
+    std::size_t out_len;
     auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 100000; ++i) {
-      aes_cpp::utils::remove_padding(buf, out);
+      aes_cpp::utils::remove_padding(buf, out, out_len);
     }
     auto end = std::chrono::high_resolution_clock::now();
     return end - start;
