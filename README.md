@@ -20,8 +20,8 @@ git clone https://github.com/microsoft/vcpkg.git
 ./vcpkg/bootstrap-vcpkg.sh
 ./vcpkg/vcpkg install
 # Enable tests with the optional feature
-./vcpkg/vcpkg install --feature=tests
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
+./vcpkg/vcpkg install --x-feature=tests
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_MANIFEST_FEATURES=tests -DAES_CPP_BUILD_TESTS=ON
 cmake --build build
 ```
 

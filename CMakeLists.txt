@@ -71,6 +71,7 @@ install(EXPORT aes_cppTargets
 )
 
 if(AES_CPP_BUILD_TESTS)
+  find_package(GTest CONFIG REQUIRED)
   add_executable(tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests.cpp)
-  target_link_libraries(tests aes gtest pthread)
+  target_link_libraries(tests aes GTest::gtest_main pthread)
 endif()
