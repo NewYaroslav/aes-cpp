@@ -157,6 +157,7 @@ auto plain = utils::decrypt_gcm_to_string(data, key, aad);
 ```
 
 #Padding
+
 This library does not provide any padding because padding is not part of AES standard.
 For ECB and CBC modes plaintext and ciphertext length in bytes must be divisible by
 16. CFB, CTR and GCM modes operate on data of any length. If the length for ECB or
