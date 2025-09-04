@@ -2,12 +2,18 @@ cmake_minimum_required(VERSION 2.8)
 
 project(aes_cpp CXX)
 
+option(AES_CPP_BUILD_TESTS "Build aes_cpp tests" ON)
+
 set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/aes.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/src/aes_utils.cpp)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(${PROJECT_NAME} ${SOURCE_FILES})
-target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIR})
+add_library(aes ${SOURCE_FILES})
+add_library(aes_cpp::aes_cpp ALIAS aes)
+add_library(aescpp ALIAS aes)
+target_include_directories(aes PUBLIC ${INCLUDE_DIR})
 
-add_executable(tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests.cpp)
-target_link_libraries(tests ${PROJECT_NAME} gtest pthread)
+if(AES_CPP_BUILD_TESTS)
+  add_executable(tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests.cpp)
+  target_link_libraries(tests aes gtest pthread)
+endif()
