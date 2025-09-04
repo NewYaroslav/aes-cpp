@@ -162,7 +162,10 @@ There are four executables in `bin` folder:
 * `release` - version with optimization (main code will be taken from dev/main.cpp)  
 
 
-Build commands:  
+Build commands:
+
+Tests are disabled by default. Run CMake with `-DAES_CPP_BUILD_TESTS=ON` to build them.
+
 * `make build_all` - build all targets
 * `make build_test` - build `test` target
 * `make build_debug` - build `debug` target (defines `AESCPP_DEBUG`)

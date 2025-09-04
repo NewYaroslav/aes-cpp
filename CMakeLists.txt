@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(aes_cpp CXX)
 
-option(AES_CPP_BUILD_TESTS "Build aes_cpp tests" ON)
+option(AES_CPP_BUILD_TESTS "Build aes_cpp tests" OFF)
 
 set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/aes.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/src/aes_utils.cpp)
