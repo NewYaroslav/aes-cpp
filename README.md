@@ -13,6 +13,18 @@ Stable releases are maintained on the `stable` branch and in tagged versions.
 * C++ compiler
 * CMake 2.8 or newer
 
+## Building with vcpkg
+
+```bash
+git clone https://github.com/microsoft/vcpkg.git
+./vcpkg/bootstrap-vcpkg.sh
+./vcpkg/vcpkg install
+# Enable tests with the optional feature
+./vcpkg/vcpkg install --feature=tests
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake --build build
+```
+
 ## CMake Integration
 
 This library can be added to another CMake project via `add_subdirectory`:
