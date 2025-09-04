@@ -13,6 +13,15 @@ Stable releases are maintained on the `stable` branch and in tagged versions.
 * C++ compiler
 * CMake 2.8 or newer
 
+## CMake Integration
+
+This library can be added to another CMake project via `add_subdirectory`:
+
+```cmake
+add_subdirectory(path/to/aes-cpp)
+target_link_libraries(your_app PRIVATE aes_cpp::aes_cpp)
+```
+
 ## Hardware Acceleration
 On x86 CPUs this library checks for AES-NI support at runtime and uses
 hardware-accelerated instructions when available. If AES-NI is missing, a
