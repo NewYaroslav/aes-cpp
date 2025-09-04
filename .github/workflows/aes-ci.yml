@@ -61,7 +61,7 @@ jobs:
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           ./vcpkg/bootstrap-vcpkg.sh
-          ./vcpkg/vcpkg install --feature=tests
+          ./vcpkg/vcpkg install --x-feature=tests
       - name: Configure
         run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DAES_CPP_BUILD_TESTS=ON
       - name: Build
