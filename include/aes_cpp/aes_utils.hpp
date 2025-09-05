@@ -46,6 +46,13 @@ std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data);
 bool remove_padding(const std::vector<uint8_t> &data, std::vector<uint8_t> &out,
                     std::size_t &out_len) noexcept;
 
+/// \brief Compare two byte vectors in constant time.
+/// \param a First vector.
+/// \param b Second vector.
+/// \return True if vectors are equal.
+bool constant_time_equal(const std::vector<uint8_t> &a,
+                         const std::vector<uint8_t> &b);
+
 /// \brief Prepend IV to ciphertext.
 /// \param ciphertext Ciphertext without IV.
 /// \param iv Initialization vector to prepend.
