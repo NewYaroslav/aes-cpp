@@ -1,14 +1,6 @@
 # aes-cpp
 
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Building with vcpkg](#building-with-vcpkg)
-- [CMake Integration](#cmake-integration)
-- [Usage](#usage)
-- [Development](#development)
-
 C++ AES(Advanced Encryption Standard) implementation.
-
 Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 
 [![Ubuntu](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml)
@@ -16,7 +8,24 @@ Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 
 Stable releases are maintained on the `stable` branch and in tagged versions.
 
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Building with vcpkg](#building-with-vcpkg)
+- [CMake Integration](#cmake-integration)
+- [Usage](#usage)
+- [Development](#development)
+
+## Features
+
+- Supports 128-, 192-, and 256-bit keys
+- Implements ECB, CBC, CFB, CTR, and GCM modes
+- Uses AES-NI hardware acceleration when available
+- Provides vector overloads for `std::vector` inputs
+- Includes debug helpers for inspecting intermediate states
+
 ## Prerequisites
+
 * C++11 or newer compiler
 * CMake 3.14 or newer
 
@@ -85,20 +94,24 @@ target_link_libraries(your_app PRIVATE aes_cpp::aes_cpp)
 ```
 
 ## Hardware Acceleration
+
 On x86 CPUs this library checks for AES-NI support at runtime and uses
 hardware-accelerated instructions when available. If AES-NI is missing, a
 portable software implementation is used instead.
 
 ## Supported Modes
+
 ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an authentication tag for message integrity. CBC, CFB and CTR can be paired with a MAC callback (e.g., HMAC) to authenticate `IV || ciphertext`; omitting the callback leaves them vulnerable to tampering.
 ECB mode is provided for completeness but leaks plaintext patterns and should be avoided. Prefer authenticated encryption modes such as GCM that provide both confidentiality and integrity.
 
 ## IV Generation
+
 `aes_cpp::utils` provides helpers for creating random IVs. `generate_iv_16()`
 produces a 16-byte IV for CBC, CFB and CTR modes, while `generate_iv_12()`
 returns a 12-byte IV recommended for GCM.
 
 ## Vector Overloads
+
 All encryption and decryption methods have overloads that accept `std::vector<unsigned char>` in addition to raw pointer APIs:
 ```c++
 #include <aes_cpp/aes.hpp>
@@ -112,6 +125,7 @@ auto cipherVec = aesVec.EncryptCBC(plainVec, keyVec, iv);
 ```
 
 ## Clearing Cached Keys
+
 The `AES` class caches the last key and its expanded round keys for reuse.
 Call `clear_cache()` when this material is no longer needed to securely erase
 it. The destructor invokes this automatically.
@@ -123,6 +137,7 @@ Defining the `AESCPP_DEBUG` macro enables helper functions such as `printHexArra
 ## Usage
 
 ### Encryption/Decryption
+
 ```c++
 #include <aes_cpp/aes.hpp>
 
@@ -136,6 +151,7 @@ auto restored = aes.DecryptCBC(cipher.get(), sizeof(plain), key, iv);
 ```
 
 ### encrypt/decrypt with `AesMode::CTR`
+
 ```c++
 #include <aes_cpp/aes_utils.hpp>
 
@@ -150,6 +166,7 @@ auto restored =
 ```
 
 ### MAC Callback
+
 `utils::encrypt`, `utils::decrypt`, and `utils::decrypt_to_string` for CBC, CFB
 and CTR modes accept an optional callback for computing a message
 authentication code. The library authenticates the concatenation of IV and
@@ -169,11 +186,13 @@ auto restored =
 ```
 
 ### Constant-Time Comparison
+
 `utils::constant_time_equal` compares byte vectors without leaking
 information through timing, but it assumes the lengths of both inputs are
 public because it checks them and derives a loop bound from the larger size.
 
 ### GCM Helpers
+
 `encrypt_gcm` and `decrypt_gcm` manage the 12-byte IV, optional additional
 authenticated data (AAD), and the authentication tag produced by GCM.
 
