@@ -35,6 +35,7 @@ Stable releases are maintained on the `stable` branch and in tagged versions.
 ```bash
 git clone https://github.com/NewYaroslav/aes-cpp.git
 cd aes-cpp
+./setup-hooks.sh # Activate clang-format pre-commit hook required by CI
 cmake -S . -B build
 cmake --build build
 
@@ -43,6 +44,8 @@ cmake -S . -B build -DAES_CPP_BUILD_TESTS=ON
 cmake --build build
 ctest --test-dir build
 ```
+
+`./setup-hooks.sh` enables the clang-format pre-commit check enforced by the CI pipeline.
 
 ```c++
 #include <aes_cpp/aes_utils.hpp>
