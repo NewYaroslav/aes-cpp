@@ -294,6 +294,36 @@ Tests are disabled by default. Run CMake with `-DAES_CPP_BUILD_TESTS=ON` to buil
 * `make release` - run `release` version
 * `make clean` - clean `bin` directory
 
+## FAQ / Troubleshooting
+
+### How do I generate an IV?
+
+`aes_cpp::utils` includes helpers such as `generate_iv_16()` for CBC, CFB and CTR modes and `generate_iv_12()` for GCM. See [IV Generation](#iv-generation) for usage examples.
+
+### Which compilers and architectures are supported?
+
+The library targets any C++11 (or newer) compiler and is tested with GCC, Clang and MSVC. It runs on x86 and x86_64; other platforms should work as long as a compatible compiler is available.
+
+### What if my CPU lacks AES-NI?
+
+AES-NI instructions are detected at runtime. When unavailable, the library automatically falls back to a portable software implementation with lower performance. See [Hardware Acceleration](#hardware-acceleration) for details.
+
+### How do I add the library as a submodule or via vcpkg?
+
+To embed as a Git submodule:
+
+```bash
+git submodule add https://github.com/NewYaroslav/aes-cpp.git external/aes-cpp
+```
+
+Then follow the [CMake Integration](#cmake-integration) section using `add_subdirectory(external/aes-cpp)`.
+
+For vcpkg users, see [Building with vcpkg](#building-with-vcpkg) and run:
+
+```bash
+vcpkg install
+```
+
 ## Windows Build
 
 Required tools:
