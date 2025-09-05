@@ -52,6 +52,9 @@ jobs:
         run: |
           make workflow_build_speed_test FLAGS="-Wall -Wextra -I./include -std=c++${{ matrix.std }}"
           ./bin/speedtest
+      - name: GF_Multiply constant-time check
+        if: runner.os == 'Linux'
+        run: bash dev/gf_multiply_branch_check.sh
 
   vcpkg:
     runs-on: ubuntu-latest
