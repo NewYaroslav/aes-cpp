@@ -698,6 +698,14 @@ TEST(Utils, DecryptStringCbcMalformedCiphertextsSameError) {
   EXPECT_EQ(pad_msg, len_msg);
 }
 
+TEST(Utils, ExtractIvFromCiphertextTooShort) {
+  std::vector<uint8_t> ciphertext_with_iv(aes_cpp::utils::BLOCK_SIZE - 1, 0);
+  std::array<uint8_t, aes_cpp::utils::BLOCK_SIZE> iv;
+  EXPECT_THROW(
+      aes_cpp::utils::extract_iv_from_ciphertext(ciphertext_with_iv, iv),
+      std::invalid_argument);
+}
+
 TEST(Utils, RemovePaddingConstantTime) {
   std::vector<uint8_t> valid(aes_cpp::utils::BLOCK_SIZE,
                              static_cast<uint8_t>(aes_cpp::utils::BLOCK_SIZE));
