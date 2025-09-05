@@ -24,6 +24,7 @@ include(CMakePackageConfigHelpers)
 set(AES_CPP_VERSION 0.1.0)
 
 option(AES_CPP_BUILD_TESTS "Build aes_cpp tests" OFF)
+option(AES_CPP_ENABLE_AESNI "Build AES-NI/PCLMUL code paths" ON)
 
 set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/aes.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/src/aes_utils.cpp)
@@ -39,6 +40,12 @@ target_include_directories(aes_cpp
     $<INSTALL_INTERFACE:include>
 )
 set_target_properties(aes_cpp PROPERTIES EXPORT_NAME aes_cpp)
+
+if(AES_CPP_ENABLE_AESNI
+   AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang"
+   AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|i.86")
+  target_compile_options(aes_cpp PRIVATE -maes -mpclmul -msse2 -mssse3)
+endif()
 
 install(TARGETS aes_cpp EXPORT aes_cppTargets
         ARCHIVE DESTINATION lib
