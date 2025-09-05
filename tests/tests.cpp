@@ -650,6 +650,44 @@ TEST(GCM, InputTooLong) {
                std::length_error);
 }
 
+TEST(GCM, AadTooLong) {
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
+  unsigned char in = 0;
+  unsigned char out;
+  unsigned char aad = 0;
+  std::array<unsigned char, 16> key{};
+  std::array<unsigned char, 12> iv{};
+  std::array<unsigned char, 16> tag{};
+  const size_t gcmByteLimit = ((1ULL << 39) - 256) / 8;
+
+  EXPECT_THROW(aes.EncryptGCM(&in, 0, key.data(), iv.data(), &aad,
+                              gcmByteLimit + 1, tag.data(), &out),
+               std::length_error);
+
+  EXPECT_THROW(aes.DecryptGCM(&in, 0, key.data(), iv.data(), &aad,
+                              gcmByteLimit + 1, tag.data(), &out),
+               std::length_error);
+}
+
+TEST(GCM, AadPlusInputTooLong) {
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
+  unsigned char in = 0;
+  unsigned char out;
+  unsigned char aad = 0;
+  std::array<unsigned char, 16> key{};
+  std::array<unsigned char, 12> iv{};
+  std::array<unsigned char, 16> tag{};
+  const size_t gcmByteLimit = ((1ULL << 39) - 256) / 8;
+
+  EXPECT_THROW(aes.EncryptGCM(&in, 1, key.data(), iv.data(), &aad, gcmByteLimit,
+                              tag.data(), &out),
+               std::length_error);
+
+  EXPECT_THROW(aes.DecryptGCM(&in, 1, key.data(), iv.data(), &aad, gcmByteLimit,
+                              tag.data(), &out),
+               std::length_error);
+}
+
 TEST(Utils, EncryptDecryptStringCBC) {
   std::string text = "hello world";
   std::array<uint8_t, 16> key = {0};

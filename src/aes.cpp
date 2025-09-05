@@ -491,9 +491,9 @@ void AES::EncryptGCM(const unsigned char in[], size_t inLen,
   if (!iv || (!aad && aadLen > 0) || !tag)
     throw std::invalid_argument("Null IV, AAD or tag");
   if (inLen > (1ULL << 32) * 16) throw std::length_error("Input too long");
-  const uint64_t gcmLimit = (1ULL << 39) - 256;
-  if (aadLen > gcmLimit) throw std::length_error("AAD too long");
-  if (aadLen + inLen > gcmLimit)
+  const uint64_t gcmByteLimit = ((1ULL << 39) - 256) / 8;
+  if (aadLen > gcmByteLimit) throw std::length_error("AAD too long");
+  if (aadLen + inLen > gcmByteLimit)
     throw std::length_error("AAD + input too long");
   auto roundKeys = prepare_round_keys(key);
 
@@ -570,9 +570,9 @@ void AES::DecryptGCM(const unsigned char in[], size_t inLen,
   if (!iv || (!aad && aadLen > 0) || !tag)
     throw std::invalid_argument("Null IV, AAD or tag");
   if (inLen > (1ULL << 32) * 16) throw std::length_error("Input too long");
-  const uint64_t gcmLimit = (1ULL << 39) - 256;
-  if (aadLen > gcmLimit) throw std::length_error("AAD too long");
-  if (aadLen + inLen > gcmLimit)
+  const uint64_t gcmByteLimit = ((1ULL << 39) - 256) / 8;
+  if (aadLen > gcmByteLimit) throw std::length_error("AAD too long");
+  if (aadLen + inLen > gcmByteLimit)
     throw std::length_error("AAD + input too long");
   auto roundKeys = prepare_round_keys(key);
 
