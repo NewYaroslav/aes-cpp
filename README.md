@@ -10,6 +10,7 @@ Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 Stable releases are maintained on the `stable` branch and in tagged versions.
 
 - [Features](#features)
+- [Security Notes](#security-notes)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Building with vcpkg](#building-with-vcpkg)
@@ -24,6 +25,12 @@ Stable releases are maintained on the `stable` branch and in tagged versions.
 - Uses AES-NI hardware acceleration when available
 - Provides vector overloads for `std::vector` inputs
 - Includes debug helpers for inspecting intermediate states
+
+## Security Notes
+
+- This library does not generate or store encryption keys. Applications must handle key management separately.
+- It does not mitigate side-channel attacks such as timing or cache-based leaks.
+- Prefer authenticated encryption modes like GCM; see [GCM Helpers](#gcm-helpers) and [tests](tests/tests.cpp) for usage examples.
 
 ## Prerequisites
 
@@ -113,7 +120,7 @@ portable software implementation is used instead.
 ## Supported Modes
 
 ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an authentication tag for message integrity. CBC, CFB and CTR can be paired with a MAC callback (e.g., HMAC) to authenticate `IV || ciphertext`; omitting the callback leaves them vulnerable to tampering.
-ECB mode is provided for completeness but leaks plaintext patterns and should be avoided. Prefer authenticated encryption modes such as GCM that provide both confidentiality and integrity.
+ECB mode is provided solely for demonstration purposes and must not be used in real systems as it leaks plaintext patterns. Prefer authenticated encryption modes such as GCM that provide both confidentiality and integrity.
 
 ## Examples
 
