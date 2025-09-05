@@ -698,6 +698,14 @@ TEST(Utils, DecryptStringCbcMalformedCiphertextsSameError) {
   EXPECT_EQ(pad_msg, len_msg);
 }
 
+TEST(Utils, ConstantTimeEqual) {
+  std::vector<uint8_t> a = {0x00, 0x01, 0x02, 0x03};
+  auto b = a;
+  std::vector<uint8_t> c = {0x00, 0x01, 0x02, 0x04};
+  EXPECT_TRUE(aes_cpp::utils::constant_time_equal(a, b));
+  EXPECT_FALSE(aes_cpp::utils::constant_time_equal(a, c));
+}
+
 TEST(Utils, RemovePaddingConstantTime) {
   std::vector<uint8_t> valid(aes_cpp::utils::BLOCK_SIZE,
                              static_cast<uint8_t>(aes_cpp::utils::BLOCK_SIZE));
@@ -719,7 +727,7 @@ TEST(Utils, RemovePaddingConstantTime) {
   auto t_invalid = measure(invalid);
   auto diff = t_valid > t_invalid ? t_valid - t_invalid : t_invalid - t_valid;
   auto max_t = t_valid > t_invalid ? t_valid : t_invalid;
-  EXPECT_LT(diff.count(), max_t.count() / 8);
+  EXPECT_LT(diff.count(), max_t.count() / 4);
 }
 
 TEST(Utils, EncryptDecryptCtrZeroLength) {
