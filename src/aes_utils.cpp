@@ -184,6 +184,8 @@ std::array<uint8_t, N> generate_iv_impl() {
       "No secure random source available on this platform");
 }
 
+}  // namespace
+
 bool constant_time_equal(const std::vector<uint8_t> &a,
                          const std::vector<uint8_t> &b) {
   // Length comparison and max_len computation are allowed only when the
@@ -199,8 +201,6 @@ bool constant_time_equal(const std::vector<uint8_t> &a,
   }
   return diff == 0;
 }
-
-}  // namespace
 
 std::array<uint8_t, 12> generate_iv_12() { return generate_iv_impl<12>(); }
 

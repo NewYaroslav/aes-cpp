@@ -3,6 +3,7 @@
 #include <aes_cpp/aes.hpp>
 #include <aes_cpp/aes_utils.hpp>
 #include <iostream>
+#include <stdexcept>
 
 const unsigned int MICROSECONDS = 1000000;
 unsigned long getMicroseconds() {
@@ -14,7 +15,10 @@ unsigned long getMicroseconds() {
 // Generate plaintext filled with cryptographically secure random bytes.
 unsigned char *getRandomPlain(unsigned int length) {
   unsigned char *plain = new unsigned char[length];
-  aes_cpp::utils::detail::fill_os_random(plain, length);
+  if (!aes_cpp::utils::detail::fill_os_random(plain, length)) {
+    delete[] plain;
+    throw std::runtime_error("Failed to generate random bytes");
+  }
   return plain;
 }
 
