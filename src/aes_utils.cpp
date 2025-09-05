@@ -216,23 +216,22 @@ std::vector<uint8_t> add_padding(const std::vector<uint8_t> &data) {
 bool remove_padding(const std::vector<uint8_t> &data, std::vector<uint8_t> &out,
                     std::size_t &out_len) noexcept {
   std::size_t len = data.size();
-  uint8_t padding = len ? data.back() : 0;
+  if (len == 0 || (len % BLOCK_SIZE) != 0) {
+    out = data;
+    out_len = len;
+    return false;
+  }
+  uint8_t padding = data.back();
   uint8_t invalid = 0;
-  invalid |= static_cast<uint8_t>(len == 0);
-  invalid |= static_cast<uint8_t>((len % BLOCK_SIZE) != 0);
-  invalid |= static_cast<uint8_t>(padding == 0);
-  invalid |= static_cast<uint8_t>(padding > BLOCK_SIZE);
+  invalid |= static_cast<uint8_t>((padding - 1) >= BLOCK_SIZE);
   invalid |= static_cast<uint8_t>(padding > len);
   uint8_t diff = 0;
   for (std::size_t i = 0; i < BLOCK_SIZE; ++i) {
-    uint8_t byte = 0;
-    if (i < len) {
-      byte = data[len - 1 - i];
-    }
     uint8_t mask = static_cast<uint8_t>(0 - static_cast<uint8_t>(i < padding));
-    diff |= (byte ^ padding) & mask;
+    diff |= (data[len - 1 - i] ^ padding) & mask;
   }
-  size_t mask = -static_cast<size_t>((invalid | diff) == 0);
+  invalid |= diff;
+  size_t mask = -static_cast<size_t>(invalid == 0);
   out_len = ((len - padding) & mask) | (len & ~mask);
   out.resize(len);
   std::copy(data.begin(), data.end(), out.begin());
