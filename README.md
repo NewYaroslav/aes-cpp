@@ -156,14 +156,14 @@ auto data = utils::encrypt_gcm(text, key, aad);
 auto plain = utils::decrypt_gcm_to_string(data, key, aad);
 ```
 
-#Padding
+# Padding
 
 This library does not provide any padding because padding is not part of AES standard.
 For ECB and CBC modes plaintext and ciphertext length in bytes must be divisible by
 16. CFB, CTR and GCM modes operate on data of any length. If the length for ECB or
-CBC doesn't satisfy this condition an exception will be thrown
+CBC doesn't satisfy this condition an exception will be thrown.
 
-#Links
+# Links
 
 These projects can be used together with aes_cpp:
 
@@ -173,7 +173,7 @@ These projects can be used together with aes_cpp:
 * [Wiki](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
 * [NIST](https://www.nist.gov/publications/advanced-encryption-standard-aes)
 
-#Development:
+# Development:
 
 1. `git clone https://github.com/NewYaroslav/aes-cpp.git`
 1. `docker-compose up -d`
