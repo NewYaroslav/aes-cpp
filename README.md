@@ -1,5 +1,6 @@
 # aes-cpp
 
+- [Features](#features)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Building with vcpkg](#building-with-vcpkg)
@@ -8,6 +9,14 @@
 - [Development](#development)
 
 C++ AES(Advanced Encryption Standard) implementation.
+
+## Features
+
+- Supports 128-, 192-, and 256-bit keys
+- Implements ECB, CBC, CFB, CTR, and GCM modes
+- Uses AES-NI hardware acceleration when available
+- Provides vector overloads for `std::vector` inputs
+- Includes debug helpers for inspecting intermediate states
 
 Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 
