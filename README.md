@@ -200,6 +200,7 @@ These projects can be used together with aes_cpp:
 # Development:
 
 1. `git clone https://github.com/NewYaroslav/aes-cpp.git`
+1. Run `./setup-hooks.sh` to enable the clang-format pre-commit hook enforced by `.clang-format`
 1. `docker-compose up -d`
 1. use make commands
 
@@ -229,5 +230,3 @@ Tests are disabled by default. Run CMake with `-DAES_CPP_BUILD_TESTS=ON` to buil
 * `make release` - run `release` version
 * `make clean` - clean `bin` directory
 
-To enable project hooks run:
-`git config core.hooksPath .githooks`
