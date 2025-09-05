@@ -61,7 +61,8 @@ Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES) and extended with 
   * **CTR/CFB**: IV/nonce must be **unique** per key. A counter-based scheme is typical.
   * **CBC**: IV must be **unpredictable** (CSPRNG).
 * **ECB** is provided for demonstration only. Do **not** use in real systems; it leaks patterns. Prefer authenticated encryption (GCM).
-
+* **Zeroization**: memory wiping is best-effort and does not cover OS swap or external copies.
+  
 ## Requirements
 
 * C++11 or newer
@@ -203,6 +204,8 @@ int main() {
 }
 ```
 
+**Note (CTR):** throws on 128-bit counter wrap-around (practically unreachable).
+
 ### GCM example (AEAD) + serialization
 
 ```cpp
@@ -237,6 +240,10 @@ int main() {
 }
 ```
 
+**GCM limits & tag.** AAD ≤ 2^39−256 bytes; AAD+plaintext ≤ 2^39−256 (per spec). 
+Implementation limit: plaintext ≤ 2^36 bytes per (key, IV) due to 32-bit block counter.
+Tag length is fixed to 16 bytes. On authentication failure the output is zeroized and an exception is thrown (see *Errors & Exceptions*).
+
 ### MAC callback for CBC/CFB/CTR
 
 `utils::encrypt`, `utils::decrypt`, and `utils::decrypt_to_string` for CBC/CFB/CTR accept an optional MAC callback. The library authenticates `IV || ciphertext` and passes this buffer to your callback. Use a dedicated MAC key; do **not** reuse the AES key.
@@ -256,19 +263,22 @@ Utilities in `aes_cpp::utils`:
 
 * `generate_iv_16()` → 16-byte IV for CBC/CFB/CTR (use CSPRNG or a counter scheme ensuring **uniqueness per key**)
 * `generate_iv_12()` → 12-byte IV for GCM (**never reuse** with the same key). Random 96-bit IVs are acceptable for many use-cases; a deterministic counter/nonce scheme eliminates collision risk within one key’s lifetime.
+* Use a **CSPRNG** for random IVs.
 
 ## Padding
 
-Core `AES` operates on 16-byte blocks and expects callers to supply padded data for ECB/CBC. `aes_cpp::utils` provides PKCS#7 helpers and higher-level CBC helpers that apply padding automatically.
+Core `AES` operates on 16-byte blocks and expects callers to supply padded data for ECB/CBC.
+If the input size is not a multiple of 16, an exception is thrown. `aes_cpp::utils` provides
+PKCS#7 helpers and higher-level CBC helpers that apply padding automatically.
 
 ## Vector Overloads
 
-Most APIs provide std::vector<uint8_t>-based overloads. They do not copy the input;
-they allocate an output vector and write results directly into it (return is NRVO/move).
-For zero-allocation/zero-copy scenarios, use pointer/size APIs with a caller-provided
-output buffer, or in-place pointer APIs (same buffer for input/output) where applicable.
-A span-like API (read-only span + writable span) may be added later.
-
+Most APIs provide `std::vector<uint8_t>` overloads. They do **not** copy the input;
+they allocate an output vector and write results directly into it (return uses NRVO/move).
+For zero-allocation scenarios, use pointer/size APIs with a caller-provided output buffer,
+or in-place pointer APIs (same buffer for input/output) where applicable.
+Note: `DecryptGCM` normalizes the tag to 16 bytes (may copy/resize the tag).
+A span-like API may be added later.
 
 ## Constant-Time Helpers
 
@@ -276,8 +286,13 @@ A span-like API (read-only span + writable span) may be added later.
 
 ## Hardware Acceleration
 
-* **x86/x86\_64**: runtime AES-NI detection; hardware path when available, otherwise software fallback.
-* **Non-x86 (e.g., ARMv8)**: currently uses software path (no ARM Crypto Extensions yet). *Subject to change if ARM acceleration is added in the future.*
+* **x86/x86_64**: runtime AES-NI detection; hardware path when available, otherwise software fallback.
+* **GHASH** (GCM) uses PCLMULQDQ when available.
+* **Non-x86 (e.g., ARMv8)**: currently uses software path (no ARM Crypto Extensions yet).
+
+### Build flags for acceleration
+* GCC/Clang: pass `-maes -mpclmul` to compile AES-NI/PCLMUL code paths (selected at runtime).
+* MSVC: intrinsics available by default; CPUID selects the path at runtime.
 
 ## Windows Build
 
@@ -293,6 +308,16 @@ ctest --test-dir build -C Release
 ```
 
 Linking example (MSVC): link against `build\Release\aes_cpp.lib` or consume via `find_package` after `cmake --install`.
+
+## Errors & Exceptions
+
+* `std::invalid_argument`: null key/IV/tag/AAD; invalid IV size (GCM requires 12 bytes); tag size > 16.
+* `std::length_error`: ECB/CBC input not multiple of 16; GCM AAD/length bounds; CTR counter overflow.
+* `std::runtime_error`: GCM authentication failed (output buffer is zeroized before throwing).
+
+## Thread-safety
+
+`AES` methods are safe for concurrent use per instance (key cache is mutex-protected; per-call state is local).
 
 ## Development
 
@@ -327,7 +352,8 @@ Binaries in `bin/`:
 
 **No AES-NI?** The library falls back to the portable software implementation; expect lower performance.
 
-**Submodule vs package?** As a submodule use `add_subdirectory`. As an installed package use `find_package(aes_cpp CONFIG REQUIRED)` and link `aes_cpp::aes_cpp`.
+**Submodule vs package?** As a submodule use `add_subdirectory`. As an installed package use `find_package(aes_cpp CONFIG REQUIRED)` and link `aes_cpp::aes_cpp`.  
+Note: the `aescpp` alias is build-tree only; consumers should use `aes_cpp::aes_cpp`.
 
 **vcpkg triplets?** Set explicitly when needed, e.g. `vcpkg install --triplet x64-windows`.
 
