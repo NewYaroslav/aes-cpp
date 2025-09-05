@@ -61,9 +61,11 @@ int main() {
 }
 ```
 
+See [examples/ctr.cpp](examples/ctr.cpp) for a minimal usage example.
+
 ```bash
-g++ quickstart.cpp -std=c++17 -Iinclude build/libaes_cpp.a -o quickstart
-./quickstart
+g++ examples/ctr.cpp -std=c++17 -Iinclude build/libaes_cpp.a -o ctr_example
+./ctr_example
 ```
 
 ## Building with vcpkg
@@ -110,6 +112,16 @@ portable software implementation is used instead.
 ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an authentication tag for message integrity. CBC, CFB and CTR can be paired with a MAC callback (e.g., HMAC) to authenticate `IV || ciphertext`; omitting the callback leaves them vulnerable to tampering.
 ECB mode is provided for completeness but leaks plaintext patterns and should be avoided. Prefer authenticated encryption modes such as GCM that provide both confidentiality and integrity.
 
+## Examples
+
+| Mode | Example |
+| ---- | ------- |
+| ECB  | [examples/ecb.cpp](examples/ecb.cpp) |
+| CBC  | [examples/cbc.cpp](examples/cbc.cpp) |
+| CFB  | [examples/cfb.cpp](examples/cfb.cpp) |
+| CTR  | [examples/ctr.cpp](examples/ctr.cpp) |
+| GCM  | [examples/gcm.cpp](examples/gcm.cpp) |
+
 ## IV Generation
 
 `aes_cpp::utils` provides helpers for creating random IVs. `generate_iv_16()`
@@ -119,6 +131,7 @@ returns a 12-byte IV recommended for GCM.
 ## Vector Overloads
 
 All encryption and decryption methods have overloads that accept `std::vector<unsigned char>` in addition to raw pointer APIs:
+
 ```c++
 #include <aes_cpp/aes.hpp>
 
@@ -204,7 +217,8 @@ authenticated data (AAD), and the authentication tag produced by GCM.
 
 GCM limits AAD to `(1ULL << 39) - 256` bytes and the combined length of AAD and
 plaintext to the same bound. The library throws `std::length_error` if these
-limits are exceeded:
+limits are exceeded. 
+
 ```c++
 #include <aes_cpp/aes_utils.hpp>
 
@@ -218,6 +232,8 @@ auto data = utils::encrypt_gcm(text, key, aad);
 // data.tag holds the 16-byte authentication tag
 auto plain = utils::decrypt_gcm_to_string(data, key, aad);
 ```
+
+See [examples/gcm.cpp](examples/gcm.cpp) for a complete example.
 
 # Padding
 
@@ -246,6 +262,8 @@ std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 auto encrypted = utils::encrypt(text, key, utils::AesMode::CBC);
 auto restored = utils::decrypt_to_string(encrypted, key, utils::AesMode::CBC);
 ```
+
+See [examples/cbc.cpp](examples/cbc.cpp) for a complete CBC example.
 
 CFB, CTR and GCM modes operate on data of any length.
 
