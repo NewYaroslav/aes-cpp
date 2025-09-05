@@ -230,3 +230,23 @@ Tests are disabled by default. Run CMake with `-DAES_CPP_BUILD_TESTS=ON` to buil
 * `make release` - run `release` version
 * `make clean` - clean `bin` directory
 
+## Windows Build
+
+Required tools:
+
+* Microsoft Visual C++ (MSVC)
+* CMake
+* vcpkg
+
+Example commands for Windows PowerShell or Command Prompt:
+
+```powershell
+git clone https://github.com/microsoft/vcpkg.git
+.\vcpkg\bootstrap-vcpkg.bat
+.\vcpkg\vcpkg install --x-feature=tests
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=.\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_MANIFEST_FEATURES=tests -DAES_CPP_BUILD_TESTS=ON
+cmake --build build --config Release
+ctest --test-dir build -C Release
+```
+
+
