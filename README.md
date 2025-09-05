@@ -1,105 +1,110 @@
 # aes-cpp
 
-C++ AES(Advanced Encryption Standard) implementation.
-Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
+C++ AES (Advanced Encryption Standard) library.
+Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES) and extended with utilities, examples, CMake packaging, and CI.
 
 [![Ubuntu](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml)
 [![Windows](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Stable releases are maintained on the `stable` branch and in tagged versions.
+> Stable releases are maintained on the `stable` branch and published as semver tags.
 
-- [Features](#features)
-- [Security Notes](#security-notes)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Building with vcpkg](#building-with-vcpkg)
-- [CMake Integration](#cmake-integration)
-- [Usage](#usage)
-- [Development](#development)
+---
+
+* [Features](#features)
+* [Security Notes (READ FIRST)](#security-notes-read-first)
+* [Requirements](#requirements)
+* [Quick Start](#quick-start)
+* [CMake Integration](#cmake-integration)
+
+  * [add\_subdirectory](#add_subdirectory)
+  * [Installed package (find\_package)](#installed-package-find_package)
+  * [Install layout & exported targets](#install-layout--exported-targets)
+* [Building with vcpkg](#building-with-vcpkg)
+* [Usage](#usage)
+
+  * [CBC example (with padding)](#cbc-example-with-padding)
+  * [CTR example (string helpers)](#ctr-example-string-helpers)
+  * [GCM example (AEAD) + serialization](#gcm-example-aead--serialization)
+  * [MAC callback for CBC/CFB/CTR](#mac-callback-for-cbc-cfb-ctr)
+* [IV / Nonce Generation](#iv--nonce-generation)
+* [Padding](#padding)
+* [Vector Overloads](#vector-overloads)
+* [Constant-Time Helpers](#constant-time-helpers)
+* [Hardware Acceleration](#hardware-acceleration)
+* [Windows Build](#windows-build)
+* [Development](#development)
+* [FAQ / Troubleshooting](#faq--troubleshooting)
+* [Links](#links)
+* [License](#license)
+
+---
 
 ## Features
 
-- Supports 128-, 192-, and 256-bit keys
-- Implements ECB, CBC, CFB, CTR, and GCM modes
-- Uses AES-NI hardware acceleration when available
-- Provides vector overloads for `std::vector` inputs
-- Includes debug helpers for inspecting intermediate states
+* AES-128 / AES-192 / AES-256
+* Modes: **ECB**, **CBC**, **CFB**, **CTR**, **GCM**
+* Runtime AES-NI detection on x86/x86\_64; software fallback otherwise
+* Convenience utilities (`aes_cpp::utils`) with string/`std::vector` helpers
+* Optional debug helpers (hex printers) behind `AESCPP_DEBUG`
+* CMake package: `aes_cpp::aes_cpp` target, `find_package` support
 
-## Security Notes
+## Security Notes (READ FIRST)
 
-- This library does not generate or store encryption keys. Applications must handle key management separately.
-- It does not mitigate side-channel attacks such as timing or cache-based leaks.
-- Prefer authenticated encryption modes like GCM; see [GCM Helpers](#gcm-helpers) and [tests](tests/tests.cpp) for usage examples.
+* **Key management**: the library does **not** generate or store keys. Derive keys via a KDF (PBKDF2/scrypt/Argon2) and manage rotation/storage in your application.
+* **Side channels**:
 
-## Prerequisites
+  * Software path is **not constant-time**. Even with AES-NI, side channels may remain depending on platform and usage. Evaluate your threat model (shared CPU, co-tenancy, etc.).
+* **IV/nonce uniqueness is mandatory per key**:
 
-* C++11 or newer compiler
-* CMake 3.14 or newer
+  * **GCM (recommended)**: 12-byte IV; **never reuse** an IV with the same key. Reuse breaks confidentiality and integrity.
+  * **CTR/CFB**: IV/nonce must be **unique** per key. A counter-based scheme is typical.
+  * **CBC**: IV must be **unpredictable** (CSPRNG).
+* **ECB** is provided for demonstration only. Do **not** use in real systems; it leaks patterns. Prefer authenticated encryption (GCM).
+
+## Requirements
+
+* C++11 or newer
+* CMake ≥ 3.14
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/NewYaroslav/aes-cpp.git
 cd aes-cpp
-./setup-hooks.sh # Activate clang-format pre-commit hook required by CI
+./setup-hooks.sh               # enables clang-format pre-commit (enforced by CI)
 cmake -S . -B build
 cmake --build build
 
-# Enable and run tests
+# enable and run tests
 cmake -S . -B build -DAES_CPP_BUILD_TESTS=ON
 cmake --build build
 ctest --test-dir build
 ```
 
-`./setup-hooks.sh` enables the clang-format pre-commit check enforced by the CI pipeline.
-
-```c++
-#include <aes_cpp/aes_utils.hpp>
-#include <array>
-#include <string>
-#include <iostream>
-
-int main() {
-    using namespace aes_cpp;
-    std::string text = "Hello AES";
-    std::array<uint8_t, 16> key = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
-                                   0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
-    auto encrypted = utils::encrypt(text, key, utils::AesMode::CTR);
-    auto decrypted = utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR);
-    std::cout << decrypted << std::endl;
-}
-```
-
-See [examples/ctr.cpp](examples/ctr.cpp) for a minimal usage example.
+Minimal compile & run (Linux, from repo root):
 
 ```bash
-g++ examples/ctr.cpp -std=c++17 -Iinclude build/libaes_cpp.a -o ctr_example
+# Build static lib first via CMake as above, then:
+g++ examples/ctr.cpp -std=c++17 -Iinclude -Lbuild -laes_cpp -o ctr_example
 ./ctr_example
-```
-
-## Building with vcpkg
-
-```bash
-git clone https://github.com/microsoft/vcpkg.git
-./vcpkg/bootstrap-vcpkg.sh
-./vcpkg/vcpkg install
-# Enable tests with the optional feature
-./vcpkg/vcpkg install --x-feature=tests
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_MANIFEST_FEATURES=tests -DAES_CPP_BUILD_TESTS=ON
-cmake --build build
 ```
 
 ## CMake Integration
 
-This library can be added to another CMake project via `add_subdirectory`:
+### add\_subdirectory
 
 ```cmake
-add_subdirectory(path/to/aes-cpp)
+# CMakeLists.txt
+add_subdirectory(external/aes-cpp)
+# Optionally: set(AES_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
 target_link_libraries(your_app PRIVATE aes_cpp::aes_cpp)
 ```
 
-Alternatively, install the library and use `find_package`:
+### Installed package (find\_package)
+
+Install to a prefix and consume via `find_package`:
 
 ```bash
 cmake -S . -B build
@@ -107,260 +112,176 @@ cmake --install build --prefix /your/install/prefix
 ```
 
 ```cmake
+# consumer CMakeLists.txt
 find_package(aes_cpp CONFIG REQUIRED)
 target_link_libraries(your_app PRIVATE aes_cpp::aes_cpp)
 ```
 
-## Hardware Acceleration
+### Install layout & exported targets
 
-On x86 CPUs this library checks for AES-NI support at runtime and uses
-hardware-accelerated instructions when available. If AES-NI is missing, a
-portable software implementation is used instead.
+The project installs:
 
-## Supported Modes
+* headers → `include/`
+* library → `lib/`
+* CMake package files → `lib/cmake/aes_cpp/`
 
-ECB, CBC, CFB, CTR and GCM modes are implemented. GCM additionally produces an authentication tag for message integrity. CBC, CFB and CTR can be paired with a MAC callback (e.g., HMAC) to authenticate `IV || ciphertext`; omitting the callback leaves them vulnerable to tampering.
-ECB mode is provided solely for demonstration purposes and must not be used in real systems as it leaks plaintext patterns. Prefer authenticated encryption modes such as GCM that provide both confidentiality and integrity.
+  * `aes_cppConfig.cmake`
+  * `aes_cppConfigVersion.cmake`
+  * `aes_cppTargets.cmake`
 
-## Examples
+Exported target name: **`aes_cpp::aes_cpp`** (also local alias `aescpp`).
 
-| Mode | Example |
-| ---- | ------- |
-| ECB  | [examples/ecb.cpp](examples/ecb.cpp) |
-| CBC  | [examples/cbc.cpp](examples/cbc.cpp) |
-| CFB  | [examples/cfb.cpp](examples/cfb.cpp) |
-| CTR  | [examples/ctr.cpp](examples/ctr.cpp) |
-| GCM  | [examples/gcm.cpp](examples/gcm.cpp) |
+## Building with vcpkg
 
-## IV Generation
+With a vcpkg manifest (`vcpkg.json`) in the repo, typical flow:
 
-`aes_cpp::utils` provides helpers for creating random IVs. `generate_iv_16()`
-produces a 16-byte IV for CBC, CFB and CTR modes, while `generate_iv_12()`
-returns a 12-byte IV recommended for GCM.
-
-## Vector Overloads
-
-All encryption and decryption methods have overloads that accept `std::vector<unsigned char>` in addition to raw pointer APIs:
-
-```c++
-#include <aes_cpp/aes.hpp>
-
-std::vector<unsigned char> plainVec = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff };
-std::vector<unsigned char> keyVec   = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-unsigned char iv[]                  = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-
-AES aesVec(AESKeyLength::AES_128);
-auto cipherVec = aesVec.EncryptCBC(plainVec, keyVec, iv);
+```bash
+git clone https://github.com/microsoft/vcpkg.git
+./vcpkg/bootstrap-vcpkg.sh
+./vcpkg/vcpkg install                 # default triplet
+./vcpkg/vcpkg install --x-feature=tests
+cmake -S . -B build \
+  -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake \
+  -DVCPKG_MANIFEST_FEATURES=tests \
+  -DAES_CPP_BUILD_TESTS=ON
+cmake --build build
 ```
 
-## Clearing Cached Keys
-
-The `AES` class caches the last key and its expanded round keys for reuse.
-Call `clear_cache()` when this material is no longer needed to securely erase
-it. The destructor invokes this automatically.
-
-## Debug Helpers
-
-Defining the `AESCPP_DEBUG` macro enables helper functions such as `printHexArray` and `printHexVector` for inspecting data. These helpers are for debugging only and must not be used with sensitive data in production builds. The `make build_debug` target defines this macro automatically, or you can compile with `-DAESCPP_DEBUG`.
+On Windows (PowerShell / cmd) see [Windows Build](#windows-build).
 
 ## Usage
 
-### Encryption/Decryption
+Include headers from `include/aes_cpp`.
 
-```c++
+### CBC example (with padding)
+
+```cpp
 #include <aes_cpp/aes.hpp>
-
-unsigned char plain[] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff };
-unsigned char key[]   = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-unsigned char iv[]    = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-
-AES aes(AESKeyLength::AES_128);
-auto cipher   = aes.EncryptCBC(plain, sizeof(plain), key, iv);
-auto restored = aes.DecryptCBC(cipher.get(), sizeof(plain), key, iv);
-```
-
-### encrypt/decrypt with `AesMode::CTR`
-
-```c++
 #include <aes_cpp/aes_utils.hpp>
+#include <array>
+#include <vector>
 
 using namespace aes_cpp;
 
-std::string text = "CTR mode example";
-std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-                                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-auto encrypted = utils::encrypt(text, key, utils::AesMode::CTR);
-auto restored =
-    utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR);
+int main() {
+    const unsigned char plain[] = {
+        0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77,
+        0x88,0x99,0xaa,0xbb,0xcc,0xdd,0xee,0xff
+    };
+    const unsigned char key[] = {
+        0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
+        0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f
+    };
+    auto iv = utils::generate_iv_16(); // CBC IV from CSPRNG
+
+    AES aes(AESKeyLength::AES_128);
+    // utils::encrypt/decrypt auto-apply PKCS#7 for CBC
+    auto enc = utils::encrypt(std::vector<uint8_t>(plain, plain+sizeof(plain)), key, utils::AesMode::CBC, std::nullopt, iv);
+    auto dec = utils::decrypt(enc, key, utils::AesMode::CBC);
+}
 ```
 
-### MAC Callback
+### CTR example (string helpers)
 
-`utils::encrypt`, `utils::decrypt`, and `utils::decrypt_to_string` for CBC, CFB
-and CTR modes accept an optional callback for computing a message
-authentication code. The library authenticates the concatenation of IV and
-ciphertext and passes this buffer to the callback. Use the same callback for
-both operations to detect tampering before returning plaintext. The MAC should
-use its own secret key rather than reusing the AES key. Omitting the callback
-disables authentication and is insecure.
+```cpp
+#include <aes_cpp/aes_utils.hpp>
+#include <array>
+#include <string>
+#include <iostream>
 
-```c++
-auto mac_fn = [](const std::vector<uint8_t> &data) {
-  return my_hmac(data); // data = IV || ciphertext
+using namespace aes_cpp;
+
+int main() {
+    std::string text = "CTR mode example";
+    std::array<uint8_t,16> key { 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
+                                 0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f };
+    auto iv = utils::generate_iv_16(); // unique per (key, message)
+
+    auto encrypted = utils::encrypt(text, key, utils::AesMode::CTR, std::nullopt, iv);
+    auto restored   = utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR, std::nullopt);
+    std::cout << restored << "\n";
+}
+```
+
+### GCM example (AEAD) + serialization
+
+```cpp
+#include <aes_cpp/aes_utils.hpp>
+#include <array>
+#include <vector>
+
+using namespace aes_cpp;
+
+struct GcmPacket {
+    std::array<uint8_t,12> iv;           // 12-byte IV (nonce)
+    std::vector<uint8_t>   ciphertext;   // raw bytes
+    std::array<uint8_t,16> tag;          // 16-byte auth tag
+};
+
+int main() {
+    std::string text = "GCM example";
+    std::array<uint8_t,16> key { 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
+                                 0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f };
+    std::vector<uint8_t> aad = { 'h','e','a','d','e','r' };
+
+    auto enc = utils::encrypt_gcm(text, key, aad); // produces {iv, ciphertext, tag}
+
+    // Serialize as {iv || ciphertext || tag} if desired
+    std::vector<uint8_t> wire;
+    wire.insert(wire.end(), enc.iv.begin(), enc.iv.end());
+    wire.insert(wire.end(), enc.ciphertext.begin(), enc.ciphertext.end());
+    wire.insert(wire.end(), enc.tag.begin(), enc.tag.end());
+
+    // Decrypt
+    auto plain = utils::decrypt_gcm_to_string(enc, key, aad);
+}
+```
+
+### MAC callback for CBC/CFB/CTR
+
+`utils::encrypt`, `utils::decrypt`, and `utils::decrypt_to_string` for CBC/CFB/CTR accept an optional MAC callback. The library authenticates `IV || ciphertext` and passes this buffer to your callback. Use a dedicated MAC key; do **not** reuse the AES key.
+
+```cpp
+auto mac_fn = [](const std::vector<uint8_t>& data) {
+    return my_hmac(data); // data = IV || ciphertext
 };
 
 auto encrypted = utils::encrypt(text, key, utils::AesMode::CTR, mac_fn);
-auto restored =
-    utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR, mac_fn);
+auto restored  = utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR, mac_fn);
 ```
 
-### Constant-Time Comparison
+## IV / Nonce Generation
 
-`utils::constant_time_equal` compares byte vectors without leaking
-information through timing, but it assumes the lengths of both inputs are
-public because it checks them and derives a loop bound from the larger size.
+Utilities in `aes_cpp::utils`:
 
-### GCM Helpers
+* `generate_iv_16()` → 16-byte IV for CBC/CFB/CTR (use CSPRNG or a counter scheme ensuring **uniqueness per key**)
+* `generate_iv_12()` → 12-byte IV for GCM (**never reuse** with the same key). Random 96-bit IVs are acceptable for many use-cases; a deterministic counter/nonce scheme eliminates collision risk within one key’s lifetime.
 
-`encrypt_gcm` and `decrypt_gcm` manage the 12-byte IV, optional additional
-authenticated data (AAD), and the authentication tag produced by GCM.
+## Padding
 
-GCM limits AAD to `(1ULL << 39) - 256` bytes and the combined length of AAD and
-plaintext to the same bound. The library throws `std::length_error` if these
-limits are exceeded. 
+Core `AES` operates on 16-byte blocks and expects callers to supply padded data for ECB/CBC. `aes_cpp::utils` provides PKCS#7 helpers and higher-level CBC helpers that apply padding automatically.
 
-```c++
-#include <aes_cpp/aes_utils.hpp>
+## Vector Overloads
 
-using namespace aes_cpp;
-
-std::string text = "GCM example";
-std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-                                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-std::vector<uint8_t> aad = { 'h', 'e', 'a', 'd', 'e', 'r' };
-auto data = utils::encrypt_gcm(text, key, aad);
-// data.tag holds the 16-byte authentication tag
-auto plain = utils::decrypt_gcm_to_string(data, key, aad);
-```
-
-See [examples/gcm.cpp](examples/gcm.cpp) for a complete example.
-
-# Padding
-
-The core `AES` class works on 16-byte blocks and expects callers to supply
-already padded data. If the plaintext length for ECB or CBC modes is not a
-multiple of 16 bytes, an exception is thrown.
-
-`aes_cpp::utils` provides PKCS#7 helpers for CBC mode:
-
-```c++
-std::vector<uint8_t> padded = aes_cpp::utils::add_padding(plain);
-...
-aes_cpp::utils::remove_padding(decrypted, out);
-```
-
-Higher-level helpers apply this padding automatically:
-
-```c++
-#include <aes_cpp/aes_utils.hpp>
-
-using namespace aes_cpp;
-
-std::string text = "CBC example";
-std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-                                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-auto encrypted = utils::encrypt(text, key, utils::AesMode::CBC);
-auto restored = utils::decrypt_to_string(encrypted, key, utils::AesMode::CBC);
-```
-
-See [examples/cbc.cpp](examples/cbc.cpp) for a complete CBC example.
-
-CFB, CTR and GCM modes operate on data of any length.
-
-# Links
-
-These projects can be used together with aes_cpp:
-
-* [hmac-cpp](https://github.com/NewYaroslav/hmac-cpp) - HMAC for authentication
-* [siphash-hpp](https://github.com/NewYaroslav/siphash-hpp) - header-only SipHash library
-* [obfy](https://github.com/NewYaroslav/obfy) - generate license verification code
-* [ADVobfuscator](https://github.com/NewYaroslav/ADVobfuscator) - compile-time C++ code obfuscation library
-* [Wiki](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
-* [NIST](https://www.nist.gov/publications/advanced-encryption-standard-aes)
-
-# Development:
-
-1. `git clone https://github.com/NewYaroslav/aes-cpp.git`
-1. Run `./setup-hooks.sh` to enable the clang-format pre-commit hook enforced by `.clang-format`
-1. Run `./dev/install_gtest.sh` to install GoogleTest for local builds
-1. `docker-compose up -d`
-1. use make commands
-
-There are four executables in `bin` folder:  
-* `test` - run tests  
-* `debug` - version for debugging built with `AESCPP_DEBUG` (main code will be taken from dev/main.cpp)
-* `profile` - version for profiling with gprof (main code will be taken from dev/main.cpp)  
-* `speedtest` - performance speed test (main code will be taken from speedtest/main.cpp)
-* `release` - version with optimization (main code will be taken from dev/main.cpp)  
+Most APIs provide std::vector<uint8_t>-based overloads. They do not copy the input;
+they allocate an output vector and write results directly into it (return is NRVO/move).
+For zero-allocation/zero-copy scenarios, use pointer/size APIs with a caller-provided
+output buffer, or in-place pointer APIs (same buffer for input/output) where applicable.
+A span-like API (read-only span + writable span) may be added later.
 
 
-Build commands:
+## Constant-Time Helpers
 
-Tests are disabled by default. Run CMake with `-DAES_CPP_BUILD_TESTS=ON` to build them.
+`utils::constant_time_equal(a, b)` compares byte sequences in a way that reduces timing leakage for equal-length inputs. Contract: treat lengths as public; compare lengths in protocol logic, then call the function only when sizes match.
 
-* `make build_all` - build all targets
-* `make build_test` - build `test` target
-* `make build_debug` - build `debug` target (defines `AESCPP_DEBUG`)
-* `make build_profile` - build `profile` target
-* `make build_speed_test` - build `speedtest` target
-* `make build_release` - build `release` target
-* `make style_fix` - fix code style
-* `make test` - run tests
-* `make debug` - run debug version
-* `make profile` - run profile version
-* `make speed_test` - run performance speed test
-* `make release` - run `release` version
-* `make clean` - clean `bin` directory
+## Hardware Acceleration
 
-## FAQ / Troubleshooting
-
-### How do I generate an IV?
-
-`aes_cpp::utils` includes helpers such as `generate_iv_16()` for CBC, CFB and CTR modes and `generate_iv_12()` for GCM. See [IV Generation](#iv-generation) for usage examples.
-
-### Which compilers and architectures are supported?
-
-The library targets any C++11 (or newer) compiler and is tested with GCC, Clang and MSVC. It runs on x86 and x86_64; other platforms should work as long as a compatible compiler is available.
-
-### What if my CPU lacks AES-NI?
-
-AES-NI instructions are detected at runtime. When unavailable, the library automatically falls back to a portable software implementation with lower performance. See [Hardware Acceleration](#hardware-acceleration) for details.
-
-### How do I add the library as a submodule or via vcpkg?
-
-To embed as a Git submodule:
-
-```bash
-git submodule add https://github.com/NewYaroslav/aes-cpp.git external/aes-cpp
-```
-
-Then follow the [CMake Integration](#cmake-integration) section using `add_subdirectory(external/aes-cpp)`.
-
-For vcpkg users, see [Building with vcpkg](#building-with-vcpkg) and run:
-
-```bash
-vcpkg install
-```
+* **x86/x86\_64**: runtime AES-NI detection; hardware path when available, otherwise software fallback.
+* **Non-x86 (e.g., ARMv8)**: currently uses software path (no ARM Crypto Extensions yet). *Subject to change if ARM acceleration is added in the future.*
 
 ## Windows Build
 
-Required tools:
-
-* Microsoft Visual C++ (MSVC)
-* CMake
-* vcpkg
-
-Example commands for Windows PowerShell or Command Prompt:
+Requirements: MSVC, CMake, vcpkg
 
 ```powershell
 git clone https://github.com/microsoft/vcpkg.git
@@ -371,9 +292,53 @@ cmake --build build --config Release
 ctest --test-dir build -C Release
 ```
 
+Linking example (MSVC): link against `build\Release\aes_cpp.lib` or consume via `find_package` after `cmake --install`.
+
+## Development
+
+* Clone: `git clone https://github.com/NewYaroslav/aes-cpp.git`
+* Hooks: `./setup-hooks.sh` enables clang-format pre-commit
+* Local GTest (optional): `./dev/install_gtest.sh`
+* Docker: `docker-compose up -d`
+* Make shortcuts:
+
+  * `make build_all` — build all targets
+  * `make build_test` — build tests (`-DAES_CPP_BUILD_TESTS=ON`)
+  * `make build_debug` — build `debug` (defines `AESCPP_DEBUG`)
+  * `make build_profile` — build `profile`
+  * `make build_speed_test` — build `speedtest`
+  * `make build_release` — build optimized `release`
+  * `make test` — run tests
+  * `make debug` / `make profile` / `make speed_test` / `make release` — run respective binaries
+  * `make style_fix` — fix code style
+  * `make clean` — clean `bin`
+
+Binaries in `bin/`:
+
+* `test` — runs tests
+* `debug` — debug build (main from `dev/main.cpp`)
+* `profile` — gprof build (main from `dev/main.cpp`)
+* `speedtest` — performance test (main from `speedtest/main.cpp`)
+* `release` — optimized build (main from `dev/main.cpp`)
+
+## FAQ / Troubleshooting
+
+**Compilers/architectures?** GCC, Clang, MSVC on x86/x86\_64 are covered by CI. Other platforms should work with a compatible C++11 compiler; they currently use the software path.
+
+**No AES-NI?** The library falls back to the portable software implementation; expect lower performance.
+
+**Submodule vs package?** As a submodule use `add_subdirectory`. As an installed package use `find_package(aes_cpp CONFIG REQUIRED)` and link `aes_cpp::aes_cpp`.
+
+**vcpkg triplets?** Set explicitly when needed, e.g. `vcpkg install --triplet x64-windows`.
+
+## Links
+
+* [hmac-cpp](https://github.com/NewYaroslav/hmac-cpp) — HMAC for authentication
+* [siphash-hpp](https://github.com/NewYaroslav/siphash-hpp) — header-only SipHash
+* [ADVobfuscator](https://github.com/NewYaroslav/ADVobfuscator) — compile-time obfuscation (C++20)
+* [obfy](https://github.com/NewYaroslav/obfy) — generate license verification code
+* [AES (Wikipedia)](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
-
-
+MIT — see [LICENSE](LICENSE).
