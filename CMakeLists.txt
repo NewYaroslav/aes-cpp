@@ -29,17 +29,17 @@ set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/aes.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/src/aes_utils.cpp)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_library(aes ${SOURCE_FILES})
-add_library(aes_cpp::aes_cpp ALIAS aes)
-add_library(aescpp ALIAS aes)
-target_include_directories(aes
+add_library(aes_cpp ${SOURCE_FILES})
+add_library(aes_cpp::aes_cpp ALIAS aes_cpp)
+add_library(aescpp ALIAS aes_cpp)
+target_include_directories(aes_cpp
   PUBLIC
     $<BUILD_INTERFACE:${INCLUDE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
-set_target_properties(aes PROPERTIES EXPORT_NAME aes_cpp)
+set_target_properties(aes_cpp PROPERTIES EXPORT_NAME aes_cpp)
 
-install(TARGETS aes EXPORT aes_cppTargets
+install(TARGETS aes_cpp EXPORT aes_cppTargets
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
@@ -84,6 +84,6 @@ if(AES_CPP_BUILD_TESTS)
     FetchContent_MakeAvailable(googletest)
   endif()
   add_executable(tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests.cpp)
-  target_link_libraries(tests aes GTest::gtest pthread)
+  target_link_libraries(tests aes_cpp GTest::gtest pthread)
   add_test(NAME aes_cpp_tests COMMAND tests)
 endif()
