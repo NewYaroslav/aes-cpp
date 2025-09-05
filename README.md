@@ -5,6 +5,7 @@ Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 
 [![Ubuntu](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml)
 [![Windows](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Stable releases are maintained on the `stable` branch and in tagged versions.
 
@@ -305,5 +306,10 @@ cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=.\vcpkg\scripts\buildsystems\vcpkg.cm
 cmake --build build --config Release
 ctest --test-dir build -C Release
 ```
+
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 
