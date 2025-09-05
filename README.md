@@ -204,7 +204,7 @@ int main() {
 }
 ```
 
-**Note (CTR):** throws on 128-bit counter wrap-around (practically unreachable).
+**Note (CTR):** throws `std::length_error` on 128-bit counter wrap-around (practically unreachable).
 
 ### GCM example (AEAD) + serialization
 
@@ -287,12 +287,13 @@ A span-like API may be added later.
 ## Hardware Acceleration
 
 * **x86/x86_64**: runtime AES-NI detection; hardware path when available, otherwise software fallback.
-* **GHASH** (GCM) uses PCLMULQDQ when available.
+* **GHASH** (GCM) uses PCLMULQDQ with SSSE3 shuffles when available.
 * **Non-x86 (e.g., ARMv8)**: currently uses software path (no ARM Crypto Extensions yet).
 
 ### Build flags for acceleration
-* GCC/Clang: pass `-maes -mpclmul` to compile AES-NI/PCLMUL code paths (selected at runtime).
+* GCC/Clang: pass `-maes -mpclmul -mssse3` to compile AES-NI/PCLMUL code paths (selected at runtime).
 * MSVC: intrinsics available by default; CPUID selects the path at runtime.
+* Without these flags, the software path is always used.
 
 ## Windows Build
 
