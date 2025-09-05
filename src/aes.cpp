@@ -5,6 +5,7 @@
 #include <cstring>
 #include <memory>
 #include <stdexcept>
+#include <string>
 
 #if defined(__has_include)
 #if __has_include(<strings.h>)
@@ -32,15 +33,6 @@
 #if __has_include(<cpuid.h>)
 #include <cpuid.h>
 #endif
-#endif
-
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) ||     \
-    defined(_M_IX86) || defined(__aarch64__) || defined(_M_ARM64) || \
-    defined(__ARM_FEATURE_UNALIGNED)
-// Allow direct uint64_t loads on platforms with relaxed alignment
-#define AESCPP_HAS_UNALIGNED_UINT64 1
-#else
-#define AESCPP_HAS_UNALIGNED_UINT64 0
 #endif
 
 namespace aes_cpp {
@@ -771,8 +763,9 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
   _mm_storeu_si128(reinterpret_cast<__m128i *>(Z), low);
   return;
 #else
-#if defined(__PCLMUL__) && (defined(__x86_64__) || defined(_M_X64) || \
-                            defined(__i386) || defined(_M_IX86))
+#if defined(__PCLMUL__) && defined(__SSSE3__) &&                  \
+    (defined(__x86_64__) || defined(_M_X64) || defined(__i386) || \
+     defined(_M_IX86))
   if (has_pclmul()) {
     const __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(X));
     const __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i *>(Y));
@@ -1052,47 +1045,26 @@ void AES::XorBlocks(const unsigned char *a, const unsigned char *b,
     __m128i vc = _mm_xor_si128(va, vb);
     _mm_storeu_si128(reinterpret_cast<__m128i *>(c + i), vc);
   }
-#if AESCPP_HAS_UNALIGNED_UINT64
-  // Use direct uint64_t loads when alignment isn't required
   for (; i + 8 <= len; i += 8) {
-    uint64_t va = *reinterpret_cast<const uint64_t *>(a + i);
-    uint64_t vb = *reinterpret_cast<const uint64_t *>(b + i);
-    *reinterpret_cast<uint64_t *>(c + i) = va ^ vb;
+    uint64_t va, vb, vc;
+    std::memcpy(&va, a + i, 8);
+    std::memcpy(&vb, b + i, 8);
+    vc = va ^ vb;
+    std::memcpy(c + i, &vc, 8);
   }
-#else
-  for (; i + 8 <= len; i += 8) {
-    uint64_t va;
-    uint64_t vb;
-    std::memcpy(&va, a + i, sizeof(va));
-    std::memcpy(&vb, b + i, sizeof(vb));
-    uint64_t vc = va ^ vb;
-    std::memcpy(c + i, &vc, sizeof(vc));
-  }
-#endif
   // Remaining bytes
   for (; i < len; ++i) {
     c[i] = a[i] ^ b[i];
   }
 #else
   size_t i = 0;
-#if AESCPP_HAS_UNALIGNED_UINT64
-  // Use direct uint64_t loads when alignment isn't required
   for (; i + 8 <= len; i += 8) {
-    uint64_t va = *reinterpret_cast<const uint64_t *>(a + i);
-    uint64_t vb = *reinterpret_cast<const uint64_t *>(b + i);
-    *reinterpret_cast<uint64_t *>(c + i) = va ^ vb;
+    uint64_t va, vb, vc;
+    std::memcpy(&va, a + i, 8);
+    std::memcpy(&vb, b + i, 8);
+    vc = va ^ vb;
+    std::memcpy(c + i, &vc, 8);
   }
-#else
-  for (; i + 8 <= len; i += 8) {
-    uint64_t va;
-    uint64_t vb;
-    std::memcpy(&va, a + i, sizeof(va));
-    std::memcpy(&vb, b + i, sizeof(vb));
-    uint64_t vc = va ^ vb;
-    std::memcpy(c + i, &vc, sizeof(vc));
-  }
-#endif
-  // Remaining bytes
   for (; i < len; ++i) {
     c[i] = a[i] ^ b[i];
   }
