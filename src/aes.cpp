@@ -16,9 +16,10 @@
 #if defined(_WIN32)
 #include <windows.h>
 #endif
-#if (defined(__PCLMUL__) || defined(__AES__)) &&                  \
-    (defined(__x86_64__) || defined(_M_X64) || defined(__i386) || \
-     defined(_M_IX86))
+#if ((defined(__PCLMUL__) || defined(__AES__)) &&                  \
+     (defined(__x86_64__) || defined(_M_X64) || defined(__i386) || \
+      defined(_M_IX86))) ||                                        \
+    (defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86)))
 #include <wmmintrin.h>
 #endif
 #if defined(__SSSE3__)
@@ -28,6 +29,7 @@
 #include <emmintrin.h>
 #endif
 #if defined(_MSC_VER)
+#include <immintrin.h>
 #include <intrin.h>
 #elif defined(__has_include)
 #if __has_include(<cpuid.h>)
@@ -51,6 +53,8 @@ void secure_zero(void *p, size_t n) {
 #endif
 }
 
+// Compare `len` bytes of `a` and `b` without early termination.
+// Caller must ensure both inputs are of equal length.
 bool constant_time_eq(const unsigned char *a, const unsigned char *b,
                       size_t len) {
   uint32_t diff = 0;
@@ -61,8 +65,9 @@ bool constant_time_eq(const unsigned char *a, const unsigned char *b,
   return ((v >> 31) ^ 1u) != 0;
 }
 
-#if defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
-                         defined(__i386) || defined(_M_IX86))
+#if ((defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
+                           defined(__i386) || defined(_M_IX86))) ||  \
+     (defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))))
 static bool has_aesni() {
 #if defined(_MSC_VER)
   int info[4];
@@ -88,8 +93,9 @@ static bool has_aesni() {
 }
 #endif
 
-#if defined(__PCLMUL__) && (defined(__x86_64__) || defined(_M_X64) || \
-                            defined(__i386) || defined(_M_IX86))
+#if (((defined(__PCLMUL__) && (defined(__x86_64__) || defined(_M_X64) || \
+                               defined(__i386) || defined(_M_IX86))) ||  \
+      (defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86)))))
 static bool has_pclmul() {
 #if defined(_MSC_VER)
   static const bool result = []() {
@@ -652,8 +658,9 @@ void AES::CheckLength(size_t len) {
   }
 }
 
-#if defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
-                         defined(__i386) || defined(_M_IX86))
+#if ((defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
+                           defined(__i386) || defined(_M_IX86))) ||  \
+     (defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))))
 static void EncryptBlockAESNI(const unsigned char in[], unsigned char out[],
                               const unsigned char *roundKeys, unsigned int Nr) {
   __m128i m = _mm_loadu_si128(reinterpret_cast<const __m128i *>(in));
@@ -689,8 +696,9 @@ static void DecryptBlockAESNI(const unsigned char in[], unsigned char out[],
 
 void AES::EncryptBlock(const unsigned char in[], unsigned char out[],
                        const unsigned char *roundKeys) {
-#if defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
-                         defined(__i386) || defined(_M_IX86))
+#if ((defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
+                           defined(__i386) || defined(_M_IX86))) ||  \
+     (defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))))
   static bool useAESNI = has_aesni();
   if (useAESNI) {
     EncryptBlockAESNI(in, out, roundKeys, Nr);
@@ -763,9 +771,10 @@ void AES::GF_Multiply(const unsigned char *X, const unsigned char *Y,
   _mm_storeu_si128(reinterpret_cast<__m128i *>(Z), low);
   return;
 #else
-#if defined(__PCLMUL__) && defined(__SSSE3__) &&                  \
-    (defined(__x86_64__) || defined(_M_X64) || defined(__i386) || \
-     defined(_M_IX86))
+#if (((defined(__PCLMUL__) && defined(__SSSE3__)) &&                \
+      (defined(__x86_64__) || defined(_M_X64) || defined(__i386) || \
+       defined(_M_IX86))) ||                                        \
+     (defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))))
   if (has_pclmul()) {
     const __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(X));
     const __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i *>(Y));
@@ -849,8 +858,9 @@ void AES::GHASH(const unsigned char *H, const unsigned char *X, size_t len,
 
 void AES::DecryptBlock(const unsigned char in[], unsigned char out[],
                        const unsigned char *roundKeys) {
-#if defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
-                         defined(__i386) || defined(_M_IX86))
+#if ((defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \
+                           defined(__i386) || defined(_M_IX86))) ||  \
+     (defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))))
   static bool useAESNI = has_aesni();
   if (useAESNI) {
     DecryptBlockAESNI(in, out, roundKeys, Nr);

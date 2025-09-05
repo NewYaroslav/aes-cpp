@@ -205,7 +205,7 @@ int main() {
 }
 ```
 
-**Note (CTR):** throws `std::length_error` on 128-bit counter wrap-around (practically unreachable).
+**Note (CTR):** increments the 128-bit counter in big-endian order (`J0+1`, `J0+2`, ...); throws `std::length_error` on counter wrap-around (practically unreachable).
 
 ### GCM example (AEAD) + serialization
 
