@@ -10,8 +10,8 @@ Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
 Stable releases are maintained on the `stable` branch and in tagged versions.
 
 ## Prerequisites
-* C++ compiler
-* CMake 2.8 or newer
+* C++11 or newer compiler
+* CMake 3.14 or newer
 
 ## Building with vcpkg
 
