@@ -16,7 +16,7 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   endif()
 endif()
 
-project(aes_cpp CXX)
+project(aes_cpp VERSION 0.1.0 LANGUAGES CXX)
 enable_testing()
 
 include(CMakePackageConfigHelpers)
@@ -30,6 +30,7 @@ set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/aes.cpp
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library(aes_cpp ${SOURCE_FILES})
+target_compile_features(aes_cpp PUBLIC cxx_std_11)
 add_library(aes_cpp::aes_cpp ALIAS aes_cpp)
 add_library(aescpp ALIAS aes_cpp)
 target_include_directories(aes_cpp
