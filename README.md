@@ -43,6 +43,24 @@ cmake -S . -B build -DAES_CPP_BUILD_TESTS=ON
 cmake --build build
 ctest --test-dir build
 ```
+
+```c++
+#include <aes_cpp/aes_utils.hpp>
+#include <array>
+#include <string>
+#include <iostream>
+
+int main() {
+    using namespace aes_cpp;
+    std::string text = "Hello AES";
+    std::array<uint8_t, 16> key = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
+                                   0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f};
+    auto encrypted = utils::encrypt(text, key, utils::AesMode::CTR);
+    auto decrypted = utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR);
+    std::cout << decrypted << std::endl;
+}
+```
+
 See [examples/ctr.cpp](examples/ctr.cpp) for a minimal usage example.
 
 ```bash
@@ -113,6 +131,7 @@ returns a 12-byte IV recommended for GCM.
 ## Vector Overloads
 
 All encryption and decryption methods have overloads that accept `std::vector<unsigned char>` in addition to raw pointer APIs:
+
 ```c++
 #include <aes_cpp/aes.hpp>
 
@@ -198,8 +217,23 @@ authenticated data (AAD), and the authentication tag produced by GCM.
 
 GCM limits AAD to `(1ULL << 39) - 256` bytes and the combined length of AAD and
 plaintext to the same bound. The library throws `std::length_error` if these
-limits are exceeded. See [examples/gcm.cpp](examples/gcm.cpp) for a complete
-example.
+limits are exceeded. 
+
+```c++
+#include <aes_cpp/aes_utils.hpp>
+
+using namespace aes_cpp;
+
+std::string text = "GCM example";
+std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+std::vector<uint8_t> aad = { 'h', 'e', 'a', 'd', 'e', 'r' };
+auto data = utils::encrypt_gcm(text, key, aad);
+// data.tag holds the 16-byte authentication tag
+auto plain = utils::decrypt_gcm_to_string(data, key, aad);
+```
+
+See [examples/gcm.cpp](examples/gcm.cpp) for a complete example.
 
 # Padding
 
@@ -216,6 +250,19 @@ aes_cpp::utils::remove_padding(decrypted, out);
 ```
 
 Higher-level helpers apply this padding automatically:
+
+```c++
+#include <aes_cpp/aes_utils.hpp>
+
+using namespace aes_cpp;
+
+std::string text = "CBC example";
+std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+auto encrypted = utils::encrypt(text, key, utils::AesMode::CBC);
+auto restored = utils::decrypt_to_string(encrypted, key, utils::AesMode::CBC);
+```
+
 See [examples/cbc.cpp](examples/cbc.cpp) for a complete CBC example.
 
 CFB, CTR and GCM modes operate on data of any length.
