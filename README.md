@@ -170,6 +170,7 @@ These projects can be used together with aes_cpp:
 * [hmac-cpp](https://github.com/NewYaroslav/hmac-cpp) - HMAC for authentication
 * [siphash-hpp](https://github.com/NewYaroslav/siphash-hpp) - header-only SipHash library
 * [obfy](https://github.com/NewYaroslav/obfy) - generate license verification code
+* [ADVobfuscator](https://github.com/NewYaroslav/ADVobfuscator) - compile-time C++ code obfuscation library
 * [Wiki](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard)
 * [NIST](https://www.nist.gov/publications/advanced-encryption-standard-aes)
 
