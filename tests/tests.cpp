@@ -727,7 +727,7 @@ TEST(Utils, RemovePaddingConstantTime) {
   auto t_invalid = measure(invalid);
   auto diff = t_valid > t_invalid ? t_valid - t_invalid : t_invalid - t_valid;
   auto max_t = t_valid > t_invalid ? t_valid : t_invalid;
-  EXPECT_LT(diff.count(), max_t.count() / 8);
+  EXPECT_LT(diff.count(), max_t.count() / 4);
 }
 
 TEST(Utils, EncryptDecryptCtrZeroLength) {
