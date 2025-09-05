@@ -1,6 +1,17 @@
 # aes-cpp
 
-C++ AES(Advanced Encryption Standard) implementation
+C++ AES(Advanced Encryption Standard) implementation.
+
+Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
+
+[![Ubuntu](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml)
+[![Windows](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml)
+
+Stable releases are maintained on the `stable` branch and in tagged versions.
+
+## Prerequisites
+* C++11 or newer compiler
+* CMake 3.14 or newer
 
 ## Quick Start
 
@@ -32,18 +43,6 @@ int main() {
 g++ quickstart.cpp -std=c++17 -Iinclude build/libaes_cpp.a -o quickstart
 ./quickstart
 ```
-
-
-Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES).
-
-[![Ubuntu](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci.yml)
-[![Windows](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml/badge.svg?branch=main)](https://github.com/NewYaroslav/aes-cpp/actions/workflows/aes-ci-windows.yml)
-
-Stable releases are maintained on the `stable` branch and in tagged versions.
-
-## Prerequisites
-* C++11 or newer compiler
-* CMake 3.14 or newer
 
 ## Building with vcpkg
 
