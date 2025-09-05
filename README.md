@@ -27,6 +27,11 @@ git clone https://github.com/NewYaroslav/aes-cpp.git
 cd aes-cpp
 cmake -S . -B build
 cmake --build build
+
+# Enable and run tests
+cmake -S . -B build -DAES_CPP_BUILD_TESTS=ON
+cmake --build build
+ctest --test-dir build
 ```
 
 ```c++
