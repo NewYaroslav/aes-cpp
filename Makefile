@@ -48,7 +48,11 @@ style_fix:
 
 
 clean:
-	docker-compose exec aes rm -rf bin/*
+	@if command -v docker-compose >/dev/null 2>&1; then \
+		docker-compose exec aes rm -rf bin/*; \
+	else \
+		rm -rf bin/*; \
+	fi
 
 
 workflow_build_test: ; g++ $(FLAGS) $(CXXFLAGS) -c ./src/aes.cpp -o bin/aes.o; g++ $(FLAGS) $(CXXFLAGS) -c ./src/aes_utils.cpp -o bin/aes_utils.o; g++ $(FLAGS) $(CXXFLAGS) $(TEST_FLAGS) -g bin/aes.o bin/aes_utils.o ./tests/tests.cpp $(GTEST_LIBS) -o bin/test

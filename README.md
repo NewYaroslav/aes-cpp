@@ -264,6 +264,7 @@ These projects can be used together with aes_cpp:
 
 1. `git clone https://github.com/NewYaroslav/aes-cpp.git`
 1. Run `./setup-hooks.sh` to enable the clang-format pre-commit hook enforced by `.clang-format`
+1. Run `./dev/install_gtest.sh` to install GoogleTest for local builds
 1. `docker-compose up -d`
 1. use make commands
 
