@@ -44,7 +44,8 @@ Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES) and extended with 
 
 * AES-128 / AES-192 / AES-256
 * Modes: **ECB**, **CBC**, **CFB**, **CTR**, **GCM**
-* Runtime AES-NI detection on x86/x86\_64; software fallback otherwise
+* Runtime AES-NI detection on x86/x86\_64 when built with AES-NI/PCLMUL flags;
+  software fallback otherwise
 * Convenience utilities (`aes_cpp::utils`) with string/`std::vector` helpers
 * Optional debug helpers (hex printers) behind `AESCPP_DEBUG`
 * CMake package: `aes_cpp::aes_cpp` target, `find_package` support
@@ -274,7 +275,8 @@ PKCS#7 helpers and higher-level CBC helpers that apply padding automatically.
 ## Vector Overloads
 
 Most APIs provide `std::vector<uint8_t>` overloads. They do **not** copy the input;
-they allocate an output vector and write results directly into it (return uses NRVO/move).
+they allocate a new output vector and write results directly into it (return uses
+NRVO/move).
 For zero-allocation scenarios, use pointer/size APIs with a caller-provided output buffer,
 or in-place pointer APIs (same buffer for input/output) where applicable.
 Note: `DecryptGCM` normalizes the tag to 16 bytes (may copy/resize the tag).
@@ -286,12 +288,16 @@ A span-like API may be added later.
 
 ## Hardware Acceleration
 
-* **x86/x86_64**: runtime AES-NI detection; hardware path when available, otherwise software fallback.
+* **x86/x86_64**: runtime AES-NI detection when compiled with AES-NI/PCLMUL
+  support; hardware path when available, otherwise software fallback.
 * **GHASH** (GCM) uses PCLMULQDQ with SSSE3 shuffles when available.
 * **Non-x86 (e.g., ARMv8)**: currently uses software path (no ARM Crypto Extensions yet).
 
 ### Build flags for acceleration
-* GCC/Clang: pass `-maes -mpclmul -mssse3` to compile AES-NI/PCLMUL code paths (selected at runtime).
+* CMake option: `AES_CPP_ENABLE_AESNI` (default **ON**) adds the necessary
+  compiler flags on GCC/Clang x86 targets.
+* GCC/Clang: pass `-maes -mpclmul -msse2 -mssse3` to compile AES-NI/PCLMUL code
+  paths (selected at runtime).
 * MSVC: intrinsics available by default; CPUID selects the path at runtime.
 * Without these flags, the software path is always used.
 

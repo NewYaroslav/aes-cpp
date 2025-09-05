@@ -7,14 +7,16 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
-#include <mutex>
 #if __cplusplus >= 201703L
 #include <shared_mutex>
-#define AESCPP_SHARED_MUTEX std::shared_mutex
-#define AESCPP_SHARED_LOCK std::shared_lock
+using AESCPP_SHARED_MUTEX = std::shared_mutex;
+template <class M>
+using AESCPP_SHARED_LOCK = std::shared_lock<M>;
 #else
-#define AESCPP_SHARED_MUTEX std::mutex
-#define AESCPP_SHARED_LOCK std::unique_lock
+#include <mutex>
+using AESCPP_SHARED_MUTEX = std::mutex;
+template <class M>
+using AESCPP_SHARED_LOCK = std::unique_lock<M>;
 #endif
 #include <stdexcept>
 #include <string>

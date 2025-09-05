@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
-#include <string>
 
 #if defined(__has_include)
 #if __has_include(<strings.h>)
@@ -40,8 +40,8 @@ namespace aes_cpp {
 void secure_zero(void *p, size_t n) {
 #if defined(_WIN32)
   SecureZeroMemory(p, n);
-#elif defined(explicit_bzero) || defined(__GLIBC__) || defined(__APPLE__) || \
-    defined(__OpenBSD__) || defined(__FreeBSD__)
+#elif defined(__GLIBC__) || defined(__APPLE__) || defined(__OpenBSD__) || \
+    defined(__FreeBSD__)
   explicit_bzero(p, n);
 #elif defined(__STDC_LIB_EXT1__)
   memset_s(p, n, 0, n);
