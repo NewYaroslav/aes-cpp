@@ -158,10 +158,33 @@ auto plain = utils::decrypt_gcm_to_string(data, key, aad);
 
 # Padding
 
-This library does not provide any padding because padding is not part of AES standard.
-For ECB and CBC modes plaintext and ciphertext length in bytes must be divisible by
-16. CFB, CTR and GCM modes operate on data of any length. If the length for ECB or
-CBC doesn't satisfy this condition an exception will be thrown.
+The core `AES` class works on 16-byte blocks and expects callers to supply
+already padded data. If the plaintext length for ECB or CBC modes is not a
+multiple of 16 bytes, an exception is thrown.
+
+`aes_cpp::utils` provides PKCS#7 helpers for CBC mode:
+
+```c++
+std::vector<uint8_t> padded = aes_cpp::utils::add_padding(plain);
+...
+aes_cpp::utils::remove_padding(decrypted, out);
+```
+
+Higher-level helpers apply this padding automatically:
+
+```c++
+#include <aes_cpp/aes_utils.hpp>
+
+using namespace aes_cpp;
+
+std::string text = "CBC example";
+std::array<uint8_t, 16> key = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+auto encrypted = utils::encrypt(text, key, utils::AesMode::CBC);
+auto restored = utils::decrypt_to_string(encrypted, key, utils::AesMode::CBC);
+```
+
+CFB, CTR and GCM modes operate on data of any length.
 
 # Links
 
