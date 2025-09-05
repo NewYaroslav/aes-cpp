@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.14)
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   if(DEFINED ENV{VCPKG_ROOT})
@@ -17,6 +17,7 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 project(aes_cpp CXX)
+enable_testing()
 
 include(CMakePackageConfigHelpers)
 
@@ -71,7 +72,18 @@ install(EXPORT aes_cppTargets
 )
 
 if(AES_CPP_BUILD_TESTS)
-  find_package(GTest CONFIG REQUIRED)
+  find_package(GTest CONFIG)
+  if(NOT GTest_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+      googletest
+      GIT_REPOSITORY https://github.com/google/googletest.git
+      GIT_TAG v1.14.0
+      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    FetchContent_MakeAvailable(googletest)
+  endif()
   add_executable(tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests.cpp)
   target_link_libraries(tests aes GTest::gtest pthread)
+  add_test(NAME aes_cpp_tests COMMAND tests)
 endif()
