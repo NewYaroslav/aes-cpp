@@ -17,6 +17,7 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 project(aes_cpp CXX)
+enable_testing()
 
 include(CMakePackageConfigHelpers)
 
@@ -74,4 +75,5 @@ if(AES_CPP_BUILD_TESTS)
   find_package(GTest CONFIG REQUIRED)
   add_executable(tests ${CMAKE_CURRENT_SOURCE_DIR}/tests/tests.cpp)
   target_link_libraries(tests aes GTest::gtest pthread)
+  add_test(NAME aes_cpp_tests COMMAND tests)
 endif()
