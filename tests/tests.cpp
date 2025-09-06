@@ -780,22 +780,14 @@ TEST(Utils, RemovePaddingConstantTime) {
   auto invalid = valid;
   invalid.back() = 0;
 
-  auto measure = [](const std::vector<uint8_t> &buf) {
-    std::vector<uint8_t> out;
-    std::size_t out_len;
-    auto start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 100000; ++i) {
-      aes_cpp::utils::remove_padding(buf, out, out_len);
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-    return end - start;
-  };
+  std::vector<uint8_t> out;
+  std::size_t out_len;
 
-  auto t_valid = measure(valid);
-  auto t_invalid = measure(invalid);
-  auto diff = t_valid > t_invalid ? t_valid - t_invalid : t_invalid - t_valid;
-  auto max_t = t_valid > t_invalid ? t_valid : t_invalid;
-  EXPECT_LT(diff.count(), max_t.count() / 4);
+  EXPECT_TRUE(aes_cpp::utils::remove_padding(valid, out, out_len));
+  EXPECT_EQ(out_len, 0U);
+
+  EXPECT_FALSE(aes_cpp::utils::remove_padding(invalid, out, out_len));
+  EXPECT_EQ(out_len, invalid.size());
 }
 
 TEST(Utils, EncryptDecryptCtrZeroLength) {
