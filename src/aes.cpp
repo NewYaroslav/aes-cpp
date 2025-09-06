@@ -42,6 +42,7 @@
 namespace aes_cpp {
 
 void secure_zero(void *p, size_t n) {
+  if (p == nullptr || n == 0) return;
 #if defined(_WIN32)
   SecureZeroMemory(p, n);
 #elif defined(HAVE_EXPLICIT_BZERO)
