@@ -19,6 +19,7 @@ endif()
 project(aes_cpp VERSION 0.1.0 LANGUAGES CXX)
 enable_testing()
 
+include(CheckSymbolExists)
 include(CMakePackageConfigHelpers)
 
 set(AES_CPP_VERSION 0.1.0)
@@ -30,6 +31,8 @@ set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/aes.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/src/aes_utils.cpp)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+check_symbol_exists(explicit_bzero "string.h" HAVE_EXPLICIT_BZERO)
+
 add_library(aes_cpp ${SOURCE_FILES})
 target_compile_features(aes_cpp PUBLIC cxx_std_11)
 add_library(aes_cpp::aes_cpp ALIAS aes_cpp)
@@ -40,6 +43,10 @@ target_include_directories(aes_cpp
     $<INSTALL_INTERFACE:include>
 )
 set_target_properties(aes_cpp PROPERTIES EXPORT_NAME aes_cpp)
+
+if(HAVE_EXPLICIT_BZERO)
+  target_compile_definitions(aes_cpp PUBLIC HAVE_EXPLICIT_BZERO)
+endif()
 
 if(AES_CPP_ENABLE_AESNI
    AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang"
