@@ -71,6 +71,40 @@ jobs:
         run: cmake --build build
       - name: Test
         run: ctest --test-dir build
+
+  sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build gtest
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libgtest-dev cmake
+          cd /usr/src/gtest
+          sudo cmake CMakeLists.txt
+          sudo make
+          sudo cp lib/*.a /usr/lib
+      - name: Tests with sanitizers
+        run: |
+          make workflow_build_test FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g -O1 -Wall -Wextra -I./include -std=c++17" TEST_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g -O1 -Wall -Wextra -I./include -std=c++17"
+          ASAN_OPTIONS=detect_leaks=1 ./bin/test
+      - name: GF_Multiply constant-time check
+        run: bash dev/gf_multiply_branch_check.sh
+
+  macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build and test
+        run: |
+          cmake -S . -B build -DAES_CPP_BUILD_TESTS=ON -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }}
+          cmake --build build
+          ctest --test-dir build
+      - name: GF_Multiply constant-time check
+        run: bash dev/gf_multiply_branch_check.sh
       
       
       

@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <aes_cpp/aes.hpp>
 #include <algorithm>
 #include <cstddef>
@@ -42,8 +44,7 @@ namespace aes_cpp {
 void secure_zero(void *p, size_t n) {
 #if defined(_WIN32)
   SecureZeroMemory(p, n);
-#elif defined(__GLIBC__) || defined(__APPLE__) || defined(__OpenBSD__) || \
-    defined(__FreeBSD__)
+#elif defined(HAVE_EXPLICIT_BZERO)
   explicit_bzero(p, n);
 #elif defined(__STDC_LIB_EXT1__)
   memset_s(p, n, 0, n);
@@ -57,12 +58,11 @@ void secure_zero(void *p, size_t n) {
 // Caller must ensure both inputs are of equal length.
 bool constant_time_eq(const unsigned char *a, const unsigned char *b,
                       size_t len) {
-  uint32_t diff = 0;
+  unsigned int diff = 0;
   for (size_t i = 0; i < len; ++i) {
-    diff |= static_cast<uint32_t>(a[i] ^ b[i]);
+    diff |= static_cast<unsigned int>(a[i] ^ b[i]);
   }
-  uint32_t v = diff | (uint32_t(0) - diff);
-  return ((v >> 31) ^ 1u) != 0;
+  return diff == 0;
 }
 
 #if ((defined(__AES__) && (defined(__x86_64__) || defined(_M_X64) || \

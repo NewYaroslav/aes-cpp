@@ -58,7 +58,8 @@ Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES) and extended with 
   * Software path is **not constant-time**. Even with AES-NI, side channels may remain depending on platform and usage. Evaluate your threat model (shared CPU, co-tenancy, etc.).
 * **IV/nonce uniqueness is mandatory per key**:
 
-  * **GCM (recommended)**: 12-byte IV; **never reuse** an IV with the same key. Reuse breaks confidentiality and integrity.
+* **GCM (recommended)**: **12-byte IV (nonce) required**; non-12-byte IVs are not supported. **Never reuse** an IV with the same key. Reuse breaks confidentiality and integrity.
+* GCM tag length fixed to 16 bytes.
   * **CTR/CFB**: IV/nonce must be **unique** per key. A counter-based scheme is typical.
   * **CBC**: IV must be **unpredictable** (CSPRNG).
 * **ECB** is provided for demonstration only. Do **not** use in real systems; it leaks patterns. Prefer authenticated encryption (GCM).
@@ -228,7 +229,7 @@ int main() {
                                  0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f };
     std::vector<uint8_t> aad = { 'h','e','a','d','e','r' };
 
-    auto enc = utils::encrypt_gcm(text, key, aad); // produces {iv, ciphertext, tag}
+    auto enc = utils::encrypt_gcm(text, key, aad); // {iv, ciphertext, tag}; do not reuse `enc.iv` with the same key
 
     // Serialize as {iv || ciphertext || tag} if desired
     std::vector<uint8_t> wire;
@@ -288,6 +289,9 @@ A span-like API may be added later.
 
 ## Hardware Acceleration
 
+Hardware path is compiled only when AES-NI/PCLMUL instructions are enabled at
+build time; runtime CPUID then selects between hardware and software paths.
+
 * **x86/x86_64**: runtime AES-NI detection when compiled with AES-NI/PCLMUL
   support; hardware path when available, otherwise software fallback.
 * **GHASH** (GCM) uses PCLMULQDQ with SSSE3 shuffles when available.
@@ -296,9 +300,9 @@ A span-like API may be added later.
 ### Build flags for acceleration
 * CMake option: `AES_CPP_ENABLE_AESNI` (default **ON**) adds the necessary
   compiler flags on GCC/Clang x86 targets.
-* GCC/Clang: pass `-maes -mpclmul -msse2 -mssse3` to compile AES-NI/PCLMUL code
-  paths (selected at runtime).
-* MSVC: intrinsics available by default; CPUID selects the path at runtime.
+* GCC/Clang: pass `-maes -mpclmul` to compile AES-NI/PCLMUL code paths.
+* MSVC: AES-NI intrinsics enabled by default; `/arch:AVX2` is optional for wider
+  SIMD. CPUID selects the path at runtime.
 * Without these flags, the software path is always used.
 
 ## Windows Build

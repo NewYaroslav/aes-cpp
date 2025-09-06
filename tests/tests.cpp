@@ -595,6 +595,28 @@ TEST(LongData, EncryptDecryptVectorOneKb) {
   ASSERT_EQ(innew, plain);
 }
 
+TEST(CTR, CounterOverflowThrows) {
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
+  unsigned char plain[16] = {0};
+  unsigned char key[16] = {0};
+  unsigned char iv[16];
+  std::fill_n(iv, sizeof(iv), 0xFF);
+  unsigned char out[16];
+  EXPECT_THROW(aes.EncryptCTR(plain, sizeof(plain), key, iv, out),
+               std::length_error);
+}
+
+TEST(GCM, EncryptDecryptZeroPlaintext) {
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
+  unsigned char key[16] = {0};
+  unsigned char iv[12] = {0};
+  unsigned char tag[16];
+  EXPECT_NO_THROW({
+    aes.EncryptGCM(nullptr, 0, key, iv, nullptr, 0, tag, nullptr);
+    aes.DecryptGCM(nullptr, 0, key, iv, nullptr, 0, tag, nullptr);
+  });
+}
+
 TEST(GCM, DecryptInvalidTag) {
   aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[16] = {0};
