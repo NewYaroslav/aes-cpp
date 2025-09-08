@@ -16,13 +16,13 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   endif()
 endif()
 
-project(aes_cpp VERSION 0.2.0 LANGUAGES CXX)
+project(aes_cpp VERSION 0.2.1 LANGUAGES CXX)
 enable_testing()
 
 include(CheckSymbolExists)
 include(CMakePackageConfigHelpers)
 
-set(AES_CPP_VERSION 0.2.0)
+set(AES_CPP_VERSION 0.2.1)
 
 option(AES_CPP_BUILD_TESTS "Build aes_cpp tests" OFF)
 option(AES_CPP_ENABLE_AESNI "Build AES-NI/PCLMUL code paths" ON)
