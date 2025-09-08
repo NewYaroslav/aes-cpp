@@ -72,6 +72,9 @@ jobs:
       - name: Test
         run: ctest --test-dir build
 
+      - name: GF_Multiply constant-time check
+        run: bash dev/gf_multiply_branch_check.sh
+
   sanitizers:
     runs-on: ubuntu-latest
     steps:
