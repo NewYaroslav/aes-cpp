@@ -22,7 +22,7 @@ jobs:
       matrix:
         std: [11, 17]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Code style (check only)
         run: |
@@ -59,7 +59,7 @@ jobs:
   vcpkg:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Install vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg.git
@@ -75,7 +75,7 @@ jobs:
   sanitizers:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build gtest
         run: |
           sudo apt-get update
@@ -97,7 +97,7 @@ jobs:
       matrix:
         arch: [x86_64, arm64]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build and test
         run: |
           cmake -S . -B build -DAES_CPP_BUILD_TESTS=ON -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }}
