@@ -39,6 +39,22 @@ TEST(Internal, ConstantTimeEq) {
   EXPECT_FALSE(aes_cpp::constant_time_eq(a, c, sizeof(a)));
 }
 
+TEST(Internal, PrepareRoundKeysRecomputesAfterManualClear) {
+  aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
+  const std::array<unsigned char, 16> key = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+                                             0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+                                             0x0c, 0x0d, 0x0e, 0x0f};
+
+  auto primed = aes.prepare_round_keys(key.data());
+  ASSERT_NE(primed, nullptr);
+
+  aes.cachedRoundKeys.reset();
+  ASSERT_FALSE(aes.cachedRoundKeys);
+
+  auto regenerated = aes.prepare_round_keys(key.data());
+  EXPECT_NE(regenerated, nullptr);
+}
+
 TEST(Internal, ConcurrentKeyPreparationDoesNotAffectEncryption) {
   aes_cpp::AES aes(aes_cpp::AESKeyLength::AES_128);
   unsigned char plain[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,

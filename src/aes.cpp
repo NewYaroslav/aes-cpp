@@ -250,16 +250,17 @@ std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
   const size_t keyLen = 4 * Nk;
   {
     AESCPP_SHARED_LOCK<AESCPP_SHARED_MUTEX> lock(cacheMutex);
-    if (cachedKey.size() == keyLen &&
-        constant_time_eq(cachedKey.data(), key, keyLen)) {
+    const bool keyMatches = cachedKey.size() == keyLen &&
+                            constant_time_eq(cachedKey.data(), key, keyLen);
+    if (keyMatches && cachedRoundKeys) {
       return cachedRoundKeys;
     }
   }
   std::unique_lock<AESCPP_SHARED_MUTEX> lock(cacheMutex);
-  if (cachedKey.size() != keyLen ||
-      !constant_time_eq(cachedKey.data(), key, keyLen)) {
-    secure_zero(cachedKey.data(), cachedKey.size());
-    cachedKey.assign(key, key + keyLen);
+  const bool keyMatches = cachedKey.size() == keyLen &&
+                          constant_time_eq(cachedKey.data(), key, keyLen);
+  if (!cachedRoundKeys || !keyMatches) {
+    std::vector<unsigned char> newKey(key, key + keyLen);
     auto newRoundKeys = std::shared_ptr<std::vector<unsigned char>>(
         new std::vector<unsigned char>(4 * Nb * (Nr + 1)),
         [](std::vector<unsigned char> *p) {
@@ -267,7 +268,10 @@ std::shared_ptr<const std::vector<unsigned char>> AES::prepare_round_keys(
           delete p;
         });  // zeroize on last reference
     KeyExpansion(key, newRoundKeys->data());
-    cachedRoundKeys = newRoundKeys;
+
+    secure_zero(cachedKey.data(), cachedKey.size());
+    cachedKey.swap(newKey);
+    cachedRoundKeys.swap(newRoundKeys);
   }
   return cachedRoundKeys;
 }
