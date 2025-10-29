@@ -1088,26 +1088,36 @@ void AES::XorBlocks(const unsigned char *a, const unsigned char *b,
 #endif
 }
 
-#ifdef AESCPP_DEBUG  // Debug helpers - do not use with sensitive data in
-                     // production
 void AES::printHexArray(unsigned char a[], size_t n) {
+#ifdef AESCPP_DEBUG
   for (size_t i = 0; i < n; i++) {
     printf("%02x ", a[i]);
   }
+#else
+  (void)a;
+  (void)n;
+#endif
 }
 
 void AES::printHexVector(const std::vector<unsigned char> &a) {
+#ifdef AESCPP_DEBUG
   for (size_t i = 0; i < a.size(); i++) {
     printf("%02x ", a[i]);
   }
+#else
+  (void)a;
+#endif
 }
 
 void AES::printHexVector(std::vector<unsigned char> &&a) {
+#ifdef AESCPP_DEBUG
   for (size_t i = 0; i < a.size(); i++) {
     printf("%02x ", a[i]);
   }
-}
+#else
+  (void)a;
 #endif
+}
 
 std::vector<unsigned char> AES::ArrayToVector(unsigned char *a, size_t len) {
   std::vector<unsigned char> v(a, a + len);
