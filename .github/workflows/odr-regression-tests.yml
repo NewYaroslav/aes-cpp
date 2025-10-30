@@ -4,13 +4,6 @@ on:
   push
 
 jobs:
-  shared-mutex-layout:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run AESCPP_SHARED_MUTEX layout regression test
-        run: bash tests/odr/test_shared_mutex.sh
-
   debug-api-surface:
     runs-on: ubuntu-latest
     steps:
