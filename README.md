@@ -26,7 +26,8 @@ Forked from [SergeyBel/AES](https://github.com/SergeyBel/AES) and extended with 
   * [CBC example (with padding)](#cbc-example-with-padding)
   * [CTR example (string helpers)](#ctr-example-string-helpers)
   * [GCM example (AEAD) + serialization](#gcm-example-aead--serialization)
-  * [MAC callback for CBC/CFB/CTR](#mac-callback-for-cbc-cfb-ctr)
+  * [MAC callback for CBC/CFB/CTR](#mac-callback-for-cbccfbctr)
+* [API Limitations](#api-limitations)
 * [IV / Nonce Generation](#iv--nonce-generation)
 * [Padding](#padding)
 * [Vector Overloads](#vector-overloads)
@@ -258,6 +259,24 @@ auto mac_fn = [](const std::vector<uint8_t>& data) {
 auto encrypted = utils::encrypt(text, key, utils::AesMode::CTR, mac_fn);
 auto restored  = utils::decrypt_to_string(encrypted, key, utils::AesMode::CTR, mac_fn);
 ```
+
+## API Limitations
+
+**Template Utilities Limitations**
+
+In this library, the template functions from `aes_utils` **are declared in the header** but **defined in the** `.cpp` and **pre-explicitly instantiated** only for a limited set of key types. This design is intentional to keep ABI stable and avoid ODR conflicts across translation units. Therefore, **only the pre-supported key types** (listed below) are guaranteed to work.
+If you call, for example, `encrypt(...)` or `decrypt(...)` with a different key type, compilation will succeed, but **linking will fail** with an error like:
+```cpp
+undefined reference to `... encrypt<std::array<unsigned char,48>>(...)`
+```
+**Supported Key Types**
+
+At the moment, the library guarantees instantiations for the following containers:
+* `std::array<std::uint8_t, 16>` (AES-128)
+* `std::array<std::uint8_t, 24>` (AES-192)
+* `std::array<std::uint8_t, 32>` (AES-256)
+* `std::vector<std::uint8_t>` (length is validated at runtime as 16/24/32)
+These types are supported across all template utilities (`encrypt`, `decrypt`, `encrypt_gcm`, `decrypt_gcm`, and the corresponding convenience wrappers).
 
 ## IV / Nonce Generation
 
