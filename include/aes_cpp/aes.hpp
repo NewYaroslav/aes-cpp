@@ -455,7 +455,6 @@ class AES {
                   const unsigned char aad[], size_t aadLen,
                   const unsigned char tag[], unsigned char out[]);
 
-#ifdef AESCPP_DEBUG
   /// \brief Print byte array as hexadecimal values.
   /// \param a Array to print.
   /// \param n Number of bytes in \p a.
@@ -470,7 +469,6 @@ class AES {
   /// \overload
   /// \warning For debugging only; do not use with sensitive data in production.
   void printHexVector(std::vector<unsigned char> &&a);
-#endif
 
  private:
   static constexpr unsigned int Nb = 4;
